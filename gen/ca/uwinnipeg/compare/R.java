@@ -36,19 +36,16 @@ public final class R {
         public static final int about_icon=0x7f070000;
         public static final int about_thanks=0x7f070006;
         public static final int about_thanks_title=0x7f070005;
-        public static final int gallery=0x7f070007;
-        public static final int imageView=0x7f070008;
-        public static final int menu_about=0x7f07000e;
-        public static final int menu_cancel=0x7f07000d;
-        public static final int menu_create=0x7f07000c;
-        public static final int selection=0x7f07000b;
-        public static final int selection_image=0x7f07000a;
-        public static final int selection_view=0x7f070009;
+        public static final int menu_about=0x7f07000c;
+        public static final int menu_cancel=0x7f07000b;
+        public static final int menu_create=0x7f07000a;
+        public static final int selection=0x7f070009;
+        public static final int selection_image=0x7f070008;
+        public static final int selection_view=0x7f070007;
     }
     public static final class layout {
         public static final int about=0x7f030000;
-        public static final int main=0x7f030001;
-        public static final int neighbourhood_select=0x7f030002;
+        public static final int neighbourhood_select=0x7f030001;
     }
     public static final class menu {
         public static final int neighbourhood_select=0x7f060000;

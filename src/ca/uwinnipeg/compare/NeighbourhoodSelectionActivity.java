@@ -1,35 +1,32 @@
 package ca.uwinnipeg.compare;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.Region;
-import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.graphics.drawable.shapes.Shape;
-import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Images;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
+import ca.uwinnipeg.compare.view.SelectionView;
 
 public class NeighbourhoodSelectionActivity extends Activity {
   private Shape selectionShape; // The shape of the current neighbourhood
   private Rect selectionBounds; // A rectangle that store the size and position of the selection
   private Bitmap image; // The image the neighbourhood belongs to
+  private SelectionView selView;
   
-  private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
-  private Uri fileUri;
+  // Image constants
+  private static final int PADDING_RATIO = 8;
+  
+  private static final int SELECT_IMAGE = 101;
+  private static final String TAG = "Neighbourhood Activity";
 
   /**
    * Called when this Activity is first created.
@@ -38,36 +35,35 @@ public class NeighbourhoodSelectionActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState){
     super.onCreate(savedInstanceState);
     
-    // Load image
-    Resources res = getResources();
-    image = BitmapFactory.decodeResource(res, R.drawable.sample_0);
-    
-    // Request image from camera
-    Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-    fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
-    i.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
-    
-    startActivityForResult(i, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+    // Request image
+    Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
+    startActivityForResult(i, SELECT_IMAGE);
     
     // Create shape
     selectionShape = new RectShape();
     
     // Create Bounds to fill entire image
-    int padding = 8;
-    int padWidth = image.getWidth()/padding;
-    int padHeight = image.getHeight()/padding;
-    selectionBounds = new Rect(padWidth, padHeight, image.getWidth()-padWidth, image.getHeight()-padHeight);
     
     // Create view
-    SelectionView selView = new SelectionView(this);
+    selView = new SelectionView(this);
     
     // Setup view
-    selView.setImage(image);
     selView.setSelectionShape(selectionShape);
-    selView.setSelectionBounds(selectionBounds);
     
     // add view to activity
     setContentView(selView);
+  }
+  
+  /**
+   * Respond to activity results to recieve images from other applications.
+   */
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == SELECT_IMAGE)
+      if (resultCode == Activity.RESULT_OK) {
+        setImage(data.getData());        
+      } 
   }
   
   /**
@@ -101,74 +97,33 @@ public class NeighbourhoodSelectionActivity extends Activity {
     Intent i = new Intent(this, AboutActivity.class);
     startActivity(i);
   }
-
+  
   /**
-   * 
-   * The view which the image and currently selected neighbourhood is drawn.
-   *
+   * Sets the image being selected and reflects the change in the view.
+   * @param uri
    */
-  private static class SelectionView extends View {
-    private ShapeDrawable selection; // The shape to be drawn as the current neighbourhood
-    private Bitmap image; // The image to draw as the background
-    
-    private Paint imagePaint;
-
-    public SelectionView(Context context){
-      super(context);
-      setFocusable(true);	
-
-      // Setup selection shape
-      selection = new ShapeDrawable();
-      
-      // Setup the paint for the selection shape (colour, stroke, etc.)
-      Paint selectionPaint = selection.getPaint();
-      
-      selectionPaint.setColor(0xff00ccff); // SEPERATE STYLE
-      selectionPaint.setStrokeWidth(2); // SEPERATE STYLE
-      selectionPaint.setStyle(Paint.Style.STROKE); // SEPERate STYLE
-
-      imagePaint = new Paint();
+  public void setImage(Uri uri) {
+    // set the image to the received URI
+    try {
+      image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+      selView.setImage(image);
+      resetBounds();
     }
-
-    /**
-     * Set the shape being used to select a neighbourhood.
-     */
-    public void setSelectionShape(Shape s) {
-      selection.setShape(s);
+    catch (Exception e) {
+      Log.e(TAG, "Failed to load file " + uri.getPath() + "\n" + e.getMessage());
     }
-    
-    /**
-     * Set the bounds of the selection.
-     */
-    public void setSelectionBounds(Rect r) {
-      selection.setBounds(r);
+  }
+  
+  /**
+   * Sets the bounds to a default value.
+   */
+  public void resetBounds() {
+    if (image != null) { // Can't reset the bounds if there is no image
+      int padWidth = image.getWidth()/PADDING_RATIO;
+      int padHeight = image.getHeight()/PADDING_RATIO;
+      selectionBounds = new Rect(padWidth, padHeight, image.getWidth()-padWidth, image.getHeight()-padHeight);
+      selView.setSelectionBounds(selectionBounds);
     }
-
-    /**
-     * Sets the image that the neighbourhood is being selected for.
-     */
-    public void setImage(Bitmap bm) {
-      image = bm;
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-
-      // Draw the image to the background
-      canvas.drawBitmap(image, 75, 75, imagePaint);
-      canvas.translate(75, 75); // TMP
-      
-      // Dim unselected area
-      canvas.save();
-      canvas.clipRect(0, 0, canvas.getWidth(), canvas.getHeight());
-      canvas.clipRect(selection.getBounds(), Region.Op.DIFFERENCE); // NEED TO GENERALIZE TO ANY SHAPE
-      canvas.drawARGB(150,0,0,0);
-      canvas.restore();
-      
-      // Draw the shape of the current selection
-      selection.draw(canvas);
-    }
-
   }
 
 }
