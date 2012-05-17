@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Compare Demo</string>
+    <string name="app_versionName">1.0</string>
+    <string name="app_about">About</string>
+    <string name="menu_create">Create</string>
+    <string name="menu_cancel">Cancel</string>
+    <string name="menu_about">About</string>
+    <string name="about_developers_title">Developed by</string>
+    <string name="about_thanks_title">Thanks to</string>
 </resources>
