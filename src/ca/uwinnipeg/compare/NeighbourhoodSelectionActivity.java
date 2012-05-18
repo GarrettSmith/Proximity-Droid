@@ -29,7 +29,7 @@ public class NeighbourhoodSelectionActivity extends Activity {
   private SelectionView selView;
   
   // constants
-  private static final int PADDING_RATIO = 8;  
+  private static final int PADDING_RATIO = 4;  
   private static final int SELECT_IMAGE = 101;
   private static final String TAG = "Neighbourhood Activity";
   private static final String IMAGE_PATH_NAME = "Image Path";

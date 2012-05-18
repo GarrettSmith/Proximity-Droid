@@ -12,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.Shape;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 /**
@@ -44,6 +45,39 @@ public class SelectionView extends View {
     selectionPaint.setColor(0xff00ccff); // SEPERATE STYLE
     selectionPaint.setStrokeWidth(0); // SEPERATE STYLE
     selectionPaint.setStyle(Paint.Style.STROKE); // SEPERate STYLE
+  }
+  
+  // TODO Lock selection to edge
+  @Override 
+  public boolean onTouchEvent(MotionEvent event) {
+    
+    // Get bounds data
+    Rect selB = mSelection.getBounds();
+    int selHalfWidth  = selB.width()/2;
+    int selHalfHeight = selB.height()/2; 
+    
+    Rect imgB = mImage.getBounds();
+    
+    // Calculate touch position
+    int x = (int)event.getX() - (this.getWidth()/2);
+    int y = (int)event.getY() - (this.getHeight()/2);
+    
+    // Limit selection to be within the image
+    int left   = x - selHalfWidth;
+    int top    = y - selHalfHeight;
+    int right  = x + selHalfWidth;
+    int bottom = y + selHalfHeight;
+
+    if (left < imgB.left)     x = imgB.left + selHalfWidth;
+    if (top < imgB.top)       y = imgB.top + selHalfHeight;
+    if (right > imgB.right)   x = imgB.right - selHalfWidth;
+    if (bottom > imgB.bottom) y = imgB.bottom - selHalfHeight;
+
+    selB.offsetTo(x-selHalfWidth, y-selHalfHeight); // move the selection
+
+    this.invalidate(); // Request a redraw
+    
+    return true; // returning true means this input has been handled
   }
 
   /**
@@ -98,7 +132,7 @@ public class SelectionView extends View {
     
     // if the height of the image WITH SCALE is still greater than the screen
     // calculate scale using height
-    if ( (h * scale) > vh) scale = calcScale(h, vh);   
+    //if ( (h * scale) > vh) scale = calcScale(h, vh);   
     
     mTransform.postScale(scale, scale); // set scale from center
     
