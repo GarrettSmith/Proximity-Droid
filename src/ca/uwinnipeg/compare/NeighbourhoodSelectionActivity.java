@@ -171,9 +171,7 @@ public class NeighbourhoodSelectionActivity extends Activity {
       else {
         padding = h/PADDING_RATIO;
       }
-      int halfWidth = (w-padding)/2;
-      int halfHeight = (h-padding)/2;
-      selectionBounds = new Rect(-1*halfWidth, -1*halfHeight, halfWidth, halfHeight);
+      selectionBounds = new Rect(padding, padding, w-padding, h-padding);
       selView.setSelectionBounds(selectionBounds);
     }
   }

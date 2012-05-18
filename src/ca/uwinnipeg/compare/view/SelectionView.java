@@ -27,7 +27,7 @@ public class SelectionView extends View {
   
   private static final String TAG = "Selection View";
   
-  private static final int PADDING_RATIO = 4; // minimum space between the selection and the screen edge
+  private static final int PADDING_RATIO = 2; // minimum space between the selection and the screen edge
 
   public SelectionView(Context context){
     super(context);
@@ -59,8 +59,8 @@ public class SelectionView extends View {
     Rect imgB = mImage.getBounds();
     
     // Calculate touch position
-    int x = (int)event.getX() - (this.getWidth()/2);
-    int y = (int)event.getY() - (this.getHeight()/2);
+    int x = (int)event.getX();
+    int y = (int)event.getY();
     
     // Limit selection to be within the image
     int left   = x - selHalfWidth;
@@ -75,6 +75,7 @@ public class SelectionView extends View {
 
     selB.offsetTo(x-selHalfWidth, y-selHalfHeight); // move the selection
 
+    updateMatrix();
     this.invalidate(); // Request a redraw
     
     return true; // returning true means this input has been handled
@@ -100,9 +101,7 @@ public class SelectionView extends View {
   public void setImage(String path) {
     Bitmap image = BitmapFactory.decodeFile(path);
     mImage = new BitmapDrawable(getResources(), image);
-    int halfWidth = image.getWidth()/2;
-    int halfHeight = image.getHeight()/2;
-    mImage.setBounds(-1*halfWidth, -1*halfHeight, halfWidth, halfHeight);
+    mImage.setBounds(0, 0, image.getWidth(), image.getHeight());
   }
   
   /**
@@ -110,9 +109,8 @@ public class SelectionView extends View {
    */
   // TODO set a maximum zoom
   public void updateMatrix() {
-    
     // reset the matrix
-    mTransform.reset();
+    mTransform.reset();    
     
     // Get size of selection
     Rect b = mSelection.getBounds();
@@ -123,6 +121,11 @@ public class SelectionView extends View {
     int vw = this.getWidth();
     int vh = this.getHeight();
     
+    // Translate so selection is centered
+    float left = (float)-b.exactCenterX() + (vw/2);
+    float top  = (float)-b.exactCenterY() + (vh/2);
+    mTransform.postTranslate(left, top);
+    
     // Update the scale of the matrix
     
     float scale = 1; // value to scale the image by (default 1)
@@ -132,14 +135,9 @@ public class SelectionView extends View {
     
     // if the height of the image WITH SCALE is still greater than the screen
     // calculate scale using height
-    //if ( (h * scale) > vh) scale = calcScale(h, vh);   
+    if ( (h * scale) > vh) scale = calcScale(h, vh);   
     
-    mTransform.postScale(scale, scale); // set scale from center
-    
-    // Translate so selection is centered
-    float left = (float)vw/2;
-    float top  = (float)vh/2;
-    mTransform.postTranslate(left, top);
+    mTransform.postScale(scale, scale, (vw/2), (vh/2)); // set scale from center
   }
   
   private float calcScale(int drwDimen, int contDimen) {
@@ -148,9 +146,8 @@ public class SelectionView extends View {
 
   @Override
   protected void onDraw(Canvas canvas) {
-    
-    updateMatrix(); //TMP
-    
+
+    updateMatrix(); // TMP
     if (mTransform != null) { canvas.concat(mTransform); }
     else { Log.w(TAG, "Transform matrix is null, cannot transform drawing."); }
 
