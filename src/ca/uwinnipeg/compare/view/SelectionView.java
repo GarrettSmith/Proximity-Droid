@@ -2,12 +2,16 @@ package ca.uwinnipeg.compare.view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.Shape;
+import android.util.Log;
 import android.view.View;
 
 /**
@@ -16,64 +20,119 @@ import android.view.View;
  *
  */
 public class SelectionView extends View {
-  private ShapeDrawable selection; // The shape to be drawn as the current neighbourhood
-  private Bitmap image; // The image to draw as the background
+  private ShapeDrawable mSelection; // The shape to be drawn as the current neighbourhood
+  private BitmapDrawable mImage; // The image to draw as the background
+  private Matrix mTransform; // The matrix to transform the drawing by
   
-  private Paint imagePaint;
+  private static final String TAG = "Selection View";
+  
+  private static final int PADDING_RATIO = 4; // minimum space between the selection and the screen edge
 
   public SelectionView(Context context){
     super(context);
     setFocusable(true); 
 
     // Setup selection shape
-    selection = new ShapeDrawable();
+    mSelection = new ShapeDrawable();
+    
+    // Setup transform matrix
+    mTransform = new Matrix();
     
     // Setup the paint for the selection shape (colour, stroke, etc.)
-    Paint selectionPaint = selection.getPaint();
+    Paint selectionPaint = mSelection.getPaint();
     
     selectionPaint.setColor(0xff00ccff); // SEPERATE STYLE
-    selectionPaint.setStrokeWidth(2); // SEPERATE STYLE
+    selectionPaint.setStrokeWidth(0); // SEPERATE STYLE
     selectionPaint.setStyle(Paint.Style.STROKE); // SEPERate STYLE
-
-    imagePaint = new Paint();
   }
 
   /**
    * Set the shape being used to select a neighbourhood.
    */
   public void setSelectionShape(Shape s) {
-    selection.setShape(s);
+    mSelection.setShape(s);
   }
   
   /**
    * Set the bounds of the selection.
    */
   public void setSelectionBounds(Rect r) {
-    selection.setBounds(r);
+    mSelection.setBounds(r);
   }
 
   /**
    * Sets the image that the neighbourhood is being selected for.
    */
-  public void setImage(Bitmap bm) {
-    image = bm;
+  public void setImage(String path) {
+    Bitmap image = BitmapFactory.decodeFile(path);
+    mImage = new BitmapDrawable(getResources(), image);
+    int halfWidth = image.getWidth()/2;
+    int halfHeight = image.getHeight()/2;
+    mImage.setBounds(-1*halfWidth, -1*halfHeight, halfWidth, halfHeight);
+  }
+  
+  /**
+   * Updates the transformation matrix to scale the view according to the selection.
+   */
+  // TODO set a maximum zoom
+  public void updateMatrix() {
+    
+    // reset the matrix
+    mTransform.reset();
+    
+    // Get size of selection
+    Rect b = mSelection.getBounds();
+    int w = b.width();
+    int h = b.height();    
+    
+    // Get size of drawing area
+    int vw = this.getWidth();
+    int vh = this.getHeight();
+    
+    // Update the scale of the matrix
+    
+    float scale = 1; // value to scale the image by (default 1)
+    
+    // scale with width
+    scale = calcScale(w, vw); 
+    
+    // if the height of the image WITH SCALE is still greater than the screen
+    // calculate scale using height
+    if ( (h * scale) > vh) scale = calcScale(h, vh);   
+    
+    mTransform.postScale(scale, scale); // set scale from center
+    
+    // Translate so selection is centered
+    float left = (float)vw/2;
+    float top  = (float)vh/2;
+    mTransform.postTranslate(left, top);
+  }
+  
+  private float calcScale(int drwDimen, int contDimen) {
+    return (float)contDimen / (drwDimen + contDimen / PADDING_RATIO);
   }
 
   @Override
   protected void onDraw(Canvas canvas) {
+    
+    updateMatrix(); //TMP
+    
+    if (mTransform != null) { canvas.concat(mTransform); }
+    else { Log.w(TAG, "Transform matrix is null, cannot transform drawing."); }
 
-    // Draw the image to the background
-    canvas.drawBitmap(image, 0, 0, imagePaint);
+    // Draw the image if it has been loaded
+    if (mImage != null) { mImage.draw(canvas); }
+    else { Log.w(TAG, "BitmapDrawable is null, cannot draw image."); }
     
     // Dim unselected area
     canvas.save();
-    canvas.clipRect(0, 0, canvas.getWidth(), canvas.getHeight());
-    canvas.clipRect(selection.getBounds(), Region.Op.DIFFERENCE); // NEED TO GENERALIZE TO ANY SHAPE
-    canvas.drawARGB(150,0,0,0);
+    canvas.clipRect(mImage.getBounds());
+    canvas.clipRect(mSelection.getBounds(), Region.Op.DIFFERENCE); // NEED TO GENERALIZE TO ANY SHAPE
+    canvas.drawARGB(150,0,0,0); // SEPERATE STYLE
     canvas.restore();
     
     // Draw the shape of the current selection
-    selection.draw(canvas);
+    mSelection.draw(canvas);
   }
 
 }
