@@ -155,6 +155,14 @@ public class NeighbourhoodView {
       mBounds.offset(
           dx * (mBounds.width()  / r.width()),
           dy * (mBounds.height() / r.height()) );
+      // constrain top and left
+      mBounds.offsetTo(
+          Math.max(0, mBounds.left),
+          Math.max(0, mBounds.top));
+      // constrain bottom and right
+      mBounds.offsetTo(
+          Math.min(mImageRect.width() - mBounds.width(), mBounds.left),
+          Math.min(mImageRect.height() - mBounds.height(), mBounds.top));
       mShapeDrawable.setBounds(mBounds);
       mView.invalidate();
     }
