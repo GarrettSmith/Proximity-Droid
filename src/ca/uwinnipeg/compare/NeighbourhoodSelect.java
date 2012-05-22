@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.graphics.drawable.shapes.Shape;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,10 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.WindowManager;
 
-//TODO scale images
-//TODO Resize selection
-//TODO Change selection shape
-//TODO Switch to xml based layout
+//TODO: Scale down bitmaps
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
@@ -29,7 +25,6 @@ import android.view.WindowManager;
  */
 public class NeighbourhoodSelect extends Activity {
   
-  @SuppressWarnings("unused")
   public static final String TAG = "NeighbourhoodSelect";
   
   
@@ -37,13 +32,9 @@ public class NeighbourhoodSelect extends Activity {
   private Bitmap mBitmap;
   private int mOrientation;
   
-  private Shape selectionShape; // The shape of the current neighbourhood
-  private Rect selectionBounds; // A rectangle that store the size and position of the selection
-  
   private SelectionView mSelectionView;
   
   // constants
-  private static final int PADDING_RATIO = 4;  
   
   private static final int SELECT_IMAGE = 1 << 0;
   
@@ -61,9 +52,6 @@ public class NeighbourhoodSelect extends Activity {
     mSelectionView = (SelectionView) findViewById(R.id.selection_view);
     
     mContentResolver = getContentResolver();
-
-    // Make UI fullscreen.
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
     // Check if state needs to be restored
     if (state != null) {

@@ -16,7 +16,7 @@ import android.widget.ImageView;
  *
  */
 public class SelectionView extends ImageView {  
-  @SuppressWarnings("unused")
+
   public static final String TAG = "SelectionView";
   
   // This matrix transforms the image to fit within the screen. 

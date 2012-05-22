@@ -20,9 +20,8 @@ import android.view.View;
  *
  */
 public class NeighbourhoodView {
-  
-  @SuppressWarnings("unused")
-  public final String TAG = "NeighbourhoodView";
+ 
+  public static final String TAG = "NeighbourhoodView";
   
   // The default ratio of padding when resetting the neighbour hood size
   public static final float PADDING_RATIO = 1/8f;
