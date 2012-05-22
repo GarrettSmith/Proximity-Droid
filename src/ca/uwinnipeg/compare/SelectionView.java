@@ -92,6 +92,8 @@ public class SelectionView extends ImageView {
     mBitmap.setBitmap(bm);
     mBitmap.setOrientation(or);
     updateBaseMatrix(); // update the base matrix to reflect the new bitmap
+    
+    mNeighbourhood.resetBounds(mBitmap.getWidth(), mBitmap.getHeight()); // TODO: decide where to put reset
   }
   
   // Matrix updates
@@ -143,6 +145,7 @@ public class SelectionView extends ImageView {
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
+    canvas.concat(mFinalMatrix);
     mNeighbourhood.draw(canvas);
   }
 

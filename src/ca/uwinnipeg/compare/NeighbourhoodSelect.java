@@ -130,7 +130,6 @@ public class NeighbourhoodSelect extends Activity {
       
       // Reflect new values
       setBitmap();
-      resetBounds();
     }
     catch (Exception e) { // TODO: handle specific exceptions
       Log.e(TAG, "Failed to load file. " + data.toString());
@@ -193,32 +192,6 @@ public class NeighbourhoodSelect extends Activity {
     mSelectionView.setImageBitmap(mBitmap, mOrientation);
   }
   
-  /**
-   * Sets the bounds to a default value.
-   */
-  public void resetBounds() {
-    if (mBitmap != null) { // Can't reset the bounds if there is no image
-      /*
-      // Load properties of the image
-      BitmapFactory.Options options = new BitmapFactory.Options();
-      options.inJustDecodeBounds = true;
-      Uri uri = Uri.parse(mImagePath);
-      BitmapFactory.decodeFile(getRealPathFromURI(uri), options);
-      int w = options.outWidth;
-      int h = options.outHeight;
-      int padding;
-      // Use the smaller side to determine the padding
-      // This makes it feel more uniform
-      if (w < h) {
-        padding = w/PADDING_RATIO;
-      }
-      else {
-        padding = h/PADDING_RATIO;
-      }
-      selectionBounds = new Rect(padding, padding, w-padding, h-padding);
-      mSelectionView.setSelectionBounds(selectionBounds);
-      */
-    }
-  }
+
 
 }
