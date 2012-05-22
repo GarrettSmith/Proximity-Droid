@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.WindowManager;
 
 //TODO scale images
 //TODO Resize selection
@@ -60,8 +61,10 @@ public class NeighbourhoodSelect extends Activity {
     mSelectionView = (SelectionView) findViewById(R.id.selection_view);
     
     mContentResolver = getContentResolver();
-    
-    
+
+    // Make UI fullscreen.
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
     // Check if state needs to be restored
     if (state != null) {
       mBitmap = state.getParcelable(BITMAP_KEY);
@@ -84,8 +87,24 @@ public class NeighbourhoodSelect extends Activity {
     }
     else {
       setBitmap();
-    }
+      init();
+    }    
     
+  }
+  
+  private void init() {
+    // Setup neighbourhood
+    NeighbourhoodView nv = new NeighbourhoodView(mSelectionView);
+    
+    int width = mBitmap.getWidth();
+    int height = mBitmap.getHeight();
+    
+    Rect imageRect = new Rect(0, 0, width, height);    
+    nv.setImageRect(imageRect);
+    
+    nv.resetBounds(width, height); // setup default bounds
+
+    mSelectionView.add(nv);
   }
   
   // TODO save state of the current selection
@@ -106,6 +125,7 @@ public class NeighbourhoodSelect extends Activity {
     if (requestCode == SELECT_IMAGE)
       if (resultCode == Activity.RESULT_OK) {
         loadImage(data.getData()); // Load the returned uri
+        init();
       } 
       else {
         finish(); // If the intent failed or was cancelled exit

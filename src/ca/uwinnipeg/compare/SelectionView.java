@@ -1,5 +1,7 @@
 package ca.uwinnipeg.compare;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -17,9 +19,6 @@ public class SelectionView extends ImageView {
   @SuppressWarnings("unused")
   public static final String TAG = "SelectionView";
   
-  //minimum space between the selection and the screen edge
-  private static final int PADDING_RATIO = 2; 
-  
   // This matrix transforms the image to fit within the screen. 
   // The image is scaled to fit the screen using letterboxing.
   protected Matrix mBaseMatrix = new Matrix();
@@ -35,7 +34,12 @@ public class SelectionView extends ImageView {
   protected final RotatedBitmap mBitmap = new RotatedBitmap(null);
   
   // This is the neighbourhood being selected for the image.
-  protected NeighbourhoodView mNeighbourhood;
+  protected ArrayList<NeighbourhoodView> mNeighbourhoods = new ArrayList<NeighbourhoodView>();
+  
+  public void add(NeighbourhoodView nv) {
+    mNeighbourhoods.add(nv);
+    invalidate(); // request redraw
+  }
   
   // Ran to ensure the dimensions of the view are accessible to update the base matrix
   private Runnable mOnLayoutRunnable = null;
@@ -52,7 +56,6 @@ public class SelectionView extends ImageView {
   
   private void init() {
     setScaleType(ImageView.ScaleType.MATRIX); // set the image view to use a matrix
-    mNeighbourhood = new NeighbourhoodView(this);
   }
   
   @Override 
@@ -78,8 +81,26 @@ public class SelectionView extends ImageView {
   }
   
   @Override 
-  public boolean onTouchEvent(MotionEvent event) {    
-    return true; // returning true means this input has been handled
+  public boolean onTouchEvent(MotionEvent event) {
+    switch (event.getActionMasked()) {
+    case MotionEvent.ACTION_DOWN: 
+      for (NeighbourhoodView n : mNeighbourhoods) {
+        n.handleDown(event.getX(), event.getY());
+      }
+      return true;
+    case MotionEvent.ACTION_UP:   
+      for (NeighbourhoodView n : mNeighbourhoods) {
+        n.handleUp(event.getX(), event.getY());
+      }
+      return true;
+    case MotionEvent.ACTION_MOVE: 
+      for (NeighbourhoodView n : mNeighbourhoods) {
+        n.handleMove(event.getX(), event.getY());
+      }
+      return true;
+    default:                      
+      return false;
+    }
   }
   
   @Override
@@ -93,7 +114,7 @@ public class SelectionView extends ImageView {
     mBitmap.setOrientation(or);
     updateBaseMatrix(); // update the base matrix to reflect the new bitmap
     
-    mNeighbourhood.resetBounds(mBitmap.getWidth(), mBitmap.getHeight()); // TODO: decide where to put reset
+    //mNeighbourhood.resetBounds(mBitmap.getWidth(), mBitmap.getHeight()); // TODO: decide where to put reset
   }
   
   // Matrix updates
@@ -140,13 +161,24 @@ public class SelectionView extends ImageView {
     mFinalMatrix.set(mBaseMatrix);
     mFinalMatrix.postConcat(mUserMatrix);
     setImageMatrix(mFinalMatrix); // Apply the final matrix to the image
+    
+    // Let neighbourhoods know the final matrix has changed
+    for (NeighbourhoodView n : mNeighbourhoods) {
+      n.setMatrix(mFinalMatrix);
+    }
+  }
+
+  public Matrix getFinalMatrix() {
+    return mFinalMatrix;
   }
 
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
     canvas.concat(mFinalMatrix);
-    mNeighbourhood.draw(canvas);
+    for (NeighbourhoodView n : mNeighbourhoods) {
+      n.draw(canvas);
+    }
   }
 
 }
