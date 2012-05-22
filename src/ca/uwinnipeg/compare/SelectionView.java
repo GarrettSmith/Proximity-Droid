@@ -7,7 +7,6 @@ import android.graphics.Matrix;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ImageView;
-import ca.uwinnipeg.compare.RotatedBitmap.Orientation;
 
 /**
  * 
@@ -85,10 +84,10 @@ public class SelectionView extends ImageView {
   
   @Override
   public void setImageBitmap(Bitmap bm) {
-    setImageBitmap(bm, Orientation.Normal);
+    setImageBitmap(bm, RotatedBitmap.NORMAL);
   }
   
-  private void setImageBitmap(Bitmap bm, Orientation or) {
+  protected void setImageBitmap(Bitmap bm, int or) {
     super.setImageBitmap(bm);
     mBitmap.setBitmap(bm);
     mBitmap.setOrientation(or);

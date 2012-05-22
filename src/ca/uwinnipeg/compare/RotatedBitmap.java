@@ -8,24 +8,27 @@ public class RotatedBitmap {
   public static final String TAG = "RotatedBitmap";
   
   private Bitmap mBitmap;
-  private Orientation mOrientation;
+  private int mOrientation;
   
-  enum Orientation { Normal, CW, UpsideDown, CCW }
+  public static final int NORMAL = 0;
+  public static final int CW = 1;
+  public static final int UPSIDEDOWN = 2;
+  public static final int CCW = 3;
   
   public RotatedBitmap(Bitmap bm) {
-    this(bm, Orientation.Normal);
+    this(bm, NORMAL);
   }
   
-  public RotatedBitmap(Bitmap bm, Orientation or) {
+  public RotatedBitmap(Bitmap bm, int or) {
     mBitmap = bm;
     mOrientation = or;
   }
   
-  public void setOrientation(Orientation or) {
+  public void setOrientation(int or) {
     mOrientation = or;
   }
   
-  public Orientation getOrientation() {
+  public int getOrientation() {
     return mOrientation;
   }
   
@@ -41,20 +44,15 @@ public class RotatedBitmap {
    * @return the degrees the bitmap is rotated
    */
   public int getRotation() {
-    switch(mOrientation) {
-    case Normal:      return 0;
-    case CW:          return 90;
-    case UpsideDown:  return 180;
-    default:          return 270; //CCW
-    }
+    return mOrientation * 90;
   }
   
   /**
    * 
-   * @return true if the bitmap has changed orientation (is rotated CW or CCW)
+   * @return true if the bitmap has changed int (is rotated CW or CCW)
    */
   public boolean isOrientationChanged() {
-    return (mOrientation == Orientation.CW || mOrientation == Orientation.CCW);
+    return (mOrientation % 2 != 0);
   }
   
   public int getWidth() {
@@ -71,7 +69,7 @@ public class RotatedBitmap {
   public Matrix getMatrix() {
     Matrix m = new Matrix(); // Identity
     
-    if (mOrientation != Orientation.Normal) {
+    if (mOrientation != NORMAL) {
       int centerX = mBitmap.getWidth() / 2;
       int centerY = mBitmap.getHeight() / 2;
       

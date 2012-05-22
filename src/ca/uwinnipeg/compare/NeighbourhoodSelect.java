@@ -3,9 +3,11 @@ package ca.uwinnipeg.compare;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.shapes.Shape;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -32,6 +34,7 @@ public class NeighbourhoodSelect extends Activity {
   
   private ContentResolver mContentResolver;
   private Bitmap mBitmap;
+  private int mOrientation;
   
   private Shape selectionShape; // The shape of the current neighbourhood
   private Rect selectionBounds; // A rectangle that store the size and position of the selection
@@ -43,7 +46,8 @@ public class NeighbourhoodSelect extends Activity {
   
   private static final int SELECT_IMAGE = 1 << 0;
   
-  private static final String BITMAP_NAME = "Bitmap";
+  private static final String BITMAP_KEY = "Bitmap";
+  private static final String ORIENTATION_KEY = "Orientation";
 
   /**
    * Called when this Activity is first created.
@@ -60,7 +64,8 @@ public class NeighbourhoodSelect extends Activity {
     
     // Check if state needs to be restored
     if (state != null) {
-      mBitmap = state.getParcelable(BITMAP_NAME);
+      mBitmap = state.getParcelable(BITMAP_KEY);
+      mOrientation = state.getInt(ORIENTATION_KEY);
     }
     else {
       // Check if an intent with a given bitmap was sent
@@ -68,7 +73,7 @@ public class NeighbourhoodSelect extends Activity {
       Bundle extras = intent.getExtras();
 
       if (extras != null) {
-        mBitmap = (Bitmap) extras.getParcelable(BITMAP_NAME);
+        mBitmap = (Bitmap) extras.getParcelable(BITMAP_KEY);
       }
     }
     
@@ -87,7 +92,8 @@ public class NeighbourhoodSelect extends Activity {
   @Override
   protected void onSaveInstanceState(Bundle state) {    
     // Save the current image
-    state.putParcelable(BITMAP_NAME, mBitmap);
+    state.putParcelable(BITMAP_KEY, mBitmap);
+    state.putInt(ORIENTATION_KEY, mOrientation);
     super.onSaveInstanceState(state);
   }
   
@@ -106,21 +112,53 @@ public class NeighbourhoodSelect extends Activity {
       }
   }
   
+  /**
+   * Loads the bitmap from data and sets the orientation and bitmap to the view.
+   * @param data
+   */
   protected void loadImage(Uri data) {
     // set the image to the received URI
     try {
+      // load the bitmap
       mBitmap = MediaStore.Images.Media.getBitmap(mContentResolver, data);
+      
+      // Load the orientation
+      ExifInterface exif = new ExifInterface(getRealPathFromURI(data));
+      int orientation = 
+          exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+      mOrientation = mapEXIF(orientation);
+      
+      // Reflect new values
       setBitmap();
       resetBounds();
     }
-    catch (Exception e) {
+    catch (Exception e) { // TODO: handle specific exceptions
       Log.e(TAG, "Failed to load file. " + data.toString());
     }
   }
-
+  
+  private static int mapEXIF(int exifVal) {
+    switch (exifVal) {
+    case ExifInterface.ORIENTATION_ROTATE_90:   return RotatedBitmap.CW;
+    case ExifInterface.ORIENTATION_ROTATE_180:  return RotatedBitmap.UPSIDEDOWN;
+    case ExifInterface.ORIENTATION_ROTATE_270:  return RotatedBitmap.CCW;
+    default:                                    return RotatedBitmap.NORMAL;
+    }
+  }
+  
   /**
-   * Create the menu.
+   * modified from http://android-er.blogspot.ca/2011/04/convert-uri-to-real-path-format.html
+   * @param contentUri
+   * @return the file path represented by contentUri
    */
+  private String getRealPathFromURI(Uri contentUri) {
+    String[] proj = { MediaStore.Images.Media.DATA };
+    Cursor cursor = mContentResolver.query(contentUri, proj, null, null, null);
+    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+    cursor.moveToFirst();
+    return cursor.getString(column_index);
+  }
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       MenuInflater inflater = getMenuInflater();
@@ -128,9 +166,6 @@ public class NeighbourhoodSelect extends Activity {
       return true;
   }
   
-  /**
-   * Respond to buttons presses.
-   */
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
@@ -154,9 +189,8 @@ public class NeighbourhoodSelect extends Activity {
    * Attempts to load the image located at image path and reflects the change 
    * in the view.
    */
-  // TODO rotate the image correctly
   private void setBitmap() { 
-    mSelectionView.setImageBitmap(mBitmap);
+    mSelectionView.setImageBitmap(mBitmap, mOrientation);
   }
   
   /**
