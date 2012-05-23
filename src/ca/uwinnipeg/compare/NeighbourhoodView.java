@@ -1,6 +1,7 @@
 /**
  * 
- */
+ */  
+// TODO: Figure out how to represent shape  
 package ca.uwinnipeg.compare;
 
 import android.graphics.Canvas;
@@ -10,7 +11,6 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.graphics.drawable.shapes.Shape;
 import android.view.View;
@@ -26,11 +26,9 @@ public class NeighbourhoodView {
   // The default ratio of padding when resetting the neighbour hood size
   public static final float PADDING_RATIO = 1/8f;
   
-  // The shape of the neighbourhood.
-  protected Shape mShape = new RectShape();
-  
+  //Paint shared by all neighbourhoods, used to draw when focused
   private static Paint FOCUSED_PAINT;
-  
+
   // The bounds of the neighbourhood.
   protected Rect mBounds = new Rect(); // in image space
   
@@ -40,21 +38,9 @@ public class NeighbourhoodView {
   // Whether this neighbourhood is selected or not.
   boolean mFocused;
   
-  private Matrix mMatrix;
+  // 
+  private Matrix mMatrix; 
   private Rect mImageRect; // in image space
-  
-  /**
-   * Sets the focused status of this neighbourhood.
-   * A focused neighbourhood draws differently.
-   * @param focus
-   */
-  public void setFocused(Boolean focus) {
-    mFocused = focus;
-  }
-  
-  public boolean isFocused() {
-    return mFocused;
-  }
   
   public NeighbourhoodView(View v){
     mView = v;
@@ -71,6 +57,19 @@ public class NeighbourhoodView {
     // TESTING
     mFocused = true;
   }
+
+  /**
+   * Sets the focused status of this neighbourhood.
+   * A focused neighbourhood draws differently.
+   * @param focus
+   */
+  public void setFocused(Boolean focus) {
+    mFocused = focus;
+  }
+  
+  public boolean isFocused() {
+    return mFocused;
+  }
   
   /**
    * Perform initial setup so we can translate to image space later on when handling input.
@@ -83,19 +82,8 @@ public class NeighbourhoodView {
     mMatrix = m;
   }
 
-  public void setShape(Shape s) {
-    mShape = s;
-  }
-  
   public void setBounds(Rect r) {
     mBounds.set(r);
-  }
-  
-  // Maps the neighbourhood bounds from image space to screen space.
-  private Rect computeLayout() {
-    RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
-    mMatrix.mapRect(r);
-    return new Rect(Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom));
   }
   
   /**
@@ -112,6 +100,7 @@ public class NeighbourhoodView {
   
   // The amount a touch can be off and still be considered touching an edge
   // TODO: Test different values of touch padding
+  // TODO: Look into shifting it outside to make moving easier
   protected static final int TOUCH_PADDING = 75;
   
   private Action mAction = Action.None;
@@ -167,6 +156,7 @@ public class NeighbourhoodView {
     // TODO: Make this less of a brute force
     // TODO: Detect edge pairs
     // TODO: Use touch size
+    // TODO: Handle pinch
     if      (Math.abs(x - left)   <= TOUCH_PADDING) rtn = Edge.L;
     else if (Math.abs(x - right)  <= TOUCH_PADDING) rtn = Edge.R;
     
@@ -248,12 +238,21 @@ public class NeighbourhoodView {
    * @param dy
    * @param edg
    */
+  // TODO: Constrain resize
   private void resize(int dx, int dy, Edge edg) {
     switch (edg) {
-    case L: mBounds.left    += dx; break;
-    case R: mBounds.right   += dx; break;
-    case T: mBounds.top     += dy; break;
-    case B: mBounds.bottom  += dy; break;
+    case L: 
+      mBounds.left = Math.max(0, mBounds.left + dx);
+      break;
+    case R: 
+      mBounds.right = Math.min(mImageRect.right, mBounds.right + dx);
+      break;
+    case T: 
+      mBounds.top = Math.max(0, mBounds.top + dy);
+      break;
+    case B: 
+      mBounds.bottom = Math.min(mImageRect.bottom, mBounds.bottom + dy);
+      break;
     case TL:
       resize(dx, dy, Edge.T);
       resize(dx, dy, Edge.L);
@@ -285,6 +284,16 @@ public class NeighbourhoodView {
     mMatrix.invert(inverse);
     inverse.mapPoints(point);
     return point;
+  }
+
+  /**
+   *  Maps the neighbourhood bounds from image space to screen space.
+   * @return
+   */
+  private Rect getScreenSpaceBounds() {
+    RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+    mMatrix.mapRect(r);
+    return new Rect(Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom));
   }
 
   /**
