@@ -175,7 +175,7 @@ public class SelectionView extends ImageView {
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
-    canvas.concat(mFinalMatrix);
+    //canvas.concat(mFinalMatrix);
     for (NeighbourhoodView n : mNeighbourhoods) {
       n.draw(canvas);
     }

@@ -15,7 +15,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.WindowManager;
 
 //TODO: Scale down bitmaps
 /**
@@ -74,13 +73,14 @@ public class NeighbourhoodSelect extends Activity {
       startActivityForResult(i, SELECT_IMAGE);
     }
     else {
-      setBitmap();
       init();
     }    
     
   }
   
   private void init() {
+    // set bitmap
+    mSelectionView.setImageBitmap(mBitmap, mOrientation);
     // Setup neighbourhood
     NeighbourhoodView nv = new NeighbourhoodView(mSelectionView);
     
@@ -89,6 +89,8 @@ public class NeighbourhoodSelect extends Activity {
     
     Rect imageRect = new Rect(0, 0, width, height);    
     nv.setImageRect(imageRect);
+    
+    nv.setMatrix(mSelectionView.getFinalMatrix());
     
     nv.resetBounds(width, height); // setup default bounds
 
@@ -135,9 +137,6 @@ public class NeighbourhoodSelect extends Activity {
       int orientation = 
           exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
       mOrientation = mapEXIF(orientation);
-      
-      // Reflect new values
-      setBitmap();
     }
     catch (Exception e) { // TODO: handle specific exceptions
       Log.e(TAG, "Failed to load file. " + data.toString());
@@ -163,6 +162,7 @@ public class NeighbourhoodSelect extends Activity {
     Cursor cursor = mContentResolver.query(contentUri, proj, null, null, null);
     int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
     cursor.moveToFirst();
+    cursor.close();
     return cursor.getString(column_index);
   }
 
@@ -191,15 +191,5 @@ public class NeighbourhoodSelect extends Activity {
     Intent i = new Intent(this, AboutActivity.class);
     startActivity(i);
   }
-  
-  /**
-   * Attempts to load the image located at image path and reflects the change 
-   * in the view.
-   */
-  private void setBitmap() { 
-    mSelectionView.setImageBitmap(mBitmap, mOrientation);
-  }
-  
-
 
 }
