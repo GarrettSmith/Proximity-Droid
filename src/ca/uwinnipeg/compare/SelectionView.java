@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -85,17 +86,17 @@ public class SelectionView extends ImageView {
     switch (event.getActionMasked()) {
     case MotionEvent.ACTION_DOWN: 
       for (NeighbourhoodView n : mNeighbourhoods) {
-        n.handleDown(event.getX(), event.getY());
+        n.handleDown(event);
       }
       return true;
     case MotionEvent.ACTION_UP:   
       for (NeighbourhoodView n : mNeighbourhoods) {
-        n.handleUp(event.getX(), event.getY());
+        n.handleUp(event);
       }
       return true;
     case MotionEvent.ACTION_MOVE: 
       for (NeighbourhoodView n : mNeighbourhoods) {
-        n.handleMove(event.getX(), event.getY());
+        n.handleMove(event);
       }
       return true;
     default:                      

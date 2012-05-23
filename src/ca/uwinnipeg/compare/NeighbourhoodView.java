@@ -11,8 +11,8 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.graphics.drawable.shapes.RectShape;
-import android.graphics.drawable.shapes.Shape;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 /**
@@ -110,8 +110,12 @@ public class NeighbourhoodView {
   private float mLastX = 0;
   private float mLastY = 0;
   
+  // The previous distance between two fingers, used for pinch zoom
+  private float mLastDistance = 0;
+  private Action mLastAction = Action.None;
+  
   // The action currently taking place
-  public enum Action { None, Move, Resize }
+  public enum Action { None, Move, Resize, Scale }
   
   // The edge or pair of edges that are currently selected
   public enum Edge { None, TL, T, TR, R, BR, B, BL, L, ALL }
@@ -119,12 +123,11 @@ public class NeighbourhoodView {
   /** 
    * Handles a down event.
    */
-  public void handleDown(float x, float y) {    
-    float[] p = convertToImageSpace(x, y);
-    x = p[0];
-    y = p[1];
-    
-    // TODO: Check if touch was on an edge
+  public void handleDown(MotionEvent event) {
+    float[] p = convertToImageSpace(event.getX(), event.getY());
+    float x = p[0];
+    float y = p[1];
+
     if ( (mEdge = checkEdges(x, y)) != Edge.None) {
       mAction = Action.Resize;
     }
@@ -154,7 +157,6 @@ public class NeighbourhoodView {
     Edge rtn = Edge.None;
     
     // TODO: Make this less of a brute force
-    // TODO: Detect edge pairs
     // TODO: Use touch size
     // TODO: Handle pinch
     if      (Math.abs(x - left)   <= TOUCH_PADDING) rtn = Edge.L;
@@ -174,17 +176,32 @@ public class NeighbourhoodView {
   /**
    * Handles an up event.
    */
-  public void handleUp(float x, float y) {
+  public void handleUp(MotionEvent event) {
     mAction = Action.None;
   }
   
   /**
    * handles motion to move the neighbourhood.
    */
-  public void handleMove(float x, float y) {
-    float[] p = convertToImageSpace(x, y);
-    x = p[0];
-    y = p[1];
+  public void handleMove(MotionEvent event) {
+    float[] p = convertToImageSpace(event.getX(), event.getY());
+    float x = p[0];
+    float y = p[1];
+
+    
+    if (mAction != Action.Scale) {
+      // check for pinch
+      if (event.getPointerCount() >= 2) {
+        mLastAction = mAction;
+        mAction = Action.Scale;
+        mLastDistance = MathUtil.distance(x , y, event.getX(1), event.getY(1) );
+      }      
+    }
+    // Check if there are still other pointers
+    else if (event.getPointerCount() == 1) { 
+      mAction = mLastAction;
+    }
+    
     
     // Check if any action is being performed
     if (mAction != Action.None) {
@@ -200,6 +217,13 @@ public class NeighbourhoodView {
         break;
       case Resize:
         resize((int)dx, (int)dy, mEdge);
+        break;
+      case Scale:
+        float x1 = event.getX(1);
+        float y1 = event.getY(1);
+        float dist = MathUtil.distance(x,y,x1,y1);
+        scale(dist - mLastDistance);
+        mLastDistance = dist;
         break;
       }
 
@@ -238,7 +262,6 @@ public class NeighbourhoodView {
    * @param dy
    * @param edg
    */
-  // TODO: Constrain resize
   private void resize(int dx, int dy, Edge edg) {
     switch (edg) {
     case L: 
@@ -270,6 +293,17 @@ public class NeighbourhoodView {
       resize(dx, dy, Edge.R);
       break;
     }
+  }
+  
+  /**
+   * Scales the distance given the delta in distance between pointers.
+   * @param dDist
+   */
+  // TODO: Maintain aspect ratio when scaling back from edge of screen
+  private void scale(float dDist) {
+    int half = (int)(dDist / 2);
+    resize(-half, -half, Edge.TL);
+    resize(half, half, Edge.BR);
   }
   
   /**
