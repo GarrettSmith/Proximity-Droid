@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -114,8 +113,6 @@ public class SelectionView extends ImageView {
     mBitmap.setBitmap(bm);
     mBitmap.setOrientation(or);
     updateBaseMatrix(); // update the base matrix to reflect the new bitmap
-    
-    //mNeighbourhood.resetBounds(mBitmap.getWidth(), mBitmap.getHeight()); // TODO: decide where to put reset
   }
   
   // Matrix updates

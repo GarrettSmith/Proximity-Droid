@@ -17,6 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 
 //TODO: Scale down bitmaps
+// TODO: Zoom and pan to follow neighbourhood
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
@@ -32,6 +33,7 @@ public class NeighbourhoodSelect extends Activity {
   private int mOrientation;
   
   private SelectionView mSelectionView;
+  private NeighbourhoodView mNeighbourhoodView;
   
   // constants
   
@@ -39,6 +41,7 @@ public class NeighbourhoodSelect extends Activity {
   
   private static final String BITMAP_KEY = "Bitmap";
   private static final String ORIENTATION_KEY = "Orientation";
+  private static final String NEIGHBOURHOOD_BOUNDS_KEY = "Neighbourhood Bounds";
 
   /**
    * Called when this Activity is first created.
@@ -51,11 +54,14 @@ public class NeighbourhoodSelect extends Activity {
     mSelectionView = (SelectionView) findViewById(R.id.selection_view);
     
     mContentResolver = getContentResolver();
+    
+    Rect bounds = null;
 
     // Check if state needs to be restored
     if (state != null) {
       mBitmap = state.getParcelable(BITMAP_KEY);
       mOrientation = state.getInt(ORIENTATION_KEY);
+      bounds = state.getParcelable(NEIGHBOURHOOD_BOUNDS_KEY);
     }
     else {
       // Check if an intent with a given bitmap was sent
@@ -73,28 +79,34 @@ public class NeighbourhoodSelect extends Activity {
       startActivityForResult(i, SELECT_IMAGE);
     }
     else {
-      init();
+      init(bounds);
     }    
     
   }
   
-  private void init() {
+  private void init(Rect bounds) {
     // set bitmap
     mSelectionView.setImageBitmap(mBitmap, mOrientation);
     // Setup neighbourhood
-    NeighbourhoodView nv = new NeighbourhoodView(mSelectionView);
+    mNeighbourhoodView = new NeighbourhoodView(mSelectionView);
     
     int width = mBitmap.getWidth();
     int height = mBitmap.getHeight();
     
     Rect imageRect = new Rect(0, 0, width, height);    
-    nv.setImageRect(imageRect);
+    mNeighbourhoodView.setImageRect(imageRect);
     
-    nv.setMatrix(mSelectionView.getFinalMatrix());
+    mNeighbourhoodView.setMatrix(mSelectionView.getFinalMatrix());
     
-    nv.resetBounds(width, height); // setup default bounds
+    if (bounds != null) {
+      mNeighbourhoodView.setBounds(bounds);
+    }
+    else {
+      mNeighbourhoodView.resetBounds(width, height); // setup default bounds
+    }
+      
 
-    mSelectionView.add(nv);
+    mSelectionView.add(mNeighbourhoodView);
   }
   
   // TODO save state of the current selection
@@ -103,6 +115,9 @@ public class NeighbourhoodSelect extends Activity {
     // Save the current image
     state.putParcelable(BITMAP_KEY, mBitmap);
     state.putInt(ORIENTATION_KEY, mOrientation);
+    if (mNeighbourhoodView != null) {
+      state.putParcelable(NEIGHBOURHOOD_BOUNDS_KEY, mNeighbourhoodView.getBounds());
+    }
     super.onSaveInstanceState(state);
   }
   
@@ -115,7 +130,7 @@ public class NeighbourhoodSelect extends Activity {
     if (requestCode == SELECT_IMAGE)
       if (resultCode == Activity.RESULT_OK) {
         loadImage(data.getData()); // Load the returned uri
-        init();
+        init(null);
       } 
       else {
         finish(); // If the intent failed or was cancelled exit

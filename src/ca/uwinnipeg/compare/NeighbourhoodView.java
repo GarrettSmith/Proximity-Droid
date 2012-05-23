@@ -11,7 +11,7 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.util.Log;
+import android.os.Parcelable;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -82,6 +82,10 @@ public class NeighbourhoodView {
     mMatrix = m;
   }
 
+  public Rect getBounds() {
+    return mBounds;
+  }
+  
   public void setBounds(Rect r) {
     mBounds.set(r);
   }
@@ -161,7 +165,7 @@ public class NeighbourhoodView {
     Edge rtn = Edge.None;
     
     // TODO: Make this less of a brute force
-    // TODO: Use touch size
+    // TODO: Use touch size (event.getSize())
     if      (Math.abs(x - left)   <= TOUCH_PADDING) rtn = Edge.L;
     else if (Math.abs(x - right)  <= TOUCH_PADDING) rtn = Edge.R;
     
@@ -191,7 +195,7 @@ public class NeighbourhoodView {
     float x = p[0];
     float y = p[1];
     
-    // Deal with multi touch
+    // Deal with multitouch
     if (mAction != Action.Scale) {
       // check for pinch
       if (event.getPointerCount() >= 2) {
@@ -361,7 +365,7 @@ public class NeighbourhoodView {
    *  Maps the neighbourhood bounds from image space to screen space.
    * @return
    */
-  private Rect getScreenSpaceBounds() {
+  private Rect getScreenBounds() {
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
     mMatrix.mapRect(r);
     return new Rect(Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom));
@@ -391,4 +395,5 @@ public class NeighbourhoodView {
     
     canvas.restore();
   }
+
 }
