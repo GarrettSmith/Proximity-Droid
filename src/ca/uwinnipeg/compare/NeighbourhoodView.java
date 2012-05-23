@@ -115,9 +115,9 @@ public class NeighbourhoodView {
   protected static final int TOUCH_PADDING = 25;
   
   private Action mAction = Action.None;
-  private Edge mEdge = null;
+  private Edge mEdge = Edge.None;
   
-  // The Previously touched position IN SCREEN SPACE
+  // The Previously touched position IN IMAGE SPACE
   private float mLastX = 0;
   private float mLastY = 0;
   
@@ -125,23 +125,22 @@ public class NeighbourhoodView {
   public enum Action { None, Move, Resize }
   
   // The edge or pair of edges that are currently selected
-  public enum Edge { TL, T, TR, R, BR, B, BL, L }
+  public enum Edge { None, TL, T, TR, R, BR, B, BL, L, ALL }
   
   /** 
    * Handles a down event.
    */
   public void handleDown(float x, float y) {    
-    //float[] p = convertToImageSpace(x, y);
-    //x = p[0];
-    //y = p[1];
-    Rect r = computeLayout();
+    float[] p = convertToImageSpace(x, y);
+    x = p[0];
+    y = p[1];
     
     // TODO: Check if touch was on an edge
-    if ( (mEdge = checkEdges(x, y)) != null) {
+    if ( (mEdge = checkEdges(x, y)) != Edge.None) {
       mAction = Action.Resize;
     }
     // Check if touch was within neighbourhood
-    else if (r.contains((int)x, (int)y)) {
+    else if (mBounds.contains((int)x, (int)y)) {
       mAction = Action.Move;      
     }
 
@@ -150,8 +149,25 @@ public class NeighbourhoodView {
     mLastY = y;    
   }
   
+  /**
+   * Given a point in image space determines which edge or pair of edges are within a TOUCH_PADDING
+   * of the point.
+   * @param x
+   * @param y
+   * @return the edges being touched
+   */
   private Edge checkEdges(float x, float y) {
-    return null;
+    int left = mBounds.left;
+    int right = mBounds.right;
+    int top = mBounds.top;
+    int bottom = mBounds.bottom;
+    
+    // TODO: Make this less of a brute force
+    if      (Math.abs(x - left)   <= TOUCH_PADDING) return Edge.L;
+    else if (Math.abs(x - right)  <= TOUCH_PADDING) return Edge.R;
+    else if (Math.abs(y - top)    <= TOUCH_PADDING) return Edge.T; 
+    else if (Math.abs(y - bottom) <= TOUCH_PADDING) return Edge.B; 
+    else                                            return Edge.None;
   }
   
   /**
@@ -165,35 +181,29 @@ public class NeighbourhoodView {
    * handles motion to move the neighbourhood.
    */
   public void handleMove(float x, float y) {
-    //float[] p = convertToImageSpace(x, y);
-    //x = p[0];
-    //y = p[1];
+    float[] p = convertToImageSpace(x, y);
+    x = p[0];
+    y = p[1];
     
-    switch (mAction) {
-    case Move:      
+    // Check if any action is being performed
+    if (mAction != Action.None) {
       
       // Calculate change in position
       float dx = x - mLastX;
       float dy = y - mLastY;
 
-      // Move the neighbourhood by the change
-      mBounds.offset((int)dx, (int)dy);
-
-      // constrain top and left
-      mBounds.offsetTo(
-          Math.max(0, mBounds.left),
-          Math.max(0, mBounds.top));
-
-      // constrain bottom and right
-      mBounds.offsetTo(
-          Math.min(mImageRect.width() - mBounds.width(), mBounds.left),
-          Math.min(mImageRect.height() - mBounds.height(), mBounds.top));
+      // Determine which action to take
+      switch (mAction) {
+      case Move:
+        move((int)dx, (int)dy);
+        break;
+      case Resize:
+        resize((int)dx, (int)dy, mEdge);
+        break;
+      }
 
       // Reflect change on screen
       mView.invalidate();
-      break;
-      
-    case Resize:
     }
     
     // Record position
@@ -201,17 +211,54 @@ public class NeighbourhoodView {
     mLastY = y;
   }
   
-//  /**
-//   * TODO: THIS IS BROKEN
-//   * converts the given points to image space
-//   * @param x
-//   * @param y
-//   */
-//  private float[] convertToImageSpace(float x, float y) {
-//    float[] point = new float[]{x, y};
-//    mMatrix.mapPoints(point);
-//    return point;
-//  }
+  /**
+   * Moves the neighbourhood by the given delta.
+   * @param dx
+   * @param dy
+   */
+  private void move(int dx, int dy) {
+    // Move the neighbourhood by the change
+    mBounds.offset(dx, dy);
+
+    // constrain top and left
+    mBounds.offsetTo(
+        Math.max(0, mBounds.left),
+        Math.max(0, mBounds.top));
+
+    // constrain bottom and right
+    mBounds.offsetTo(
+        Math.min(mImageRect.width() - mBounds.width(), mBounds.left),
+        Math.min(mImageRect.height() - mBounds.height(), mBounds.top));
+  }
+  
+  /**
+   * Resizes the given edge by the given delta.
+   * @param dx
+   * @param dy
+   * @param edg
+   */
+  private void resize(int dx, int dy, Edge edg) {
+    switch (edg) {
+    case L: mBounds.left    += dx; break;
+    case R: mBounds.right   += dx; break;
+    case T: mBounds.top     += dy; break;
+    case B: mBounds.bottom  += dy; break;
+    }
+  }
+  
+  /**
+   * 
+   * converts the given points to image space
+   * @param x
+   * @param y
+   */
+  private float[] convertToImageSpace(float x, float y) {
+    float[] point = new float[]{x, y};
+    Matrix inverse = new Matrix();
+    mMatrix.invert(inverse);
+    inverse.mapPoints(point);
+    return point;
+  }
 
   /**
    * Draws the neighbourhood to the given canvas.
