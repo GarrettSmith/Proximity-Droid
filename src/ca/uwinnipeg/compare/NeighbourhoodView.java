@@ -112,7 +112,7 @@ public class NeighbourhoodView {
   
   // The amount a touch can be off and still be considered touching an edge
   // TODO: Test different values of touch padding
-  protected static final int TOUCH_PADDING = 25;
+  protected static final int TOUCH_PADDING = 75;
   
   private Action mAction = Action.None;
   private Edge mEdge = Edge.None;
@@ -162,12 +162,23 @@ public class NeighbourhoodView {
     int top = mBounds.top;
     int bottom = mBounds.bottom;
     
+    Edge rtn = Edge.None;
+    
     // TODO: Make this less of a brute force
-    if      (Math.abs(x - left)   <= TOUCH_PADDING) return Edge.L;
-    else if (Math.abs(x - right)  <= TOUCH_PADDING) return Edge.R;
-    else if (Math.abs(y - top)    <= TOUCH_PADDING) return Edge.T; 
-    else if (Math.abs(y - bottom) <= TOUCH_PADDING) return Edge.B; 
-    else                                            return Edge.None;
+    // TODO: Detect edge pairs
+    // TODO: Use touch size
+    if      (Math.abs(x - left)   <= TOUCH_PADDING) rtn = Edge.L;
+    else if (Math.abs(x - right)  <= TOUCH_PADDING) rtn = Edge.R;
+    
+    // TODO: UGLY UGLY UGLY
+    if (Math.abs(y - top)    <= TOUCH_PADDING) {
+      rtn = rtn == Edge.L ? Edge.TL : (rtn == Edge.R ? Edge.TR : Edge.T); 
+    }
+    else if (Math.abs(y - bottom) <= TOUCH_PADDING) {
+      rtn = rtn == Edge.L ? Edge.BL : (rtn == Edge.R ? Edge.BR : Edge.B);
+    }
+    
+    return rtn;
   }
   
   /**
@@ -243,6 +254,22 @@ public class NeighbourhoodView {
     case R: mBounds.right   += dx; break;
     case T: mBounds.top     += dy; break;
     case B: mBounds.bottom  += dy; break;
+    case TL:
+      resize(dx, dy, Edge.T);
+      resize(dx, dy, Edge.L);
+      break;
+    case TR:
+      resize(dx, dy, Edge.T);
+      resize(dx, dy, Edge.R);
+      break;
+    case BL:
+      resize(dx, dy, Edge.B);
+      resize(dx, dy, Edge.L);
+      break;
+    case BR:
+      resize(dx, dy, Edge.B);
+      resize(dx, dy, Edge.R);
+      break;
     }
   }
   
