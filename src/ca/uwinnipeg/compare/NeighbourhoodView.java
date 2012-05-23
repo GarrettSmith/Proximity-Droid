@@ -114,7 +114,8 @@ public class NeighbourhoodView {
   private float mLastY = 0;
   
   // The previous distance between two fingers, used for pinch zoom
-  private float mLastDistance = 0;
+  private float mLastDistanceX = 0;
+  private float mLastDistanceY = 0;
   private Action mLastAction = Action.None;
   
   // The action currently taking place
@@ -161,7 +162,6 @@ public class NeighbourhoodView {
     
     // TODO: Make this less of a brute force
     // TODO: Use touch size
-    // TODO: Handle pinch
     if      (Math.abs(x - left)   <= TOUCH_PADDING) rtn = Edge.L;
     else if (Math.abs(x - right)  <= TOUCH_PADDING) rtn = Edge.R;
     
@@ -197,7 +197,8 @@ public class NeighbourhoodView {
       if (event.getPointerCount() >= 2) {
         mLastAction = mAction;
         mAction = Action.Scale;
-        mLastDistance = MathUtil.distance(x , y, event.getX(1), event.getY(1) );
+        mLastDistanceX = Math.abs(x - event.getX(1));
+        mLastDistanceY = Math.abs(y - event.getY(1));
         // Mark last X to prevent jump
         mLastX = -1;
       }      
@@ -239,8 +240,11 @@ public class NeighbourhoodView {
         float x1 = event.getX(1);
         float y1 = event.getY(1);
         // Scale using distance
-        float dist = MathUtil.distance(x,y,x1,y1);
-        scale((int)(dist - mLastDistance));
+        float distX = Math.abs(x - x1);
+        float distY = Math.abs(y - y1);
+        float dDistX = distX - mLastDistanceX;
+        float dDistY = distY - mLastDistanceY;
+        scale((int)dDistX, (int)dDistY);
         // move using midpoint
         float midX = (x + x1) / 2f;
         float midY = (y + y1) / 2f;
@@ -251,7 +255,8 @@ public class NeighbourhoodView {
           move((int)dx, (int)dy);
         }
         // record values
-        mLastDistance = dist;
+        mLastDistanceX = distX;
+        mLastDistanceY = distY;
         mLastX = midX;
         mLastY = midY;
         break;
@@ -333,10 +338,9 @@ public class NeighbourhoodView {
    * Scales the distance given the delta in distance between pointers.
    * @param dDist
    */
-  // TODO: Maintain aspect ratio when scaling back from edge of screen
-  private void scale(int d) {
-    resize(-d, -d, Edge.TL);
-    resize(d, d, Edge.BR);
+  private void scale(int dx, int dy) {
+    resize(-dx, -dy, Edge.TL);
+    resize(dx, dy, Edge.BR);
   }
   
   /**
