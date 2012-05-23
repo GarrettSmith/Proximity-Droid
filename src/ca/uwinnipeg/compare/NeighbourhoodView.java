@@ -93,7 +93,9 @@ public class NeighbourhoodView {
   /**
    * Sets the bounds to a default value.
    */
-  public void resetBounds(int w, int h) {
+  public void resetBounds() {
+    int w = mImageRect.width();
+    int h = mImageRect.height();
     // Use the smaller side to determine the padding
     // This makes it feel more uniform
     int padding = (int) (Math.min(w, h) * PADDING_RATIO);
@@ -103,9 +105,8 @@ public class NeighbourhoodView {
   // Movement and Events
   
   // The amount a touch can be off and still be considered touching an edge
-  // TODO: Test different values of touch padding
-  // TODO: Look into shifting it outside to make moving easier
   protected static final int TOUCH_PADDING = 75;
+  protected static final int TOUCH_SHIFT = 25;
   
   // The minimum size of the neighbourhood
   protected static final int MIN_SIZE = 25;
@@ -166,14 +167,14 @@ public class NeighbourhoodView {
     
     // TODO: Make this less of a brute force
     // TODO: Use touch size (event.getSize())
-    if      (Math.abs(x - left)   <= TOUCH_PADDING) rtn = Edge.L;
-    else if (Math.abs(x - right)  <= TOUCH_PADDING) rtn = Edge.R;
+    if      (Math.abs(x - left  + TOUCH_SHIFT)  <= TOUCH_PADDING) rtn = Edge.L;
+    else if (Math.abs(x - right - TOUCH_SHIFT)  <= TOUCH_PADDING) rtn = Edge.R;
     
     // TODO: UGLY UGLY UGLY
-    if (Math.abs(y - top)    <= TOUCH_PADDING) {
+    if (Math.abs(y - top + TOUCH_SHIFT)    <= TOUCH_PADDING) {
       rtn = rtn == Edge.L ? Edge.TL : (rtn == Edge.R ? Edge.TR : Edge.T); 
     }
-    else if (Math.abs(y - bottom) <= TOUCH_PADDING) {
+    else if (Math.abs(y - bottom - TOUCH_SHIFT) <= TOUCH_PADDING) {
       rtn = rtn == Edge.L ? Edge.BL : (rtn == Edge.R ? Edge.BR : Edge.B);
     }
     

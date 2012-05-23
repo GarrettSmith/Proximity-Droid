@@ -102,7 +102,7 @@ public class NeighbourhoodSelect extends Activity {
       mNeighbourhoodView.setBounds(bounds);
     }
     else {
-      mNeighbourhoodView.resetBounds(width, height); // setup default bounds
+      mNeighbourhoodView.resetBounds(); // setup default bounds
     }
       
 
@@ -185,6 +185,7 @@ public class NeighbourhoodSelect extends Activity {
   public boolean onCreateOptionsMenu(Menu menu) {
       MenuInflater inflater = getMenuInflater();
       inflater.inflate(R.menu.neighbourhood_select, menu);
+      mSelectionView.updateFinalMatrix(); // recenter
       return true;
   }
   
