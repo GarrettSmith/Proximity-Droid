@@ -103,6 +103,9 @@ public class NeighbourhoodView {
   // TODO: Look into shifting it outside to make moving easier
   protected static final int TOUCH_PADDING = 75;
   
+  // The minimum size of the neighbourhood
+  protected static final int MIN_SIZE = 25;
+  
   private Action mAction = Action.None;
   private Edge mEdge = Edge.None;
   
@@ -187,43 +190,70 @@ public class NeighbourhoodView {
     float[] p = convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
     float y = p[1];
-
     
+    // Deal with multi touch
     if (mAction != Action.Scale) {
       // check for pinch
       if (event.getPointerCount() >= 2) {
         mLastAction = mAction;
         mAction = Action.Scale;
         mLastDistance = MathUtil.distance(x , y, event.getX(1), event.getY(1) );
+        // Mark last X to prevent jump
+        mLastX = -1;
       }      
     }
     // Check if there are still other pointers
     else if (event.getPointerCount() == 1) { 
+      // Reset last point
+      mLastX = x;
+      mLastY = y;
+      // return to last action
       mAction = mLastAction;
     }
-    
     
     // Check if any action is being performed
     if (mAction != Action.None) {
       
-      // Calculate change in position
-      float dx = x - mLastX;
-      float dy = y - mLastY;
-
+      float dx, dy;
       // Determine which action to take
       switch (mAction) {
       case Move:
+        // Calculate change in position of first point
+        dx = x - mLastX;
+        dy = y - mLastY;
         move((int)dx, (int)dy);
+        // Record position
+        mLastX = x;
+        mLastY = y;
         break;
       case Resize:
+        // Calculate change in position of first point
+        dx = x - mLastX;
+        dy = y - mLastY;
         resize((int)dx, (int)dy, mEdge);
+        // Record position
+        mLastX = x;
+        mLastY = y;
         break;
       case Scale:
         float x1 = event.getX(1);
         float y1 = event.getY(1);
+        // Scale using distance
         float dist = MathUtil.distance(x,y,x1,y1);
-        scale(dist - mLastDistance);
+        scale((int)(dist - mLastDistance));
+        // move using midpoint
+        float midX = (x + x1) / 2f;
+        float midY = (y + y1) / 2f;
+        // check if first time scaling to prevent jump
+        if (mLastX != -1) {
+          dx = midX - mLastX;
+          dy = midY - mLastY;
+          move((int)dx, (int)dy);
+        }
+        // record values
         mLastDistance = dist;
+        mLastX = midX;
+        mLastY = midY;
         break;
       }
 
@@ -231,9 +261,6 @@ public class NeighbourhoodView {
       mView.invalidate();
     }
     
-    // Record position
-    mLastX = x;
-    mLastY = y;
   }
   
   /**
@@ -262,19 +289,26 @@ public class NeighbourhoodView {
    * @param dy
    * @param edg
    */
+  // TODO: Make a minimum size
   private void resize(int dx, int dy, Edge edg) {
     switch (edg) {
     case L: 
-      mBounds.left = Math.max(0, mBounds.left + dx);
+      // constrain to image area
+      mBounds.left = Math.max(0, mBounds.left + dx); 
+      // prevent flipping and keep min size
+      mBounds.left = Math.min(mBounds.left, mBounds.right - MIN_SIZE); 
       break;
     case R: 
       mBounds.right = Math.min(mImageRect.right, mBounds.right + dx);
+      mBounds.right = Math.max(mBounds.right, mBounds.left + MIN_SIZE);
       break;
     case T: 
       mBounds.top = Math.max(0, mBounds.top + dy);
+      mBounds.top = Math.min(mBounds.top, mBounds.bottom - MIN_SIZE);
       break;
     case B: 
       mBounds.bottom = Math.min(mImageRect.bottom, mBounds.bottom + dy);
+      mBounds.bottom = Math.max(mBounds.bottom, mBounds.top + MIN_SIZE);
       break;
     case TL:
       resize(dx, dy, Edge.T);
@@ -300,10 +334,9 @@ public class NeighbourhoodView {
    * @param dDist
    */
   // TODO: Maintain aspect ratio when scaling back from edge of screen
-  private void scale(float dDist) {
-    int half = (int)(dDist / 2);
-    resize(-half, -half, Edge.TL);
-    resize(half, half, Edge.BR);
+  private void scale(int d) {
+    resize(-d, -d, Edge.TL);
+    resize(d, d, Edge.BR);
   }
   
   /**
