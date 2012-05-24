@@ -5,11 +5,14 @@
 // TODO: Handle varying image sizes
 package ca.uwinnipeg.compare;
 
+import java.util.ArrayList;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
@@ -50,6 +53,9 @@ public class NeighbourhoodView {
   public enum Shape { Rectangle, Circle, Polygon }
   
   private Shape mShape = Shape.Rectangle;
+  
+  // The list of points that make up the polygon
+  private ArrayList<PointF> mPoints = new ArrayList<PointF>();
 
   public NeighbourhoodView(View v){
     mView = v;
@@ -133,7 +139,17 @@ public class NeighbourhoodView {
   
   public void setShape(Shape s) {
     mShape = s;
-    resetBounds();
+    if (mShape == Shape.Polygon) {
+      mPoints.clear();
+      // TESTING
+      mPoints.add(new PointF(50,50));
+      mPoints.add(new PointF(200,200));
+      mPoints.add(new PointF(50, 200));
+      mView.invalidate();
+    }
+    else {
+      resetBounds();
+    }
   }
   
   public Shape getShape() {
@@ -432,58 +448,74 @@ public class NeighbourhoodView {
       Math.round(r.right), 
       Math.round(r.bottom));
   }
+  
+  /**
+   * Converts mPoints to an array of primitive floats
+   * @return
+   */
+  private float[] getPoints() {
+    final int size = mPoints.size();
+    float[] fs = new float[size * 2];
+    for (int i = 0; i < size; i++) {
+      PointF p = mPoints.get(i);
+      fs[i * 2]     = p.x;
+      fs[i * 2 + 1] = p.y;
+    }
+    return fs;
+  }
+  
+  private float[] getScreenSpacePoints() {
+    float[] ps = getPoints();
+    mMatrix.mapPoints(ps);
+    return ps;
+  }
 
   /**
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
+  // TODO: Draw handles
   protected void draw(Canvas canvas) {
     
     RectF bounds = getScreenSpaceBounds();
-
-    // backup then apply draw matrix
-    int count = canvas.save();
-    //canvas.concat(mMatrix);
-
-    // Darken outside
-    if (mFocused) {
-      canvas.save();
-      Path path = new Path();
-      
-      switch (mShape) {
-        case Rectangle:
-          path.addRect(bounds, Path.Direction.CW);
-          break;
-        case Circle:
-          canvas.drawRect(bounds, GUIDE_PAINT);
-          path.addOval(bounds, Path.Direction.CW);
-          break;
-        case Polygon:
-          // TODO: Draw polygons
-          break;
-      }
-      
-      canvas.clipPath(path, Region.Op.DIFFERENCE);
-      canvas.drawColor(0xaa000000);
-      canvas.restore();
-    }
     
-    // Draw neighbourhood
+    Path path = new Path();
+
     switch (mShape) {
       case Rectangle:
-        canvas.drawRect(bounds, FOCUSED_PAINT);
+        path.addRect(bounds, Path.Direction.CW);
         break;
       case Circle:
         canvas.drawRect(bounds, GUIDE_PAINT);
-        canvas.drawOval(bounds, FOCUSED_PAINT);
+        path.addOval(bounds, Path.Direction.CW);
         break;
       case Polygon:
-        // TODO: Draw polygons
+        float[] ps = getScreenSpacePoints();
+        int size = ps.length;
+        // Move to last point
+        path.moveTo(ps[size-2], ps[size-1]); 
+        // Connect all points
+        for (int i = 0; i < size; i += 2) {
+          path.lineTo( ps[i], ps[i+1]);
+        }
         break;
     }
-
-    // restore to original matrix
-    canvas.restoreToCount(count);
+    
+    if (mFocused) {
+      // Darken outside
+      canvas.save();
+      canvas.clipPath(path, Region.Op.DIFFERENCE);
+      canvas.drawColor(0xaa000000);
+      canvas.drawPath(path, FOCUSED_PAINT);
+      canvas.restore();
+    }
+    else {
+      canvas.drawPath(path, UNFOCUSED_PAINT);
+    }
+    
+    if (mShape == Shape.Circle) {
+      canvas.drawRect(bounds, GUIDE_PAINT);
+    }
   }
 
 }
