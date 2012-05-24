@@ -21,7 +21,7 @@ import android.widget.SpinnerAdapter;
 
 // TODO: Scale down bitmaps
 // TODO: Zoom and pan to follow neighbourhood
-// TODO: Look into why image shifts after rotate
+// TODO: Look into why image shifts after rotate, STATUS BAR does this need to be fixed?
 // TODO: Support down to 2.1
 /**
  * The activity can select neighbourhoods from an image. 

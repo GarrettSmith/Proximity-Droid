@@ -1,6 +1,8 @@
 /**
  * 
  */
+// TODO: Implement polygons
+// TODO: Handle varying image sizes
 package ca.uwinnipeg.compare;
 
 import android.graphics.Canvas;
@@ -18,7 +20,6 @@ import android.view.View;
  * @author Garrett Smith
  *
  */
-// TODO: Mark dirty rects for redraw, rather than redraw entire image.
 public class NeighbourhoodView {
 
   public static final String TAG = "NeighbourhoodView";
@@ -57,20 +58,21 @@ public class NeighbourhoodView {
     if (FOCUSED_PAINT == null) {
       FOCUSED_PAINT = new Paint();
       FOCUSED_PAINT.setStyle(Paint.Style.STROKE);
-      FOCUSED_PAINT.setStrokeWidth(0);
+      FOCUSED_PAINT.setStrokeWidth(2);
       FOCUSED_PAINT.setColor(Color.CYAN);
       FOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
       
       UNFOCUSED_PAINT = new Paint();
       UNFOCUSED_PAINT.setStyle(Paint.Style.FILL);
       UNFOCUSED_PAINT.setColor(Color.CYAN);
-      UNFOCUSED_PAINT.setAlpha(50);
+      UNFOCUSED_PAINT.setAlpha(100);
       UNFOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
       
       GUIDE_PAINT = new Paint();
       GUIDE_PAINT.setStyle(Paint.Style.STROKE);
       GUIDE_PAINT.setStrokeWidth(0);
       GUIDE_PAINT.setColor(Color.WHITE);
+      GUIDE_PAINT.setAlpha(50);
       GUIDE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
     }
   }
@@ -406,60 +408,81 @@ public class NeighbourhoodView {
    *  Maps the neighbourhood bounds from image space to screen space.
    * @return
    */
-  private Rect getScreenSpaceBounds() {
+  private RectF getScreenSpaceBounds() {
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
     mMatrix.mapRect(r);
-    return new Rect(
-        Math.round(r.left), 
-        Math.round(r.top), 
-        Math.round(r.right), 
-        Math.round(r.bottom));
-  }
-  
-  private static final int DRAW_PADDING = 1;
-
-  private Rect getPaddedScreenSpaceBounds() {
-    Rect r = getScreenSpaceBounds();
-    r.left    -= DRAW_PADDING;
-    r.top     -= DRAW_PADDING; 
-    r.right   += DRAW_PADDING; 
-    r.bottom  += DRAW_PADDING;
     return r;
+  }
+
+  /**
+   * Returns a rectangle that represents 
+   * @return
+   */
+  private Rect getPaddedScreenSpaceBounds() {
+    int padding = 
+        (int)(mFocused ? FOCUSED_PAINT.getStrokeWidth() : UNFOCUSED_PAINT.getStrokeWidth());
+    RectF r = getScreenSpaceBounds();
+    r.left    -= padding;
+    r.top     -= padding; 
+    r.right   += padding; 
+    r.bottom  += padding;
+    return new Rect(
+      Math.round(r.left), 
+      Math.round(r.top), 
+      Math.round(r.right), 
+      Math.round(r.bottom));
   }
 
   /**
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
-  // TODO: Draw properly
   protected void draw(Canvas canvas) {
+    
+    RectF bounds = getScreenSpaceBounds();
 
+    // backup then apply draw matrix
     int count = canvas.save();
-    canvas.concat(mMatrix);
+    //canvas.concat(mMatrix);
 
+    // Darken outside
     if (mFocused) {
       canvas.save();
       Path path = new Path();
       
       switch (mShape) {
         case Rectangle:
-          path.addRect(new RectF(mBounds), Path.Direction.CW);
-          canvas.drawRect(mBounds, FOCUSED_PAINT);
+          path.addRect(bounds, Path.Direction.CW);
           break;
         case Circle:
-          canvas.drawRect(mBounds, GUIDE_PAINT);
-          path.addOval(new RectF(mBounds), Path.Direction.CW);
-          canvas.drawOval(new RectF(mBounds), FOCUSED_PAINT);
+          canvas.drawRect(bounds, GUIDE_PAINT);
+          path.addOval(bounds, Path.Direction.CW);
           break;
         case Polygon:
           // TODO: Draw polygons
           break;
       }
+      
       canvas.clipPath(path, Region.Op.DIFFERENCE);
       canvas.drawColor(0xaa000000);
       canvas.restore();
-    }        
+    }
+    
+    // Draw neighbourhood
+    switch (mShape) {
+      case Rectangle:
+        canvas.drawRect(bounds, FOCUSED_PAINT);
+        break;
+      case Circle:
+        canvas.drawRect(bounds, GUIDE_PAINT);
+        canvas.drawOval(bounds, FOCUSED_PAINT);
+        break;
+      case Polygon:
+        // TODO: Draw polygons
+        break;
+    }
 
+    // restore to original matrix
     canvas.restoreToCount(count);
   }
 
