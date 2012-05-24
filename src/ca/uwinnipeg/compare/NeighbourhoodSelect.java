@@ -82,7 +82,6 @@ implements ActionBar.OnNavigationListener {
     mActionBar.setDisplayHomeAsUpEnabled(true);
 
     // Action bar navigation
-    // TODO: Make spinner functional    
     mSpinnerAdapter = ArrayAdapter.createFromResource(
         this, 
         R.array.shape_list, 
@@ -99,7 +98,8 @@ implements ActionBar.OnNavigationListener {
       mBitmap = state.getParcelable(BUNDLE_KEY_BITMAP);
       mOrientation = state.getInt(BUNDLE_KEY_ORIENTATION);
       final Rect bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
-      NeighbourhoodView.Shape shape = NeighbourhoodView.Shape.valueOf(state.getString(BUNDLE_KEY_SHAPE));
+      NeighbourhoodView.Shape shape = 
+          NeighbourhoodView.Shape.valueOf(state.getString(BUNDLE_KEY_SHAPE, ""));
       if (shape != null) {
         // Restore selected shape in spinner which then sets the neighbourhood shape
         mActionBar.setSelectedNavigationItem(shape.ordinal());
@@ -156,7 +156,6 @@ implements ActionBar.OnNavigationListener {
 
   }
 
-  // TODO save state of the current selection
   @Override
   protected void onSaveInstanceState(Bundle state) {    
     // Save the current image

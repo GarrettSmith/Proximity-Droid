@@ -1,7 +1,6 @@
 /**
  * 
- */  
-// TODO: Figure out how to represent shape  
+ */
 package ca.uwinnipeg.compare;
 
 import android.graphics.Canvas;
@@ -104,16 +103,21 @@ public class NeighbourhoodView {
     return mBounds;
   }
 
+  /**
+   * Sets bounds of neighbourhood and invalidates the containing view.
+   * @param r
+   */
   public void setBounds(Rect r) {
+    Rect dirty = new Rect(getPaddedScreenSpaceBounds());
     mBounds.set(r);
-    mView.invalidate(getScreenBounds());
+    dirty.union(getPaddedScreenSpaceBounds());
+    mView.invalidate(dirty);
   }
 
   /**
    * Sets the bounds to a default value.
    */
   public void resetBounds() {
-    Rect dirty = new Rect(mBounds);
     // can't do anything if you don't have an image to work with yet
     if (mImageRect == null) return;
     
@@ -122,9 +126,7 @@ public class NeighbourhoodView {
     // Use the smaller side to determine the padding
     // This makes it feel more uniform
     int padding = (int)(Math.min(w, h) * PADDING_RATIO);
-    mBounds.set(padding, padding, w-padding, h-padding);
-    dirty.union(getScreenBounds());
-    mView.invalidate(dirty);
+    setBounds(new Rect(padding, padding, w-padding, h-padding));
   }
   
   public void setShape(Shape s) {
@@ -254,6 +256,9 @@ public class NeighbourhoodView {
 
     // Check if any action is being performed
     if (mAction != Action.None) {
+      
+      // rectangle that needs redraw
+      Rect dirty = getPaddedScreenSpaceBounds();
 
       float dx, dy;
       // Determine which action to take
@@ -303,7 +308,8 @@ public class NeighbourhoodView {
       }
 
       // Reflect change on screen
-      mView.invalidate();
+      dirty.union(getPaddedScreenSpaceBounds());
+      mView.invalidate(dirty);
     }
 
   }
@@ -334,7 +340,6 @@ public class NeighbourhoodView {
    * @param dy
    * @param edg
    */
-  // TODO: Make a minimum size
   private void resize(int dx, int dy, Edge edg) {
     switch (edg) {
       case L: 
@@ -401,32 +406,48 @@ public class NeighbourhoodView {
    *  Maps the neighbourhood bounds from image space to screen space.
    * @return
    */
-  private Rect getScreenBounds() {
+  private Rect getScreenSpaceBounds() {
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
     mMatrix.mapRect(r);
-    return new Rect(Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom));
+    return new Rect(
+        Math.round(r.left), 
+        Math.round(r.top), 
+        Math.round(r.right), 
+        Math.round(r.bottom));
+  }
+  
+  private static final int DRAW_PADDING = 1;
+
+  private Rect getPaddedScreenSpaceBounds() {
+    Rect r = getScreenSpaceBounds();
+    r.left    -= DRAW_PADDING;
+    r.top     -= DRAW_PADDING; 
+    r.right   += DRAW_PADDING; 
+    r.bottom  += DRAW_PADDING;
+    return r;
   }
 
   /**
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
+  // TODO: Draw properly
   protected void draw(Canvas canvas) {
 
     int count = canvas.save();
     canvas.concat(mMatrix);
 
     if (mFocused) {
-      //TODO: Dim areas that are not rectangles
       canvas.save();
       Path path = new Path();
-      canvas.drawRect(mBounds, GUIDE_PAINT); // TODO: TMP
+      
       switch (mShape) {
         case Rectangle:
           path.addRect(new RectF(mBounds), Path.Direction.CW);
           canvas.drawRect(mBounds, FOCUSED_PAINT);
           break;
         case Circle:
+          canvas.drawRect(mBounds, GUIDE_PAINT);
           path.addOval(new RectF(mBounds), Path.Direction.CW);
           canvas.drawOval(new RectF(mBounds), FOCUSED_PAINT);
           break;

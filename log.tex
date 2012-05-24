@@ -117,6 +117,8 @@
     Fixed reading exif info;
   \item
     Neighbourhood is restored properly again;
+  \item
+    Change neighbourhood drawing to only require a dirty rectangle redraw rather than redraw the entire view, this speeds up redraws the for smaller neighbourhoods;
 \end{itemize}
 \subsection*{Challenges}
 \begin{itemize}
