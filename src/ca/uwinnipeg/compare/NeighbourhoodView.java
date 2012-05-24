@@ -5,13 +5,13 @@
 package ca.uwinnipeg.compare;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.os.Parcelable;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -27,8 +27,10 @@ public class NeighbourhoodView {
   // The default ratio of padding when resetting the neighbour hood size
   public static final float PADDING_RATIO = 1/8f;
 
-  //Paint shared by all neighbourhoods, used to draw when focused
+  //Paint shared by all neighbourhoods
   private static Paint FOCUSED_PAINT;
+  private static Paint UNFOCUSED_PAINT;
+  private static Paint GUIDE_PAINT;
 
   // The bounds of the neighbourhood IN IMAGE SPACE
   private Rect mBounds = new Rect();
@@ -57,12 +59,21 @@ public class NeighbourhoodView {
       FOCUSED_PAINT = new Paint();
       FOCUSED_PAINT.setStyle(Paint.Style.STROKE);
       FOCUSED_PAINT.setStrokeWidth(0);
-      FOCUSED_PAINT.setColor(0xff00ccff);
+      FOCUSED_PAINT.setColor(Color.CYAN);
       FOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      
+      UNFOCUSED_PAINT = new Paint();
+      UNFOCUSED_PAINT.setStyle(Paint.Style.FILL);
+      UNFOCUSED_PAINT.setColor(Color.CYAN);
+      UNFOCUSED_PAINT.setAlpha(50);
+      UNFOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      
+      GUIDE_PAINT = new Paint();
+      GUIDE_PAINT.setStyle(Paint.Style.STROKE);
+      GUIDE_PAINT.setStrokeWidth(0);
+      GUIDE_PAINT.setColor(Color.WHITE);
+      GUIDE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
     }
-
-    // TODO: TESTING, set focused properly
-    mFocused = true;
   }
 
   /**
@@ -102,18 +113,23 @@ public class NeighbourhoodView {
    * Sets the bounds to a default value.
    */
   public void resetBounds() {
+    Rect dirty = new Rect(mBounds);
+    // can't do anything if you don't have an image to work with yet
+    if (mImageRect == null) return;
+    
     int w = mImageRect.width();
     int h = mImageRect.height();
     // Use the smaller side to determine the padding
     // This makes it feel more uniform
-    int padding = (int) (Math.min(w, h) * PADDING_RATIO);
+    int padding = (int)(Math.min(w, h) * PADDING_RATIO);
     mBounds.set(padding, padding, w-padding, h-padding);
-    mView.invalidate(getScreenBounds());
+    dirty.union(getScreenBounds());
+    mView.invalidate(dirty);
   }
   
   public void setShape(Shape s) {
     mShape = s;
-    mView.invalidate(getScreenBounds());
+    resetBounds();
   }
   
   public Shape getShape() {
@@ -404,6 +420,7 @@ public class NeighbourhoodView {
       //TODO: Dim areas that are not rectangles
       canvas.save();
       Path path = new Path();
+      canvas.drawRect(mBounds, GUIDE_PAINT); // TODO: TMP
       switch (mShape) {
         case Rectangle:
           path.addRect(new RectF(mBounds), Path.Direction.CW);

@@ -114,7 +114,14 @@
   \item
     Added preliminary circle neighbourhoods, more oval right now;
   \item
-
+    Fixed reading exif info;
+  \item
+    Neighbourhood is restored properly again;
+\end{itemize}
+\subsection*{Challenges}
+\begin{itemize}
+  \item 
+    It would appear UI events run in their own thread. So, when I would restore the selected shape selection, on resuming or rotating the screen, it would reset my restored bounds for the shape. I solved this be creating a runnable, an object encapsulating some code, that is created when bounds are found to restore and ran and destroyed after a shape is selected if the runnable object exists;
 \end{itemize}
 
 

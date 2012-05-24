@@ -1,10 +1,7 @@
 package ca.uwinnipeg.compare;
 
 import android.app.ActionBar;
-import android.app.ActionBar.OnNavigationListener;
-import android.app.ActionBar.Tab;
 import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
@@ -38,28 +35,37 @@ implements ActionBar.OnNavigationListener {
   public static final String TAG = "NeighbourhoodSelect";
 
   // Indices of the items in the drop down menu.
-  // Must match the string array shape_list in arrays.xml and mOnNavigationListener.
+  // Must match the string array shape_list in arrays.xml and the ordinal values of
+  // NeighbourhoodView.Shape.
+  // Used by onNavigationItemSelected.
   public static final int BUTTON_SQUARE_INDEX = 0;
   public static final int BUTTON_CIRCLE_INDEX = 1;
   public static final int BUTTON_POLY_INDEX   = 2;
 
   private ContentResolver mContentResolver;
+  
   private Bitmap mBitmap;
   private int mOrientation;
 
-  private SelectionView mSelectionView;
+  private SelectView mselectView;
   private NeighbourhoodView mNeighbourhoodView;
+  
+  // Used to restore state properly without having the restored bounds overwritten.
+  // TODO: Is this really what I should be using a runnable for?
+  private Runnable mOnCreateRunnable = null;
 
-  // UI TEST
-  SpinnerAdapter mSpinnerAdapter;
+  // UI
+  private ActionBar mActionBar;
+  private SpinnerAdapter mSpinnerAdapter;
 
-  // constants
+  // Intents
+  private static final int NAVIGATION_ITEM_SELECT_IMAGE = 0;
 
-  private static final int NAVIGATION_ITEM_SELECT_IMAGE = 1 << 0;
-
+  // bundle keys
   private static final String BUNDLE_KEY_BITMAP = "Bitmap";
   private static final String BUNDLE_KEY_ORIENTATION = "Orientation";
-  private static final String BUNDLE_KEY_BOUNDS = "Neighbourhood Bounds";
+  private static final String BUNDLE_KEY_BOUNDS = "Bounds";
+  private static final String BUNDLE_KEY_SHAPE = "Shape";
 
   /**
    * Called when this Activity is first created.
@@ -72,8 +78,8 @@ implements ActionBar.OnNavigationListener {
     mContentResolver = getContentResolver();
 
     // UI
-    ActionBar actionBar = getActionBar();
-    actionBar.setDisplayHomeAsUpEnabled(true);
+    mActionBar = getActionBar();
+    mActionBar.setDisplayHomeAsUpEnabled(true);
 
     // Action bar navigation
     // TODO: Make spinner functional    
@@ -82,19 +88,32 @@ implements ActionBar.OnNavigationListener {
         R.array.shape_list, 
         android.R.layout.simple_spinner_dropdown_item);
 
-    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
-    actionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
+    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
+    mActionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
 
     // setup view
-    mSelectionView = (SelectionView) findViewById(R.id.selection_view);    
-
-    Rect bounds = null; // used for restoring previous bounds
+    mselectView = (SelectView) findViewById(R.id.select_view);
 
     // Check if state needs to be restored
     if (state != null) {
       mBitmap = state.getParcelable(BUNDLE_KEY_BITMAP);
       mOrientation = state.getInt(BUNDLE_KEY_ORIENTATION);
-      bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
+      final Rect bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
+      NeighbourhoodView.Shape shape = NeighbourhoodView.Shape.valueOf(state.getString(BUNDLE_KEY_SHAPE));
+      if (shape != null) {
+        // Restore selected shape in spinner which then sets the neighbourhood shape
+        mActionBar.setSelectedNavigationItem(shape.ordinal());
+      }
+      if (bounds != null) {
+        // Create a runnable to restore the bounds after the shape has been restored
+        mOnCreateRunnable = new Runnable() {
+          public void run() {
+            if (bounds != null) {
+              mNeighbourhoodView.setBounds(bounds);
+            }
+          }
+        };
+      }
     }
     else {
       // Check if an intent with a given bitmap was sent
@@ -112,16 +131,19 @@ implements ActionBar.OnNavigationListener {
       startActivityForResult(i, NAVIGATION_ITEM_SELECT_IMAGE);
     }
     else {
-      init(bounds);
-    }    
+      init();
+    }
 
   }
 
-  private void init(Rect bounds) {
+  private void init() {
     // set bitmap
-    mSelectionView.setImageBitmap(mBitmap, mOrientation);
+    mselectView.setImageBitmap(mBitmap, mOrientation);
     // Setup neighbourhood
-    mNeighbourhoodView = new NeighbourhoodView(mSelectionView);
+    mNeighbourhoodView = new NeighbourhoodView(mselectView);
+    mselectView.add(mNeighbourhoodView);
+    
+    mNeighbourhoodView.setFocused(true);
 
     int width = mBitmap.getWidth();
     int height = mBitmap.getHeight();
@@ -129,17 +151,9 @@ implements ActionBar.OnNavigationListener {
     Rect imageRect = new Rect(0, 0, width, height);    
     mNeighbourhoodView.setImageRect(imageRect);
 
-    mNeighbourhoodView.setMatrix(mSelectionView.getFinalMatrix());
+    // TODO: Move to constructor
+    mNeighbourhoodView.setMatrix(mselectView.getFinalMatrix());    
 
-    if (bounds != null) {
-      mNeighbourhoodView.setBounds(bounds);
-    }
-    else {
-      mNeighbourhoodView.resetBounds(); // setup default bounds
-    }
-
-
-    mSelectionView.add(mNeighbourhoodView);
   }
 
   // TODO save state of the current selection
@@ -150,11 +164,11 @@ implements ActionBar.OnNavigationListener {
     state.putInt(BUNDLE_KEY_ORIENTATION, mOrientation);
     if (mNeighbourhoodView != null) {
       state.putParcelable(BUNDLE_KEY_BOUNDS, mNeighbourhoodView.getBounds());
+      state.putString(BUNDLE_KEY_SHAPE, mNeighbourhoodView.getShape().name());
     }
     super.onSaveInstanceState(state);
   }
 
-  // TODO: Change shapes
   @Override
   public boolean onNavigationItemSelected(int position, long itemId) {
     switch(position) {
@@ -168,6 +182,11 @@ implements ActionBar.OnNavigationListener {
         mNeighbourhoodView.setShape(NeighbourhoodView.Shape.Polygon);
         break;     
     }
+    // Check to see if bounds need to be restored
+    if (mOnCreateRunnable != null) {
+      mOnCreateRunnable.run();
+      mOnCreateRunnable = null;
+    }
     return true;
   }
 
@@ -180,7 +199,7 @@ implements ActionBar.OnNavigationListener {
     if (requestCode == NAVIGATION_ITEM_SELECT_IMAGE)
       if (resultCode == Activity.RESULT_OK) {
         loadImage(data.getData()); // Load the returned uri
-        init(null);
+        init();
       } 
       else {
         finish(); // If the intent failed or was cancelled exit
@@ -238,7 +257,7 @@ implements ActionBar.OnNavigationListener {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.neighbourhood_select, menu);
-    mSelectionView.updateFinalMatrix(); // recenter
+    mselectView.updateFinalMatrix(); // recenter
     return true;
   }
 
