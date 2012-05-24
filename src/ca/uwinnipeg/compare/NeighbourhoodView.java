@@ -143,8 +143,10 @@ public class NeighbourhoodView {
       mPoints.clear();
       // TESTING
       mPoints.add(new PointF(50,50));
+      mPoints.add(new PointF(100, 50));
       mPoints.add(new PointF(200,200));
       mPoints.add(new PointF(50, 200));
+      mPoints.add(new PointF(0, 100));
       mView.invalidate();
     }
     else {
@@ -430,13 +432,10 @@ public class NeighbourhoodView {
     return r;
   }
 
-  /**
-   * Returns a rectangle that represents 
-   * @return
-   */
   private Rect getPaddedScreenSpaceBounds() {
     int padding = 
         (int)(mFocused ? FOCUSED_PAINT.getStrokeWidth() : UNFOCUSED_PAINT.getStrokeWidth());
+    padding = Math.max(padding, 1);
     RectF r = getScreenSpaceBounds();
     r.left    -= padding;
     r.top     -= padding; 
@@ -513,7 +512,7 @@ public class NeighbourhoodView {
       canvas.drawPath(path, UNFOCUSED_PAINT);
     }
     
-    if (mShape == Shape.OVAL) {
+    if (mShape != Shape.RECTANGLE) {
       canvas.drawRect(bounds, GUIDE_PAINT);
     }
   }

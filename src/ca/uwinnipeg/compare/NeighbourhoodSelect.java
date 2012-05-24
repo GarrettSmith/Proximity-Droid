@@ -6,6 +6,8 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -13,16 +15,17 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 
-// TODO: Scale down bitmaps
 // TODO: Zoom and pan to follow neighbourhood
 // TODO: Look into why image shifts after rotate, STATUS BAR does this need to be fixed?
 // TODO: Support down to 2.1
+// TODO: Shift of the main UI thread possibly
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
@@ -47,7 +50,7 @@ implements ActionBar.OnNavigationListener {
   private Bitmap mBitmap;
   private int mOrientation;
 
-  private SelectView mselectView;
+  private SelectView mSelectView;
   private NeighbourhoodView mNeighbourhoodView;
   
   // Used to restore state properly without having the restored bounds overwritten.
@@ -91,7 +94,7 @@ implements ActionBar.OnNavigationListener {
     mActionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
 
     // setup view
-    mselectView = (SelectView) findViewById(R.id.select_view);
+    mSelectView = (SelectView) findViewById(R.id.select_view);
 
     // Check if state needs to be restored
     if (state != null) {
@@ -138,10 +141,10 @@ implements ActionBar.OnNavigationListener {
 
   private void init() {
     // set bitmap
-    mselectView.setImageBitmap(mBitmap, mOrientation);
+    mSelectView.setImageBitmap(mBitmap, mOrientation);
     // Setup neighbourhood
-    mNeighbourhoodView = new NeighbourhoodView(mselectView);
-    mselectView.add(mNeighbourhoodView);
+    mNeighbourhoodView = new NeighbourhoodView(mSelectView);
+    mSelectView.add(mNeighbourhoodView);
     
     mNeighbourhoodView.setFocused(true);
 
@@ -152,7 +155,7 @@ implements ActionBar.OnNavigationListener {
     mNeighbourhoodView.setImageRect(imageRect);
 
     // TODO: Move to constructor
-    mNeighbourhoodView.setMatrix(mselectView.getFinalMatrix());    
+    mNeighbourhoodView.setMatrix(mSelectView.getFinalMatrix());    
 
   }
 
@@ -209,14 +212,36 @@ implements ActionBar.OnNavigationListener {
    * Loads the bitmap from data and sets the orientation and bitmap to the view.
    * @param data
    */
+  // TODO: CLEANUP
   protected void loadImage(Uri data) {
     String path = "";
     try {
-      // load the bitmap
-      mBitmap = MediaStore.Images.Media.getBitmap(mContentResolver, data);
-
-      // Load the orientation
       path = getRealPathFromURI(data);
+    
+      // Read the bitmap's size
+      BitmapFactory.Options options = new BitmapFactory.Options();
+      options.inJustDecodeBounds = true;
+      
+      BitmapFactory.decodeFile(path, options);
+      
+      // Get screen size
+      Display display = getWindowManager().getDefaultDisplay();
+      Point size = new Point();
+      display.getSize(size);
+      int width = size.x;
+      int height = size.y;
+      
+      // TODO: Deal with rotated images
+      // Calculate sample size
+      options.inSampleSize = 
+          calculateInSampleSize(options, width, height);
+      
+      options.inJustDecodeBounds = false; 
+      
+      // load the bitmap
+      mBitmap = BitmapFactory.decodeFile(path, options);
+
+      // Load the orientation      
       ExifInterface exif = new ExifInterface(path);
       int orientation = 
           exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
@@ -226,6 +251,30 @@ implements ActionBar.OnNavigationListener {
     catch (Exception e) {
       Log.e(TAG, "Failed to load file for exif data. " + path);
     }
+  }
+  
+  /**
+   * From http://developer.android.com/training/displaying-bitmaps/load-bitmap.html
+   * @param options
+   * @param reqWidth
+   * @param reqHeight
+   * @return
+   */
+  public static int calculateInSampleSize(
+      BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+      if (width > height) {
+        inSampleSize = Math.round((float)height / (float)reqHeight);
+      } else {
+        inSampleSize = Math.round((float)width / (float)reqWidth);
+      }
+    }
+    return inSampleSize;
   }
 
   private static int mapEXIF(int exifVal) {
@@ -256,7 +305,7 @@ implements ActionBar.OnNavigationListener {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.neighbourhood_select, menu);
-    mselectView.updateFinalMatrix(); // recenter
+    mSelectView.updateFinalMatrix(); // recenter
     return true;
   }
 
