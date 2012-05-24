@@ -38,9 +38,9 @@ implements ActionBar.OnNavigationListener {
   // Must match the string array shape_list in arrays.xml and the ordinal values of
   // NeighbourhoodView.Shape.
   // Used by onNavigationItemSelected.
-  public static final int BUTTON_SQUARE_INDEX = 0;
-  public static final int BUTTON_CIRCLE_INDEX = 1;
-  public static final int BUTTON_POLY_INDEX   = 2;
+  public static final int BUTTON_RECTANGLE_INDEX = 0;
+  public static final int BUTTON_OVAL_INDEX = 1;
+  public static final int BUTTON_POLYGON_INDEX   = 2;
 
   private ContentResolver mContentResolver;
   
@@ -171,14 +171,14 @@ implements ActionBar.OnNavigationListener {
   @Override
   public boolean onNavigationItemSelected(int position, long itemId) {
     switch(position) {
-      case BUTTON_SQUARE_INDEX:
-        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.Rectangle);
+      case BUTTON_RECTANGLE_INDEX:
+        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.RECTANGLE);
         break;
-      case BUTTON_CIRCLE_INDEX:
-        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.Circle);
+      case BUTTON_OVAL_INDEX:
+        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.OVAL);
         break;
-      case BUTTON_POLY_INDEX:
-        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.Polygon);
+      case BUTTON_POLYGON_INDEX:
+        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.POLYGON);
         break;     
     }
     // Check to see if bounds need to be restored

@@ -50,9 +50,9 @@ public class NeighbourhoodView {
   // The image bounds in image space
   private Rect mImageRect;
   
-  public enum Shape { Rectangle, Circle, Polygon }
+  public enum Shape { RECTANGLE, OVAL, POLYGON }
   
-  private Shape mShape = Shape.Rectangle;
+  private Shape mShape = Shape.RECTANGLE;
   
   // The list of points that make up the polygon
   private ArrayList<PointF> mPoints = new ArrayList<PointF>();
@@ -139,7 +139,7 @@ public class NeighbourhoodView {
   
   public void setShape(Shape s) {
     mShape = s;
-    if (mShape == Shape.Polygon) {
+    if (mShape == Shape.POLYGON) {
       mPoints.clear();
       // TESTING
       mPoints.add(new PointF(50,50));
@@ -166,8 +166,8 @@ public class NeighbourhoodView {
   // The minimum size of the neighbourhood
   protected static final int MIN_SIZE = 25;
 
-  private Action mAction = Action.None;
-  private Edge mEdge = Edge.None;
+  private Action mAction = Action.NONE;
+  private Edge mEdge = Edge.NONE;
 
   // The Previously touched position IN IMAGE SPACE
   private float mLastX = 0;
@@ -176,13 +176,13 @@ public class NeighbourhoodView {
   // The previous distance between two fingers, used for pinch zoom
   private float mLastDistanceX = 0;
   private float mLastDistanceY = 0;
-  private Action mLastAction = Action.None;
+  private Action mLastAction = Action.NONE;
 
   // The action currently taking place
-  public enum Action { None, Move, Resize, Scale }
+  public enum Action { NONE, MOVE, RESIZE, SCALE }
 
   // The edge or pair of edges that are currently selected
-  public enum Edge { None, TL, T, TR, R, BR, B, BL, L, ALL }
+  public enum Edge { NONE, TL, T, TR, R, BR, B, BL, L, ALL }
 
   /** 
    * Handles a down event.
@@ -192,12 +192,12 @@ public class NeighbourhoodView {
     float x = p[0];
     float y = p[1];
 
-    if ( (mEdge = checkEdges(x, y)) != Edge.None) {
-      mAction = Action.Resize;
+    if ( (mEdge = checkEdges(x, y)) != Edge.NONE) {
+      mAction = Action.RESIZE;
     }
     // Check if touch was within neighbourhood
     else if (mBounds.contains((int)x, (int)y)) {
-      mAction = Action.Move;      
+      mAction = Action.MOVE;      
     }
 
     // Record position
@@ -218,7 +218,7 @@ public class NeighbourhoodView {
     int top = mBounds.top;
     int bottom = mBounds.bottom;
 
-    Edge rtn = Edge.None;
+    Edge rtn = Edge.NONE;
 
     // TODO: Make this less of a brute force
     // TODO: Use touch size (event.getSize())
@@ -240,7 +240,7 @@ public class NeighbourhoodView {
    * Handles an up event.
    */
   public void handleUp(MotionEvent event) {
-    mAction = Action.None;
+    mAction = Action.NONE;
   }
 
   /**
@@ -252,11 +252,11 @@ public class NeighbourhoodView {
     float y = p[1];
 
     // Deal with multitouch
-    if (mAction != Action.Scale) {
+    if (mAction != Action.SCALE) {
       // check for pinch
       if (event.getPointerCount() >= 2) {
         mLastAction = mAction;
-        mAction = Action.Scale;
+        mAction = Action.SCALE;
         mLastDistanceX = Math.abs(x - event.getX(1));
         mLastDistanceY = Math.abs(y - event.getY(1));
         // Mark last X to prevent jump
@@ -273,7 +273,7 @@ public class NeighbourhoodView {
     }
 
     // Check if any action is being performed
-    if (mAction != Action.None) {
+    if (mAction != Action.NONE) {
       
       // rectangle that needs redraw
       Rect dirty = getPaddedScreenSpaceBounds();
@@ -281,7 +281,7 @@ public class NeighbourhoodView {
       float dx, dy;
       // Determine which action to take
       switch (mAction) {
-        case Move:
+        case MOVE:
           // Calculate change in position of first point
           dx = x - mLastX;
           dy = y - mLastY;
@@ -290,7 +290,7 @@ public class NeighbourhoodView {
           mLastX = x;
           mLastY = y;
           break;
-        case Resize:
+        case RESIZE:
           // Calculate change in position of first point
           dx = x - mLastX;
           dy = y - mLastY;
@@ -299,7 +299,7 @@ public class NeighbourhoodView {
           mLastX = x;
           mLastY = y;
           break;
-        case Scale:
+        case SCALE:
           float x1 = event.getX(1);
           float y1 = event.getY(1);
           // Scale using distance
@@ -482,14 +482,14 @@ public class NeighbourhoodView {
     Path path = new Path();
 
     switch (mShape) {
-      case Rectangle:
+      case RECTANGLE:
         path.addRect(bounds, Path.Direction.CW);
         break;
-      case Circle:
+      case OVAL:
         canvas.drawRect(bounds, GUIDE_PAINT);
         path.addOval(bounds, Path.Direction.CW);
         break;
-      case Polygon:
+      case POLYGON:
         float[] ps = getScreenSpacePoints();
         int size = ps.length;
         // Move to last point
@@ -513,7 +513,7 @@ public class NeighbourhoodView {
       canvas.drawPath(path, UNFOCUSED_PAINT);
     }
     
-    if (mShape == Shape.Circle) {
+    if (mShape == Shape.OVAL) {
       canvas.drawRect(bounds, GUIDE_PAINT);
     }
   }
