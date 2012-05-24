@@ -1,6 +1,10 @@
 package ca.uwinnipeg.compare;
 
+import android.app.ActionBar;
+import android.app.ActionBar.OnNavigationListener;
+import android.app.ActionBar.Tab;
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
@@ -15,33 +19,47 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.SpinnerAdapter;
 
-//TODO: Scale down bitmaps
+// TODO: Scale down bitmaps
 // TODO: Zoom and pan to follow neighbourhood
+// TODO: Look into why image shifts after rotate
+// TODO: Support down to 2.1
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
  *
  */
-public class NeighbourhoodSelect extends Activity {
-  
+public class NeighbourhoodSelect 
+extends Activity 
+implements ActionBar.OnNavigationListener {
+
   public static final String TAG = "NeighbourhoodSelect";
-  
-  
+
+  // Indices of the items in the drop down menu.
+  // Must match the string array shape_list in arrays.xml and mOnNavigationListener.
+  public static final int BUTTON_SQUARE_INDEX = 0;
+  public static final int BUTTON_CIRCLE_INDEX = 1;
+  public static final int BUTTON_POLY_INDEX   = 2;
+
   private ContentResolver mContentResolver;
   private Bitmap mBitmap;
   private int mOrientation;
-  
+
   private SelectionView mSelectionView;
   private NeighbourhoodView mNeighbourhoodView;
-  
+
+  // UI TEST
+  SpinnerAdapter mSpinnerAdapter;
+
   // constants
-  
-  private static final int SELECT_IMAGE = 1 << 0;
-  
-  private static final String BITMAP_KEY = "Bitmap";
-  private static final String ORIENTATION_KEY = "Orientation";
-  private static final String NEIGHBOURHOOD_BOUNDS_KEY = "Neighbourhood Bounds";
+
+  private static final int NAVIGATION_ITEM_SELECT_IMAGE = 1 << 0;
+
+  private static final String BUNDLE_KEY_BITMAP = "Bitmap";
+  private static final String BUNDLE_KEY_ORIENTATION = "Orientation";
+  private static final String BUNDLE_KEY_BOUNDS = "Neighbourhood Bounds";
 
   /**
    * Called when this Activity is first created.
@@ -50,18 +68,33 @@ public class NeighbourhoodSelect extends Activity {
   protected void onCreate(Bundle state){
     super.onCreate(state);    
     setContentView(R.layout.neighbourhood_select);
-    
-    mSelectionView = (SelectionView) findViewById(R.id.selection_view);
-    
+
     mContentResolver = getContentResolver();
-    
-    Rect bounds = null;
+
+    // UI
+    ActionBar actionBar = getActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+
+    // Action bar navigation
+    // TODO: Make spinner functional    
+    mSpinnerAdapter = ArrayAdapter.createFromResource(
+        this, 
+        R.array.shape_list, 
+        android.R.layout.simple_spinner_dropdown_item);
+
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
+    actionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
+
+    // setup view
+    mSelectionView = (SelectionView) findViewById(R.id.selection_view);    
+
+    Rect bounds = null; // used for restoring previous bounds
 
     // Check if state needs to be restored
     if (state != null) {
-      mBitmap = state.getParcelable(BITMAP_KEY);
-      mOrientation = state.getInt(ORIENTATION_KEY);
-      bounds = state.getParcelable(NEIGHBOURHOOD_BOUNDS_KEY);
+      mBitmap = state.getParcelable(BUNDLE_KEY_BITMAP);
+      mOrientation = state.getInt(BUNDLE_KEY_ORIENTATION);
+      bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
     }
     else {
       // Check if an intent with a given bitmap was sent
@@ -69,65 +102,82 @@ public class NeighbourhoodSelect extends Activity {
       Bundle extras = intent.getExtras();
 
       if (extras != null) {
-        mBitmap = (Bitmap) extras.getParcelable(BITMAP_KEY);
+        mBitmap = (Bitmap) extras.getParcelable(BUNDLE_KEY_BITMAP);
       }
     }
-    
+
     // Request a bitmap if not given one
     if (mBitmap == null) {
       Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
-      startActivityForResult(i, SELECT_IMAGE);
+      startActivityForResult(i, NAVIGATION_ITEM_SELECT_IMAGE);
     }
     else {
       init(bounds);
     }    
-    
+
   }
-  
+
   private void init(Rect bounds) {
     // set bitmap
     mSelectionView.setImageBitmap(mBitmap, mOrientation);
     // Setup neighbourhood
     mNeighbourhoodView = new NeighbourhoodView(mSelectionView);
-    
+
     int width = mBitmap.getWidth();
     int height = mBitmap.getHeight();
-    
+
     Rect imageRect = new Rect(0, 0, width, height);    
     mNeighbourhoodView.setImageRect(imageRect);
-    
+
     mNeighbourhoodView.setMatrix(mSelectionView.getFinalMatrix());
-    
+
     if (bounds != null) {
       mNeighbourhoodView.setBounds(bounds);
     }
     else {
       mNeighbourhoodView.resetBounds(); // setup default bounds
     }
-      
+
 
     mSelectionView.add(mNeighbourhoodView);
   }
-  
+
   // TODO save state of the current selection
   @Override
   protected void onSaveInstanceState(Bundle state) {    
     // Save the current image
-    state.putParcelable(BITMAP_KEY, mBitmap);
-    state.putInt(ORIENTATION_KEY, mOrientation);
+    state.putParcelable(BUNDLE_KEY_BITMAP, mBitmap);
+    state.putInt(BUNDLE_KEY_ORIENTATION, mOrientation);
     if (mNeighbourhoodView != null) {
-      state.putParcelable(NEIGHBOURHOOD_BOUNDS_KEY, mNeighbourhoodView.getBounds());
+      state.putParcelable(BUNDLE_KEY_BOUNDS, mNeighbourhoodView.getBounds());
     }
     super.onSaveInstanceState(state);
   }
-  
+
+  // TODO: Change shapes
+  @Override
+  public boolean onNavigationItemSelected(int position, long itemId) {
+    switch(position) {
+      case BUTTON_SQUARE_INDEX:
+        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.Rectangle);
+        break;
+      case BUTTON_CIRCLE_INDEX:
+        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.Circle);
+        break;
+      case BUTTON_POLY_INDEX:
+        mNeighbourhoodView.setShape(NeighbourhoodView.Shape.Polygon);
+        break;     
+    }
+    return true;
+  }
+
   /**
    * Respond to activity results to receive images from other applications.
    */
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
-    if (requestCode == SELECT_IMAGE)
+    if (requestCode == NAVIGATION_ITEM_SELECT_IMAGE)
       if (resultCode == Activity.RESULT_OK) {
         loadImage(data.getData()); // Load the returned uri
         init(null);
@@ -136,39 +186,41 @@ public class NeighbourhoodSelect extends Activity {
         finish(); // If the intent failed or was cancelled exit
       }
   }
-  
+
   /**
    * Loads the bitmap from data and sets the orientation and bitmap to the view.
    * @param data
    */
   protected void loadImage(Uri data) {
-    // set the image to the received URI
+    String path = "";
     try {
       // load the bitmap
       mBitmap = MediaStore.Images.Media.getBitmap(mContentResolver, data);
-      
+
       // Load the orientation
-      ExifInterface exif = new ExifInterface(getRealPathFromURI(data));
+      path = getRealPathFromURI(data);
+      ExifInterface exif = new ExifInterface(path);
       int orientation = 
           exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
       mOrientation = mapEXIF(orientation);
     }
-    catch (Exception e) { // TODO: handle specific exceptions
-      Log.e(TAG, "Failed to load file. " + data.toString());
+    // TODO: Deal with specific exceptions
+    catch (Exception e) {
+      Log.e(TAG, "Failed to load file for exif data. " + path);
     }
   }
-  
+
   private static int mapEXIF(int exifVal) {
     switch (exifVal) {
-    case ExifInterface.ORIENTATION_ROTATE_90:   return RotatedBitmap.CW;
-    case ExifInterface.ORIENTATION_ROTATE_180:  return RotatedBitmap.UPSIDEDOWN;
-    case ExifInterface.ORIENTATION_ROTATE_270:  return RotatedBitmap.CCW;
-    default:                                    return RotatedBitmap.NORMAL;
+      case ExifInterface.ORIENTATION_ROTATE_90:   return RotatedBitmap.CW;
+      case ExifInterface.ORIENTATION_ROTATE_180:  return RotatedBitmap.UPSIDEDOWN;
+      case ExifInterface.ORIENTATION_ROTATE_270:  return RotatedBitmap.CCW;
+      default:                                    return RotatedBitmap.NORMAL;
     }
   }
-  
+
   /**
-   * modified from http://android-er.blogspot.ca/2011/04/convert-uri-to-real-path-format.html
+   * Modified from http://android-er.blogspot.ca/2011/04/convert-uri-to-real-path-format.html
    * @param contentUri
    * @return the file path represented by contentUri
    */
@@ -177,29 +229,30 @@ public class NeighbourhoodSelect extends Activity {
     Cursor cursor = mContentResolver.query(contentUri, proj, null, null, null);
     int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
     cursor.moveToFirst();
+    String rtn = cursor.getString(column_index);
     cursor.close();
-    return cursor.getString(column_index);
+    return rtn;
   }
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-      MenuInflater inflater = getMenuInflater();
-      inflater.inflate(R.menu.neighbourhood_select, menu);
-      mSelectionView.updateFinalMatrix(); // recenter
-      return true;
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.neighbourhood_select, menu);
+    mSelectionView.updateFinalMatrix(); // recenter
+    return true;
   }
-  
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
-    case R.id.menu_about:
-      showAbout();
-      return true;
-     default:
-       return super.onOptionsItemSelected(item);
+      case R.id.menu_about:
+        showAbout();
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
     }
   }
-  
+
   /**
    * Displays the about dialog.
    */

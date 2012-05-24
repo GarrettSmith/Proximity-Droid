@@ -6,5 +6,10 @@
     <string-array name="about_thanks">
         <item >Christopher Henry</item>
     </string-array>
+    <string-array name="shape_list">
+        <item >Square</item>
+        <item >Circle</item>
+        <item >Polygon</item>
+    </string-array>
     
 </resources>
