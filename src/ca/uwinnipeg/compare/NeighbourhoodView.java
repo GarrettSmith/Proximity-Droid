@@ -3,6 +3,7 @@
  */
 // TODO: Implement polygons
 // TODO: Handle varying image sizes
+// TODO: Make drawing density independent
 package ca.uwinnipeg.compare;
 
 import java.util.ArrayList;
@@ -191,12 +192,12 @@ public class NeighbourhoodView {
   private Edge mEdge = Edge.NONE;
 
   // The Previously touched position IN IMAGE SPACE
-  private float mLastX = 0;
-  private float mLastY = 0;
+  private float mLastX;
+  private float mLastY;
 
   // The previous distance between two fingers, used for pinch zoom
-  private float mLastDistanceX = 0;
-  private float mLastDistanceY = 0;
+  private float mLastDistanceX;
+  private float mLastDistanceY;
   private Action mLastAction = Action.NONE;
 
   // The action currently taking place
@@ -223,7 +224,7 @@ public class NeighbourhoodView {
 
     // Record position
     mLastX = x;
-    mLastY = y;    
+    mLastY = y;
   }
 
   /**
@@ -260,7 +261,7 @@ public class NeighbourhoodView {
   /**
    * Handles an up event.
    */
-  public void handleUp(MotionEvent event) {
+  public void handleUp(MotionEvent event) {    
     mAction = Action.NONE;
   }
 
@@ -299,7 +300,8 @@ public class NeighbourhoodView {
       // rectangle that needs redraw
       Rect dirty = getPaddedScreenSpaceBounds();
 
-      float dx, dy;
+      float dx = 0;
+      float dy = 0;
       // Determine which action to take
       switch (mAction) {
         case MOVE:
@@ -345,10 +347,13 @@ public class NeighbourhoodView {
           mLastY = midY;
           break;
       }
+      
+     
 
       // Reflect change on screen
       dirty.union(getPaddedScreenSpaceBounds());
-      mView.invalidate(dirty);
+      mView.invalidate(dirty);      
+      
     }
 
   }

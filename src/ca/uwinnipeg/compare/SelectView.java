@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ImageView;
@@ -38,7 +39,7 @@ public class SelectView extends ImageView {
 
   public void add(NeighbourhoodView nv) {
     mNeighbourhoods.add(nv);
-    invalidate(); // request redraw
+    invalidate(nv.getBounds()); // request redraw
   }
 
   // Ran to ensure the dimensions of the view are accessible to update the base matrix
@@ -75,7 +76,7 @@ public class SelectView extends ImageView {
     }
 
     if (mBitmap.getBitmap() != null) {
-      updateFinalMatrix();      
+      updateFinalMatrix();
     }
 
   }
@@ -156,8 +157,9 @@ public class SelectView extends ImageView {
    * Updates the final matrix to be the concatenation of the base and user matrix.
    */
   protected void updateFinalMatrix() {
-    mFinalMatrix.set(mBaseMatrix);
-    mFinalMatrix.postConcat(mUserMatrix);
+    Matrix m = new Matrix(mBaseMatrix);
+    m.postConcat(mUserMatrix);
+    mFinalMatrix.set(m);
     setImageMatrix(mFinalMatrix); // Apply the final matrix to the image
 
     // Let neighbourhoods know the final matrix has changed
@@ -178,6 +180,71 @@ public class SelectView extends ImageView {
     for (NeighbourhoodView n : mNeighbourhoods) {
       n.draw(canvas);
     }
+  }
+  
+  // User matrix operations
+  
+  // Used to create operations that run on their own threads
+  private Handler mHandler = new Handler();
+  
+  // Used to access the values of the user matrix
+  private float[] mUserVals = new float[9];
+  
+  private static final float TRANSFORM_DURATION = 1.25f;
+  
+  private float getValue(int key) {
+    // read values
+    mUserMatrix.getValues(mUserVals);
+    return mUserVals[key];
+  }
+  
+  private float getTranslateX() {
+    return getValue(Matrix.MTRANS_X);
+  }
+  
+  private float getTranslateY() {
+    return getValue(Matrix.MTRANS_Y);
+  }
+  
+  public void panBy(float dx, float dy) {
+    mUserMatrix.postTranslate(dx, dy);
+    updateFinalMatrix();
+  }
+  
+  public void panTo(float x, float y) {
+    float dx = x - getTranslateX();
+    float dy = y - getTranslateY();
+    panBy(dx, dy);
+  }
+  
+  public void panBy(float dx, float dy, final float duration) {
+    final float startX = getTranslateX();
+    final float startY = getTranslateY();
+    final float dxPerMs = dx / duration;
+    final float dyPerMs = dy / duration;
+    final long startTime = System.currentTimeMillis();
+    
+    mHandler.post(new Runnable() {
+      
+      @Override
+      public void run() {
+        long now = System.currentTimeMillis();
+        float elapsed = Math.min(duration, now - startTime);
+        float targetX = startX + dxPerMs * elapsed;
+        float targetY = startY + dyPerMs * elapsed;
+        panTo(targetX, targetY);
+        
+        if (elapsed < duration) {
+          mHandler.post(this); // rerun
+        }
+      }
+    });
+  }
+  
+  public void panTo(float x, float y, float duration) {
+    float dx = x - getTranslateX();
+    float dy = y - getTranslateY();
+    panBy(dx, dy, duration);
   }
 
 }
