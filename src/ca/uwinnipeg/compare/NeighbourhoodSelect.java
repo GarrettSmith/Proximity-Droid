@@ -153,9 +153,8 @@ implements ActionBar.OnNavigationListener {
 
     Rect imageRect = new Rect(0, 0, width, height);    
     mNeighbourhoodView.setImageRect(imageRect);
-
-    // TODO: Move to constructor
-    mNeighbourhoodView.setMatrix(mSelectView.getFinalMatrix());    
+    
+    mNeighbourhoodView.resetBounds();
 
   }
 

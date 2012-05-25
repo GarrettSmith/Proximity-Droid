@@ -16,8 +16,8 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
+import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 
 /**
  * @author Garrett Smith
@@ -34,12 +34,18 @@ public class NeighbourhoodView {
   private static Paint FOCUSED_PAINT;
   private static Paint UNFOCUSED_PAINT;
   private static Paint GUIDE_PAINT;
+  private static Paint HANDLE_PAINT;
+  private static Paint UNSELECTED_PAINT;  
+
+  // Handle drawing constants
+  private static final float HANDLE_SIZE = 14;
+  private static Path HANDLE_PATH;
 
   // The bounds of the neighbourhood IN IMAGE SPACE
   private Rect mBounds = new Rect();
 
   // The view containing this neighbourhood.
-  View mView;
+  SelectView mView;
 
   // Whether this neighbourhood is selected or not.
   boolean mFocused;
@@ -57,14 +63,18 @@ public class NeighbourhoodView {
   // The list of points that make up the polygon
   private ArrayList<PointF> mPoints = new ArrayList<PointF>();
 
-  public NeighbourhoodView(View v){
+  public NeighbourhoodView(SelectView v){
     mView = v;
+    
+    // Grab the matrix
+    mMatrix = mView.getFinalMatrix();
 
     // One-time setup paint
     if (FOCUSED_PAINT == null) {
+      Log.i(TAG, "One time setup."); // TODO: make sure this only happens once
       FOCUSED_PAINT = new Paint();
       FOCUSED_PAINT.setStyle(Paint.Style.STROKE);
-      FOCUSED_PAINT.setStrokeWidth(2);
+      FOCUSED_PAINT.setStrokeWidth(3);
       FOCUSED_PAINT.setColor(Color.CYAN);
       FOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
       
@@ -80,6 +90,21 @@ public class NeighbourhoodView {
       GUIDE_PAINT.setColor(Color.WHITE);
       GUIDE_PAINT.setAlpha(50);
       GUIDE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      
+      HANDLE_PAINT = new Paint(UNFOCUSED_PAINT);
+      HANDLE_PAINT.setAlpha(255);
+      
+      UNSELECTED_PAINT = new Paint();
+      UNSELECTED_PAINT.setColor(Color.BLACK);
+      UNSELECTED_PAINT.setAlpha(100);
+      UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      
+      HANDLE_PATH = new Path();
+      float halfSize = HANDLE_SIZE / 2;
+      HANDLE_PATH.addRect(-halfSize, -halfSize, halfSize, halfSize, Path.Direction.CW);
+      Matrix m = new Matrix();
+      m.postRotate(45);
+      HANDLE_PATH.transform(m);
     }
   }
 
@@ -101,10 +126,6 @@ public class NeighbourhoodView {
    */
   public void setImageRect(Rect imageRect) {
     mImageRect = new Rect(imageRect);
-  }
-
-  public void setMatrix(Matrix m) {
-    mMatrix = m;
   }
 
   public Rect getBounds() {
@@ -149,9 +170,7 @@ public class NeighbourhoodView {
       mPoints.add(new PointF(0, 100));
       mView.invalidate();
     }
-    else {
-      resetBounds();
-    }
+    mView.invalidate(getPaddedScreenSpaceBounds());
   }
   
   public Shape getShape() {
@@ -429,14 +448,19 @@ public class NeighbourhoodView {
   private RectF getScreenSpaceBounds() {
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
     mMatrix.mapRect(r);
+    r.left    = Math.round(r.left);
+    r.top     = Math.round(r.top);
+    r.right   = Math.round(r.right); 
+    r.bottom  = Math.round(r.bottom);
     return r;
   }
 
   private Rect getPaddedScreenSpaceBounds() {
     int padding = 
-        (int)(mFocused ? FOCUSED_PAINT.getStrokeWidth() : UNFOCUSED_PAINT.getStrokeWidth());
-    padding = Math.max(padding, 1);
-    RectF r = getScreenSpaceBounds();
+        (int)(mFocused ? HANDLE_SIZE: UNFOCUSED_PAINT.getStrokeWidth());
+    padding += 1;
+    RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+    mMatrix.mapRect(r);
     r.left    -= padding;
     r.top     -= padding; 
     r.right   += padding; 
@@ -473,43 +497,68 @@ public class NeighbourhoodView {
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
-  // TODO: Draw handles
   protected void draw(Canvas canvas) {
     
     RectF bounds = getScreenSpaceBounds();
     
-    Path path = new Path();
+    Path shapePath = new Path();
 
     switch (mShape) {
       case RECTANGLE:
-        path.addRect(bounds, Path.Direction.CW);
+        shapePath.addRect(bounds, Path.Direction.CW);
         break;
       case OVAL:
         canvas.drawRect(bounds, GUIDE_PAINT);
-        path.addOval(bounds, Path.Direction.CW);
+        shapePath.addOval(bounds, Path.Direction.CW);
         break;
       case POLYGON:
         float[] ps = getScreenSpacePoints();
         int size = ps.length;
         // Move to last point
-        path.moveTo(ps[size-2], ps[size-1]); 
+        shapePath.moveTo(ps[size-2], ps[size-1]); 
         // Connect all points
         for (int i = 0; i < size; i += 2) {
-          path.lineTo( ps[i], ps[i+1]);
+          shapePath.lineTo( ps[i], ps[i+1]);
         }
         break;
     }
     
-    if (mFocused) {
+    if (mFocused) {        
+      
       // Darken outside
       canvas.save();
-      canvas.clipPath(path, Region.Op.DIFFERENCE);
-      canvas.drawColor(0xaa000000);
-      canvas.drawPath(path, FOCUSED_PAINT);
+      canvas.clipPath(shapePath, Region.Op.DIFFERENCE);
+      canvas.drawPaint(UNSELECTED_PAINT);
+      canvas.drawPath(shapePath, FOCUSED_PAINT);
       canvas.restore();
+      
+      // Draw handles
+      Path handlePath = new Path();
+      if (mShape == Shape.POLYGON) {
+        float[] ps = getScreenSpacePoints();
+        for (int i = 0; i < ps.length; i += 2) {
+          handlePath.addPath(HANDLE_PATH, ps[i], ps[i+1]);
+        }
+      }
+      else {        
+        float l = bounds.left;
+        float r = bounds.right;
+        float t = bounds.top;
+        float b = bounds.bottom;
+
+        float midX = l + bounds.width() / 2;
+        float midY = t + bounds.height() / 2;
+        
+        // Draw a handle in the middle of each side
+        handlePath.addPath(HANDLE_PATH, midX, t);
+        handlePath.addPath(HANDLE_PATH, midX, b);
+        handlePath.addPath(HANDLE_PATH, l, midY);
+        handlePath.addPath(HANDLE_PATH, r, midY);
+      }
+      canvas.drawPath(handlePath, HANDLE_PAINT);
     }
     else {
-      canvas.drawPath(path, UNFOCUSED_PAINT);
+      canvas.drawPath(shapePath, UNFOCUSED_PAINT);
     }
     
     if (mShape != Shape.RECTANGLE) {

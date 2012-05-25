@@ -161,9 +161,10 @@ public class SelectView extends ImageView {
     setImageMatrix(mFinalMatrix); // Apply the final matrix to the image
 
     // Let neighbourhoods know the final matrix has changed
-    for (NeighbourhoodView n : mNeighbourhoods) {
-      n.setMatrix(mFinalMatrix);
-    }
+    // THIS SHOULDN'T MATTER BECAUSE THEY HAVE A REFERENCE OF THE MATRIX
+    //for (NeighbourhoodView n : mNeighbourhoods) {
+    //  n.setMatrix(mFinalMatrix);
+    //}
   }
 
   public Matrix getFinalMatrix() {
