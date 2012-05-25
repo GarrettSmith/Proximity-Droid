@@ -262,7 +262,6 @@ public class NeighbourhoodView {
    * Handles an up event.
    */
   public void handleUp(MotionEvent event) {
-    mView.center(this, 200); //TODO: only center if we are close to moving out of view
     mAction = Action.NONE;
   }
 

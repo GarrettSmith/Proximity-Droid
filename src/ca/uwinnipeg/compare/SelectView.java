@@ -88,17 +88,25 @@ public class SelectView extends ImageView {
     switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN: 
         for (NeighbourhoodView n : mNeighbourhoods) {
-          n.handleDown(event);
+          if (n.isFocused()) {
+            n.handleDown(event);
+          }
         }
         return true;
       case MotionEvent.ACTION_UP:   
         for (NeighbourhoodView n : mNeighbourhoods) {
-          n.handleUp(event);
+          if (n.isFocused()) {
+            n.handleUp(event);
+            //follow(n);
+            center(n);
+          }          
         }
         return true;
       case MotionEvent.ACTION_MOVE: 
         for (NeighbourhoodView n : mNeighbourhoods) {
-          n.handleMove(event);
+          if (n.isFocused()) {
+            n.handleMove(event);
+          }
         }
         return true;
       default:                      
@@ -192,8 +200,6 @@ public class SelectView extends ImageView {
   // Used to access the values of the user matrix
   private float[] mUserVals = new float[9];
   
-  private static final float TRANSFORM_DURATION = 1.25f;
-  
   private float getValue(int key) {
     // read values
     mUserMatrix.getValues(mUserVals);
@@ -206,6 +212,10 @@ public class SelectView extends ImageView {
   
   private float getTranslateY() {
     return getValue(Matrix.MTRANS_Y);
+  }
+  
+  private float getScale() {
+    return getValue(Matrix.MSCALE_X);
   }
   
   public void panBy(float dx, float dy) {
@@ -279,7 +289,7 @@ public class SelectView extends ImageView {
     //mBaseMatrix.mapPoints(pts);
     // Apply scale
     //mUserMatrix.postScale(dScale, dScale, pts[0], pts[1]);
-    mScaleMatrix.postScale(dScale, dScale, x, y);
+    mUserMatrix.postScale(dScale, dScale, x, y);
     updateFinalMatrix();
   }
 
@@ -386,14 +396,12 @@ public class SelectView extends ImageView {
     int dy = dy1 != 0 ? dy1 : dy2;
     
     if (dx != 0 || dy != 0) {
-      dx = (int) (bounds.centerX() - (vw / 2));
-      dy = (int) (bounds.centerY() - (vh / 2));
-      float[] p = nv.convertToImageSpace(dx, dy);
-      panTo(-p[0], -p[1], FOLLOW_DURATION);
+      panBy(dx, dy);
     }
   }
   
   // TODO: remove this duplication
+  // FIXME: Doesn't work with scaling
   /**
    * Center the given neighbourhood in the view.
    * @param nv
