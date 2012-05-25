@@ -227,8 +227,8 @@ implements ActionBar.OnNavigationListener {
       Display display = getWindowManager().getDefaultDisplay();
       Point size = new Point();
       display.getSize(size);
-      int width = size.x;
-      int height = size.y;
+      int width = size.x/2;
+      int height = size.y/2;
       
       // TODO: Deal with rotated images
       // Calculate sample size

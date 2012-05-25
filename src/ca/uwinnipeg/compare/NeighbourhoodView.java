@@ -4,6 +4,7 @@
 // TODO: Implement polygons
 // TODO: Handle varying image sizes
 // TODO: Make drawing density independent
+// TODO: Look into making rotate not affect input
 package ca.uwinnipeg.compare;
 
 import java.util.ArrayList;

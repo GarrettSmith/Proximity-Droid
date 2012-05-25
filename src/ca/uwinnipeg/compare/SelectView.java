@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -98,7 +99,8 @@ public class SelectView extends ImageView {
           if (n.isFocused()) {
             n.handleUp(event);
             //follow(n);
-            center(n);
+            center(n, 200);
+            Log.i(TAG, "Scale: " + getScale());
           }          
         }
         return true;
