@@ -235,7 +235,7 @@ public class SelectView extends ImageView {
         panTo(targetX, targetY);
         
         if (elapsed < duration) {
-          mHandler.post(this); // rerun
+          mHandler.post(this); // rerun if duration has not been met
         }
       }
     });
@@ -245,6 +245,30 @@ public class SelectView extends ImageView {
     float dx = x - getTranslateX();
     float dy = y - getTranslateY();
     panBy(dx, dy, duration);
+  }
+  
+  public void centerX() {
+    panTo(0, getTranslateY());
+  }
+  
+  public void centerX(float duration) {
+    panTo(0, getTranslateY(), duration);
+  }
+  
+  public void centerY() {
+    panTo(getTranslateX(), 0);
+  }
+  
+  public void centerY(float duration) {
+    panTo(getTranslateX(), 0, duration);
+  }
+  
+  public void center() {
+    panTo(0, 0);
+  } 
+  
+  public void center(float duration) {
+    panTo(0, 0, duration);
   }
 
 }
