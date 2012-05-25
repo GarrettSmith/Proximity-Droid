@@ -6,6 +6,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -224,8 +226,8 @@ public class SelectView extends ImageView {
     final float dyPerMs = dy / duration;
     final long startTime = System.currentTimeMillis();
     
-    mHandler.post(new Runnable() {
-      
+    // create a runnable that will be repeated until duration, and thus target, is met
+    mHandler.post(new Runnable() {      
       @Override
       public void run() {
         long now = System.currentTimeMillis();
@@ -269,6 +271,29 @@ public class SelectView extends ImageView {
   
   public void center(float duration) {
     panTo(0, 0, duration);
+  }
+  
+  // TODO: remove this duplication
+  /**
+   * Center the given neighbourhood in the view.
+   * @param nv
+   */
+  public void center(NeighbourhoodView nv) {
+    Rect r = nv.getBounds();
+    RectF bounds = new RectF(r.left, r.top, r.right, r.bottom);
+    mBaseMatrix.mapRect(bounds);
+    float dx = bounds.centerX() - (getWidth() / 2f);
+    float dy = bounds.centerY() - (getHeight() / 2f);
+    panTo(-dx, -dy);
+  }
+  
+  public void center(NeighbourhoodView nv, float duration) {
+    Rect r = nv.getBounds();
+    RectF bounds = new RectF(r.left, r.top, r.right, r.bottom);
+    mBaseMatrix.mapRect(bounds);
+    float dx = bounds.centerX() - (getWidth() / 2f);
+    float dy = bounds.centerY() - (getHeight() / 2f);
+    panTo(-dx, -dy, duration);
   }
 
 }

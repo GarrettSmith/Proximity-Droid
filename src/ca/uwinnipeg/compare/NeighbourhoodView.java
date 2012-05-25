@@ -261,7 +261,8 @@ public class NeighbourhoodView {
   /**
    * Handles an up event.
    */
-  public void handleUp(MotionEvent event) {    
+  public void handleUp(MotionEvent event) {
+    mView.center(this, 200); //TODO: only center if we are close to moving out of view
     mAction = Action.NONE;
   }
 
@@ -450,7 +451,7 @@ public class NeighbourhoodView {
    *  Maps the neighbourhood bounds from image space to screen space.
    * @return
    */
-  private RectF getScreenSpaceBounds() {
+  public RectF getScreenSpaceBounds() {
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
     mMatrix.mapRect(r);
     r.left    = Math.round(r.left);
