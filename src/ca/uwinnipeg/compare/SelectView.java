@@ -86,6 +86,7 @@ public class SelectView extends ImageView {
 
   @Override 
   public boolean onTouchEvent(MotionEvent event) {
+    // TODO: Get event action properly for different api levels
     switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN: 
         for (NeighbourhoodView n : mNeighbourhoods) {
@@ -240,7 +241,7 @@ public class SelectView extends ImageView {
     
     // create a runnable that will be repeated until duration, and thus target, is met
     mHandler.post(new Runnable() {      
-      @Override
+      //@Override
       public void run() {
         long now = System.currentTimeMillis();
         float elapsed = Math.min(duration, now - startTime);
@@ -319,7 +320,7 @@ public class SelectView extends ImageView {
 
     // create a runnable that will be repeated until duration, and thus target, is met
     mHandler.post(new Runnable() {      
-      @Override
+      //@Override
       public void run() {
         long now = System.currentTimeMillis();
         float elapsed = Math.min(duration, now - startTime);

@@ -1,5 +1,6 @@
 package ca.uwinnipeg.compare;
 
+import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -46,13 +47,13 @@ implements ActionBar.OnNavigationListener {
   public static final int BUTTON_POLYGON_INDEX   = 2;
 
   private ContentResolver mContentResolver;
-  
+
   private Bitmap mBitmap;
   private int mOrientation;
 
   private SelectView mSelectView;
   private NeighbourhoodView mNeighbourhoodView;
-  
+
   // Used to restore state properly without having the restored bounds overwritten.
   // TODO: Is this really what I should be using a runnable for?
   private Runnable mOnCreateRunnable = null;
@@ -80,32 +81,20 @@ implements ActionBar.OnNavigationListener {
 
     mContentResolver = getContentResolver();
 
-    // UI
-    mActionBar = getActionBar();
-    mActionBar.setDisplayHomeAsUpEnabled(true);
-
-    // Action bar navigation
-    mSpinnerAdapter = ArrayAdapter.createFromResource(
-        this, 
-        R.array.shape_list, 
-        android.R.layout.simple_spinner_dropdown_item);
-
-    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
-    mActionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
 
     // setup view
     mSelectView = (SelectView) findViewById(R.id.select_view);
 
+    NeighbourhoodView.Shape shape = null;
+    
     // Check if state needs to be restored
     if (state != null) {
       mBitmap = state.getParcelable(BUNDLE_KEY_BITMAP);
       mOrientation = state.getInt(BUNDLE_KEY_ORIENTATION);
       final Rect bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
-      NeighbourhoodView.Shape shape = 
-          NeighbourhoodView.Shape.valueOf(state.getString(BUNDLE_KEY_SHAPE, ""));
-      if (shape != null) {
-        // Restore selected shape in spinner which then sets the neighbourhood shape
-        mActionBar.setSelectedNavigationItem(shape.ordinal());
+      String shapeStr = state.getString(BUNDLE_KEY_SHAPE);
+      if (shapeStr != null) {
+       shape = NeighbourhoodView.Shape.valueOf(shapeStr);
       }
       if (bounds != null) {
         // Create a runnable to restore the bounds after the shape has been restored
@@ -126,6 +115,14 @@ implements ActionBar.OnNavigationListener {
       if (extras != null) {
         mBitmap = (Bitmap) extras.getParcelable(BUNDLE_KEY_BITMAP);
       }
+    }    
+
+    // UI
+    if (android.os.Build.VERSION.SDK_INT >= 11) {
+      setupActionBar(shape);
+    }
+    else {
+      // TODO: Setup alternative to action bar
     }
 
     // Request a bitmap if not given one
@@ -139,13 +136,33 @@ implements ActionBar.OnNavigationListener {
 
   }
 
+  @TargetApi(11)
+  private void setupActionBar(NeighbourhoodView.Shape shape) {
+    mActionBar = getActionBar();
+    mActionBar.setDisplayHomeAsUpEnabled(true);
+
+    // Action bar navigation
+    mSpinnerAdapter = ArrayAdapter.createFromResource(
+        this, 
+        R.array.shape_list, 
+        android.R.layout.simple_spinner_dropdown_item);
+
+    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
+    mActionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
+
+    if (shape != null) {
+      // Restore selected shape in spinner which then sets the neighbourhood shape
+      mActionBar.setSelectedNavigationItem(shape.ordinal());
+    }
+  }
+
   private void init() {
     // set bitmap
     mSelectView.setImageBitmap(mBitmap, mOrientation);
     // Setup neighbourhood
     mNeighbourhoodView = new NeighbourhoodView(mSelectView);
     mSelectView.add(mNeighbourhoodView);
-    
+
     mNeighbourhoodView.setFocused(true);
 
     int width = mBitmap.getWidth();
@@ -153,7 +170,7 @@ implements ActionBar.OnNavigationListener {
 
     Rect imageRect = new Rect(0, 0, width, height);    
     mNeighbourhoodView.setImageRect(imageRect);
-    
+
     mNeighbourhoodView.resetBounds();
 
   }
@@ -170,7 +187,7 @@ implements ActionBar.OnNavigationListener {
     super.onSaveInstanceState(state);
   }
 
-  @Override
+  //@Override
   public boolean onNavigationItemSelected(int position, long itemId) {
     switch(position) {
       case BUTTON_RECTANGLE_INDEX:
@@ -216,27 +233,28 @@ implements ActionBar.OnNavigationListener {
     String path = "";
     try {
       path = getRealPathFromURI(data);
-    
+
       // Read the bitmap's size
       BitmapFactory.Options options = new BitmapFactory.Options();
       options.inJustDecodeBounds = true;
-      
+
       BitmapFactory.decodeFile(path, options);
-      
+
       // Get screen size
       Display display = getWindowManager().getDefaultDisplay();
       Point size = new Point();
+      // TODO: Get size properly for older api levels
       display.getSize(size);
       int width = size.x/2;
       int height = size.y/2;
-      
+
       // TODO: Deal with rotated images
       // Calculate sample size
       options.inSampleSize = 
           calculateInSampleSize(options, width, height);
-      
+
       options.inJustDecodeBounds = false; 
-      
+
       // load the bitmap
       mBitmap = BitmapFactory.decodeFile(path, options);
 
@@ -251,7 +269,7 @@ implements ActionBar.OnNavigationListener {
       Log.e(TAG, "Failed to load file for exif data. " + path);
     }
   }
-  
+
   /**
    * From http://developer.android.com/training/displaying-bitmaps/load-bitmap.html
    * @param options
