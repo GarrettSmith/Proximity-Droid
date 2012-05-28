@@ -1,0 +1,74 @@
+\documentclass{article}
+\title{Installing the Android Development Environment}
+\author{Garrett Smith}
+
+\usepackage{hyperref}
+\usepackage{listings}
+
+\begin{document}
+
+\section{Installing Software}
+
+\subsection{Eclipse}
+\begin{enumerate}
+  \item
+    \href{http://www.eclipse.org/downloads/}{Download Eclipse};
+  \item
+    Install and setup the default options it asks;
+\end{enumerate}
+
+\subsection{ADT}
+\begin{enumerate}
+  \item
+    Download and install ADT following these \href{http://developer.android.com/sdk/eclipse-adt.html#downloading}{directions};
+  \item
+    When asked after installing ADT, choose to download and install the Android SDK;
+\end{enumerate}
+
+\subsection{Android SDK}
+You can follow the \href{http://developer.android.com/sdk/installing.html}{full guide} at Android Developers.
+\begin{enumerate}
+  \item
+    Start the Android SDK Manager from Eclipse by goind to \textbf{Window > Android SDK Manager} or by clicking the button in the toolbar;
+  \item
+    You will need to install both packages in the tools subdirectory, as well as the most recent Android platform, as of writting 4.0.3;
+  \item
+    You may also want to install the lowest supported version, as of writting 2.1;
+  \item 
+    If you are on windows and want to use usb debugging you will need to follow \href{http://developer.android.com/sdk/win-usb.html}{Google USB Driver};
+\end{enumerate}
+
+\subsection{AVD}
+\begin{enumerate}
+  \item
+    Start the ADV Manager from either the toolbar or from \textbf{Window > AVD Manager};
+  \item
+    To create a new AVD press \textbf{New...}, name the AVD, and select the target you want the device to run;
+  \item
+    You can start your AVD from the AVD Manager by selecting the device and pressing \textbf{Start...} then \textbf{Launch};
+\end{enumerate}
+
+\section{Cloning the Git Repository}
+This will not tell you how to work with git just how to get the current source code to work with.
+\begin{enumerate}
+  \item
+    You will need some form of git running on your computer. If you are on Windows you may want to try \href{http://help.github.com/win-set-up-git/}{Download and install the latest version of Git for Windows}.
+  \item
+    Move to the directory you wisth the source code to be downloaded to;
+  \item
+    To clone the repository run the following command;
+    \begin{lstlisting}
+      git clone http://git.pixelpeg.ca/compare.git
+    \end{lstlisting}
+  \item
+    Within Eclipse, create a new project by going to \textbf{File > New > Android Project};
+  \item
+    Select \textbf{Create project from existing source} and select the location where you downloaded the source;
+  \item
+    Press finish and you're done;
+\end{enumerate}
+
+\section{Coding Style}
+Coding style primarily follows \href{http://source.android.com/source/code-style.html}{Code Style Guidelines for Contributors} with the exception that 2 spaces are used to indent code.
+
+\end{document}
