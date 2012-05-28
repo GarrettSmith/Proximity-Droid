@@ -228,7 +228,9 @@ implements ActionBar.OnNavigationListener {
    * Loads the bitmap from data and sets the orientation and bitmap to the view.
    * @param data
    */
-  // TODO: CLEANUP
+  // TODO: CLEANUP loading images
+  @SuppressWarnings("deprecation")
+  @TargetApi(13)
   protected void loadImage(Uri data) {
     String path = "";
     try {
@@ -242,16 +244,23 @@ implements ActionBar.OnNavigationListener {
 
       // Get screen size
       Display display = getWindowManager().getDefaultDisplay();
-      Point size = new Point();
-      // TODO: Get size properly for older api levels
-      display.getSize(size);
-      int width = size.x/2;
-      int height = size.y/2;
+      int width, height;
+      // Get screen size depending on the api level
+      if (android.os.Build.VERSION.SDK_INT >= 13) {
+        Point size = new Point();
+        display.getSize(size);
+        width = size.x;
+        height = size.y;
+      }
+      else {
+        width = display.getWidth();
+        height = display.getHeight();
+      }
 
       // TODO: Deal with rotated images
       // Calculate sample size
       options.inSampleSize = 
-          calculateInSampleSize(options, width, height);
+          calculateInSampleSize(options, width/2, height/2);
 
       options.inJustDecodeBounds = false; 
 

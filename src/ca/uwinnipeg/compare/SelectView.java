@@ -87,7 +87,7 @@ public class SelectView extends ImageView {
   @Override 
   public boolean onTouchEvent(MotionEvent event) {
     // TODO: Get event action properly for different api levels
-    switch (event.getActionMasked()) {
+    switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN: 
         for (NeighbourhoodView n : mNeighbourhoods) {
           if (n.isFocused()) {
@@ -99,9 +99,7 @@ public class SelectView extends ImageView {
         for (NeighbourhoodView n : mNeighbourhoods) {
           if (n.isFocused()) {
             n.handleUp(event);
-            //follow(n);
-            center(n, 200);
-            Log.i(TAG, "Scale: " + getScale());
+            follow(n);
           }          
         }
         return true;
@@ -176,7 +174,7 @@ public class SelectView extends ImageView {
     setImageMatrix(mFinalMatrix); // Apply the final matrix to the image
 
     // Let neighbourhoods know the final matrix has changed
-    // THIS SHOULDN'T MATTER BECAUSE THEY HAVE A REFERENCE OF THE MATRIX
+    // TODO: THIS SHOULDN'T MATTER BECAUSE THEY HAVE A REFERENCE OF THE MATRIX, but should they?
     //for (NeighbourhoodView n : mNeighbourhoods) {
     //  n.setMatrix(mFinalMatrix);
     //}
@@ -365,7 +363,9 @@ public class SelectView extends ImageView {
    */  
   // TODO: figure this out
   public void follow(NeighbourhoodView nv) {
-    RectF bounds = nv.getScreenSpaceBounds();
+    zoomTo(1.2f); // TODO: TESTING    
+    RectF bounds = nv.getScreenSpaceBounds();    
+    RectF screen = new RectF(getLeft(), getTop(), getRight(), getBottom());
     
     float w = bounds.width();
     float h = bounds.height();
@@ -385,21 +385,13 @@ public class SelectView extends ImageView {
     mFinalMatrix.mapPoints(pt);
     
     if ((Math.abs(zoom - getScale()) / zoom) > SOME_THRESHOLD) {
-      zoomTo(zoom, pt[0], pt[1], FOLLOW_DURATION);
+      //zoomTo(zoom, pt[0], pt[1], FOLLOW_DURATION);
     }
     
-    // recenter if the neighbourhood leaves or gets too close to the edge of screen    
-    int dx1 = (int) Math.max(0, getLeft() - bounds.left);
-    int dx2 = (int) Math.min(0, getRight() - bounds.right);
+    // recenter if the neighbourhood leaves or gets too close to the edge of screen 
     
-    int dy1 = (int) Math.max(0, getTop() - bounds.top);
-    int dy2 = (int) Math.min(0, getBottom() - bounds.bottom);
-    
-    int dx = dx1 != 0 ? dx1 : dx2;
-    int dy = dy1 != 0 ? dy1 : dy2;
-    
-    if (dx != 0 || dy != 0) {
-      panBy(dx, dy);
+    if (!screen.contains(bounds)) {
+      center(nv, FOLLOW_DURATION);
     }
   }
   

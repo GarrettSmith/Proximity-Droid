@@ -18,7 +18,6 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -73,7 +72,6 @@ public class NeighbourhoodView {
 
     // One-time setup paint
     if (FOCUSED_PAINT == null) {
-      Log.i(TAG, "One time setup."); // TODO: make sure this only happens once
       FOCUSED_PAINT = new Paint();
       FOCUSED_PAINT.setStyle(Paint.Style.STROKE);
       FOCUSED_PAINT.setStrokeWidth(3);
@@ -130,7 +128,8 @@ public class NeighbourhoodView {
     mImageRect = new Rect(imageRect);
   }
 
-  public Rect getBounds() {
+  // TODO: Make bounds handle polygons
+  public Rect getBounds() {    
     return mBounds;
   }
 
