@@ -10,7 +10,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -361,9 +360,9 @@ public class SelectView extends ImageView {
    * Zoom to fit and pan to center the given neighbourhood in the view.
    * @param nv
    */  
-  // TODO: figure this out
+  // TODO: Center the image at 1x scale
   public void follow(NeighbourhoodView nv) {
-    zoomTo(1.2f); // TODO: TESTING    
+    //zoomTo(1.5f); // TODO: TESTING    
     RectF bounds = nv.getScreenSpaceBounds();    
     RectF screen = new RectF(getLeft(), getTop(), getRight(), getBottom());
     
@@ -379,17 +378,13 @@ public class SelectView extends ImageView {
     float zoom = Math.min(z1, z2); 
     zoom *= getScale();
     zoom = Math.min(MAX_SCALE, zoom);
-    zoom = Math.max(MIN_SCALE, zoom);   
-    
-    float[] pt = { nv.getBounds().centerX(), nv.getBounds().centerY() };
-    mFinalMatrix.mapPoints(pt);
+    zoom = Math.max(MIN_SCALE, zoom);
     
     if ((Math.abs(zoom - getScale()) / zoom) > SOME_THRESHOLD) {
-      //zoomTo(zoom, pt[0], pt[1], FOLLOW_DURATION);
+      zoomTo(zoom, bounds.centerX(), bounds.centerY(), FOLLOW_DURATION);
     }
     
-    // recenter if the neighbourhood leaves or gets too close to the edge of screen 
-    
+    // re-center if the neighbourhood leaves or gets too close to the edge of screen     
     if (!screen.contains(bounds)) {
       center(nv, FOLLOW_DURATION);
     }
@@ -400,23 +395,17 @@ public class SelectView extends ImageView {
   /**
    * Center the given neighbourhood in the view.
    * @param nv
-   */
-  public void center(NeighbourhoodView nv) {
-    Rect r = nv.getBounds();
-    RectF bounds = new RectF(r.left, r.top, r.right, r.bottom);
-    mBaseMatrix.mapRect(bounds);
-    float dx = bounds.centerX() - (getWidth() / 2f);
-    float dy = bounds.centerY() - (getHeight() / 2f);
-    panTo(-dx, -dy);
-  }
-  
+   */  
   public void center(NeighbourhoodView nv, float duration) {
-    Rect r = nv.getBounds();
-    RectF bounds = new RectF(r.left, r.top, r.right, r.bottom);
-    mBaseMatrix.mapRect(bounds);
-    float dx = bounds.centerX() - (getWidth() / 2f);
-    float dy = bounds.centerY() - (getHeight() / 2f);
-    panTo(-dx, -dy, duration);
+    RectF bounds = nv.getScreenSpaceBounds(); 
+    
+    float vw = getWidth();
+    float vh = getHeight();
+    
+    float dx = (vw / 2f) - (bounds.centerX());
+    float dy = (vh / 2f) - (bounds.centerY());
+    
+    panBy(dx, dy, duration);
   }
 
 }

@@ -268,6 +268,7 @@ public class NeighbourhoodView {
   /**
    * handles motion to move the neighbourhood.
    */
+  // TODO: Constrain to screen
   public void handleMove(MotionEvent event) {
     float[] p = convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
