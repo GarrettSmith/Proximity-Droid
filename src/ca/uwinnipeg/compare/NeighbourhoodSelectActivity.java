@@ -32,7 +32,7 @@ import android.widget.SpinnerAdapter;
  * @author Garrett Smith
  *
  */
-public class NeighbourhoodSelect 
+public class NeighbourhoodSelectActivity 
 extends Activity 
 implements ActionBar.OnNavigationListener {
 

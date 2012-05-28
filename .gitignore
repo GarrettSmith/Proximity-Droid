@@ -3,4 +3,5 @@
 bin/
 gen/
 .project
+.settings
 local.properties
