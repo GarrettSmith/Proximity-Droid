@@ -5,6 +5,7 @@
 // TODO: Look into making rotate not affect input
 // TODO: Use spinner for title
 // TODO: Add hiding bars
+// TODO: Look into old shape being drawn after changing shape
 package ca.uwinnipeg.compare;
 
 import java.util.ArrayList;
@@ -18,7 +19,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -288,18 +288,37 @@ public class NeighbourhoodView {
     mLastY = y;
   }
 
-  public void addPoint(int x, int y) {
-    Point point = new Point((int)x, (int)y);
-    mPoints.add(point);
-    // Update the bounds
-    mBounds = getBounds();
+  /**
+   * Adds a point to the polygon if it is within the image bounds.
+   * @param x
+   * @param y
+   * @return the point added or null if the point would be outside the image bounds
+   */
+  // TODO: Add point between nearby points
+  public Point addPoint(int x, int y) {
+    // Prevent points from being added outside of image bounds
+    if (mImageRect.contains(x, y)) {
+      Point point = new Point((int)x, (int)y);
+      mPoints.add(point);
+      // Update the bounds
+      mBounds = getBounds();
 
-    if (mBounds.isEmpty()) {
-      mView.invalidate();
+      if (mBounds.isEmpty()) {
+        mView.invalidate();
+      }
+      else {
+        mView.invalidate(getPaddedScreenSpaceBounds());
+      }
+      return point;
     }
-    else {
-      mView.invalidate(getPaddedScreenSpaceBounds());
-    }
+    return null;
+  }
+  
+  public Point removePoint(Point p) {
+    mPoints.remove(mSelectedPoint);
+    mBounds = getBounds();
+    mView.invalidate();
+    return p;
   }
 
   /**
@@ -341,7 +360,7 @@ public class NeighbourhoodView {
    * @return the touched point or null if no point is being touched
    */
   private Point checkPoints(float x, float y) {
-    float padding = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_PADDING;
+    float padding = Math.max(mView.getWidth(), mView.getHeight()) * TOUCH_PADDING;
     for (int i = 0; i < mPoints.size(); i ++) {
       Point p = mPoints.get(i);
       if ( Math.abs(p.x - x) <= padding && Math.abs(p.y - y) <= padding) {
@@ -364,7 +383,10 @@ public class NeighbourhoodView {
         mView.followResize(this);
         break;
       case MOVE_POINT:
-        // TODO: does move point need to handle up
+        //delete the selected point if it is outside of the image bounds
+        if (!mImageRect.contains(mSelectedPoint.x, mSelectedPoint.y)) {
+          removePoint(mSelectedPoint);
+        }
         break;
     }
 
@@ -462,6 +484,7 @@ public class NeighbourhoodView {
           dx = x - mLastX;
           dy = y - mLastY;
           mSelectedPoint.offset((int)dx, (int)dy);
+          // TODO: Alert that the point will be deleted
           mBounds = getBounds();
           mLastX = x;
           mLastY = y;
@@ -618,6 +641,7 @@ public class NeighbourhoodView {
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
+  // TODO: Break down neighbourhood drawing
   protected void draw(Canvas canvas) {
 
     RectF bounds = getScreenSpaceBounds();
