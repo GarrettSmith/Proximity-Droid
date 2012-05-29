@@ -181,6 +181,20 @@ public class SelectView extends ImageView {
   public Matrix getFinalMatrix() {
     return new Matrix(mFinalMatrix);
   }
+  
+  public Matrix getUserMatrix() {
+    return new Matrix(mUserMatrix);
+  }
+  
+  public void setUserMatrix(Matrix m) {
+    mUserMatrix.set(m);
+    invalidate();
+  } 
+  
+  public void setUserMatrix(float[] values) {
+    mUserMatrix.setValues(values);
+    invalidate();
+  }
 
   @Override
   protected void onDraw(Canvas canvas) {
@@ -205,15 +219,15 @@ public class SelectView extends ImageView {
     return mUserVals[key];
   }
 
-  private float getTranslateX() {
+  public float getTranslateX() {
     return getValue(Matrix.MTRANS_X);
   }
 
-  private float getTranslateY() {
+  public float getTranslateY() {
     return getValue(Matrix.MTRANS_Y);
   }
 
-  private float getScale() {
+  public float getScale() {
     return getValue(Matrix.MSCALE_X);
   }
 
@@ -398,7 +412,7 @@ public class SelectView extends ImageView {
 
   private static final float SCALE_PADDING = 0.6f;
   private static final float SCALE_THRESHOLD = 0.1f;
-  private static final float MAX_SCALE = 4f;
+  private static final float MAX_SCALE = 6f;
   private static final float MIN_SCALE = 0.9f;
 
   public void followResize(NeighbourhoodView nv) {

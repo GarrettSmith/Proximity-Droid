@@ -1,5 +1,7 @@
 package ca.uwinnipeg.compare;
 
+import java.io.IOException;
+
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
@@ -24,10 +26,9 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 
-// TODO: Zoom and pan to follow neighbourhood
-// TODO: Look into why image shifts after rotate, STATUS BAR does this need to be fixed?
 // TODO: Support down to 2.1
 // TODO: Shift of the main UI thread possibly
+// TODO: Restore user matrix
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
@@ -56,7 +57,6 @@ implements ActionBar.OnNavigationListener {
   private NeighbourhoodView mNeighbourhoodView;
 
   // Used to restore state properly without having the restored bounds overwritten.
-  // TODO: Is this really what I should be using a runnable for?
   private Runnable mOnCreateRunnable = null;
 
   // UI
@@ -95,18 +95,19 @@ implements ActionBar.OnNavigationListener {
     if (state != null) {
       mBitmap = state.getParcelable(BUNDLE_KEY_BITMAP);
       mOrientation = state.getInt(BUNDLE_KEY_ORIENTATION);
+      
+      // Restore NeighbourhoodView
       final Rect bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
       String shapeStr = state.getString(BUNDLE_KEY_SHAPE);
       if (shapeStr != null) {
-       shape = NeighbourhoodView.Shape.valueOf(shapeStr);
+        shape = NeighbourhoodView.Shape.valueOf(shapeStr);
       }
       if (bounds != null) {
         // Create a runnable to restore the bounds after the shape has been restored
         mOnCreateRunnable = new Runnable() {
           public void run() {
-            if (bounds != null) {
-              mNeighbourhoodView.setBounds(bounds);
-            }
+            mNeighbourhoodView.setBounds(bounds);
+            mSelectView.followResize(mNeighbourhoodView);
           }
         };
       }
@@ -176,7 +177,8 @@ implements ActionBar.OnNavigationListener {
     mNeighbourhoodView.setImageRect(imageRect);
 
     mNeighbourhoodView.resetBounds();
-
+    
+    mSelectView.followResize(mNeighbourhoodView);
   }
 
   @Override
@@ -184,6 +186,7 @@ implements ActionBar.OnNavigationListener {
     // Save the current image
     state.putParcelable(BUNDLE_KEY_BITMAP, mBitmap);
     state.putInt(BUNDLE_KEY_ORIENTATION, mOrientation);
+    
     if (mNeighbourhoodView != null) {
       state.putParcelable(BUNDLE_KEY_BOUNDS, mNeighbourhoodView.getBounds());
       state.putString(BUNDLE_KEY_SHAPE, mNeighbourhoodView.getShape().name());
@@ -232,55 +235,70 @@ implements ActionBar.OnNavigationListener {
    * Loads the bitmap from data and sets the orientation and bitmap to the view.
    * @param data
    */
-  // TODO: CLEANUP loading images
+  protected void loadImage(Uri data) {
+    String path = getRealPathFromURI(data);
+
+    // Load the orientation
+    mOrientation = readOrientation(path);
+
+    // Get screen size
+    Point displaySize = getDisplaySize();
+    int width = displaySize.x;
+    int height = displaySize.y;
+
+    // Read the bitmap's size
+    BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeFile(path, options);
+
+    // Calculate sample size
+    options.inSampleSize = calculateInSampleSize(options, width, height, mOrientation);
+
+    // load the bitmap
+    options.inJustDecodeBounds = false; 
+    mBitmap = BitmapFactory.decodeFile(path, options);
+  }
+
+  /**
+   * Reads the exif orientation information of a file and returns a RotatedBitmap rotation value.
+   * @param filePath
+   * @return
+   */
+  public static int readOrientation(String filePath) {
+    ExifInterface exif;
+    int orientation = ExifInterface.ORIENTATION_NORMAL;
+    try {
+      exif = new ExifInterface(filePath);
+      orientation = 
+          exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+    } catch (IOException e) {
+      Log.e(TAG, "Failed to load file for exif data. " + filePath);
+    }    
+    return mapEXIF(orientation);
+  }
+
+  public static int mapEXIF(int exifVal) {
+    switch (exifVal) {
+      case ExifInterface.ORIENTATION_ROTATE_90:   return RotatedBitmap.CW;
+      case ExifInterface.ORIENTATION_ROTATE_180:  return RotatedBitmap.UPSIDEDOWN;
+      case ExifInterface.ORIENTATION_ROTATE_270:  return RotatedBitmap.CCW;
+      default:                                    return RotatedBitmap.NORMAL;
+    }
+  }
+
   @SuppressWarnings("deprecation")
   @TargetApi(13)
-  protected void loadImage(Uri data) {
-    String path = "";
-    try {
-      path = getRealPathFromURI(data);
-
-      // Read the bitmap's size
-      BitmapFactory.Options options = new BitmapFactory.Options();
-      options.inJustDecodeBounds = true;
-
-      BitmapFactory.decodeFile(path, options);
-
-      // Get screen size
-      Display display = getWindowManager().getDefaultDisplay();
-      int width, height;
-      // Get screen size depending on the api level
-      if (android.os.Build.VERSION.SDK_INT >= 13) {
-        Point size = new Point();
-        display.getSize(size);
-        width = size.x;
-        height = size.y;
-      }
-      else {
-        width = display.getWidth();
-        height = display.getHeight();
-      }
-
-      // TODO: Deal with rotated images
-      // Calculate sample size
-      options.inSampleSize = 
-          calculateInSampleSize(options, width/2, height/2);
-
-      options.inJustDecodeBounds = false; 
-
-      // load the bitmap
-      mBitmap = BitmapFactory.decodeFile(path, options);
-
-      // Load the orientation      
-      ExifInterface exif = new ExifInterface(path);
-      int orientation = 
-          exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-      mOrientation = mapEXIF(orientation);
+  public Point getDisplaySize() {
+    Display display = getWindowManager().getDefaultDisplay();
+    Point p = new Point();
+    if (android.os.Build.VERSION.SDK_INT >= 13) {
+      display.getSize(p);
     }
-    // TODO: Deal with specific exceptions
-    catch (Exception e) {
-      Log.e(TAG, "Failed to load file for exif data. " + path);
+    else {
+      p.x = display.getWidth();
+      p.y = display.getHeight();
     }
+    return p;
   }
 
   /**
@@ -288,13 +306,27 @@ implements ActionBar.OnNavigationListener {
    * @param options
    * @param reqWidth
    * @param reqHeight
+   * @param rotation same as RotatedBitmap
    * @return
    */
   public static int calculateInSampleSize(
-      BitmapFactory.Options options, int reqWidth, int reqHeight) {
-    // Raw height and width of image
-    final int height = options.outHeight;
-    final int width = options.outWidth;
+      BitmapFactory.Options options, 
+      int reqWidth, 
+      int reqHeight,
+      int rotation) {
+    
+    // Raw height and width of image rotated properly
+    int width, height;
+    if (rotation == RotatedBitmap.CW || rotation == RotatedBitmap.CCW) {
+      // switch width and height for images that change orientation
+      width = options.outHeight;
+      height = options.outWidth;
+    }
+    else {
+      height = options.outHeight;
+      width = options.outWidth;
+    }
+    
     int inSampleSize = 1;
 
     if (height > reqHeight || width > reqWidth) {
@@ -305,15 +337,6 @@ implements ActionBar.OnNavigationListener {
       }
     }
     return inSampleSize;
-  }
-
-  private static int mapEXIF(int exifVal) {
-    switch (exifVal) {
-      case ExifInterface.ORIENTATION_ROTATE_90:   return RotatedBitmap.CW;
-      case ExifInterface.ORIENTATION_ROTATE_180:  return RotatedBitmap.UPSIDEDOWN;
-      case ExifInterface.ORIENTATION_ROTATE_270:  return RotatedBitmap.CCW;
-      default:                                    return RotatedBitmap.NORMAL;
-    }
   }
 
   /**
