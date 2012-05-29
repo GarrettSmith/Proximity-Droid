@@ -3,6 +3,8 @@
  */
 // TODO: Implement polygons
 // TODO: Look into making rotate not affect input
+// TODO: Use spinner for title
+// TODO: Add hiding bars
 package ca.uwinnipeg.compare;
 
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
+import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -51,23 +54,23 @@ public class NeighbourhoodView {
 
   // The matrix used to move from image space to screen space
   private Matrix mMatrix; 
-  
+
   // The image bounds in image space
   private Rect mImageRect;
-  
+
   public enum Shape { RECTANGLE, OVAL, POLYGON }
-  
+
   private Shape mShape = Shape.RECTANGLE;
-  
+
   // The list of points that make up the polygon
   private ArrayList<Point> mPoints = new ArrayList<Point>();
 
   public NeighbourhoodView(SelectView v){
     mView = v;
-    
+
     // Grab the matrix
     mMatrix = mView.getFinalMatrix();
-    
+
     // Borrow the view's resources
     Resources rs = v.getResources();
 
@@ -78,29 +81,29 @@ public class NeighbourhoodView {
       FOCUSED_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_focused_stroke));
       FOCUSED_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
       FOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
-      
+
       UNFOCUSED_PAINT = new Paint();
       UNFOCUSED_PAINT.setStyle(Paint.Style.FILL);
       UNFOCUSED_PAINT.setColor(rs.getColor(R.color.neighbourhood_unfocused_color));
       UNFOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
-      
+
       GUIDE_PAINT = new Paint();
       GUIDE_PAINT.setStyle(Paint.Style.STROKE);
       GUIDE_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_guide_stroke));
       GUIDE_PAINT.setColor(rs.getColor(R.color.neighbourhood_guide_color));
       GUIDE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
-      
+
       HANDLE_PAINT = new Paint();
       HANDLE_PAINT.setStyle(Paint.Style.FILL);
       HANDLE_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
       HANDLE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
-      
+
       UNSELECTED_PAINT = new Paint();
       UNSELECTED_PAINT.setColor(rs.getColor(R.color.neighbourhood_unselected_color));
       UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
-      
+
       HANDLE_SIZE = rs.getDimension(R.dimen.neighbourhood_handle_size);
-      
+
       HANDLE_PATH = new Path();
       float halfSize = HANDLE_SIZE / 2;
       HANDLE_PATH.addRect(-halfSize, -halfSize, halfSize, halfSize, Path.Direction.CW);
@@ -129,7 +132,7 @@ public class NeighbourhoodView {
   public void setImageRect(Rect imageRect) {
     mImageRect = new Rect(imageRect);
   }
-  
+
   public void setScreenMatrix(Matrix m) {
     mMatrix.set(m);
   }
@@ -137,18 +140,21 @@ public class NeighbourhoodView {
   public Rect getBounds() {
     Rect bounds = new Rect();
     // Calculate the bounds of the polygon with more than one point
-    if (mShape == Shape.POLYGON && mPoints.size() > 1) {
-      Point p1 = mPoints.get(0);
-      Point p2 = mPoints.get(1);
-      
-      // create an initial bounds from the first two points
-      bounds.set(p1.x, p1.y, p2.x, p2.y);
-      bounds.sort(); // make sure the left is actually on the left etc.
-      
-      // Get the union of each point to get the final bounds
-      for (int i = 2; i < mPoints.size(); i++) {
-        Point p = mPoints.get(i);
-        bounds.union(p.x, p.y);
+    // Otherwise the bounds is an empty rect
+    if (mShape == Shape.POLYGON) {
+      if (mPoints.size() > 1) {
+        Point p1 = mPoints.get(0);
+        Point p2 = mPoints.get(1);
+
+        // create an initial bounds from the first two points
+        bounds.set(p1.x, p1.y, p2.x, p2.y);
+        bounds.sort(); // make sure the left is actually on the left etc.
+
+        // Get the union of each point to get the final bounds
+        for (int i = 2; i < mPoints.size(); i++) {
+          Point p = mPoints.get(i);
+          bounds.union(p.x, p.y);
+        }
       }
     }
     else {
@@ -168,13 +174,29 @@ public class NeighbourhoodView {
     mView.invalidate(dirty);
   }
 
+  public void reset() {
+    if (mShape == Shape.POLYGON) {
+      mPoints.clear();
+      mBounds = getBounds();
+    }
+    else {
+      resetBounds();
+    }
+
+    // Check if we need to follow the focused neighbourhood
+    if (mFocused) {
+      mView.followResize(this);
+    }
+    mView.invalidate();
+  }
+
   /**
    * Sets the bounds to a default value.
    */
   public void resetBounds() {
     // can't do anything if you don't have an image to work with yet
     if (mImageRect == null) return;
-    
+
     int w = mImageRect.width();
     int h = mImageRect.height();
     // Use the smaller side to determine the padding
@@ -182,23 +204,21 @@ public class NeighbourhoodView {
     int padding = (int)(Math.min(w, h) * PADDING_RATIO);
     setBounds(new Rect(padding, padding, w-padding, h-padding));
   }
-  
+
   public void setShape(Shape s) {
     mShape = s;
     if (mShape == Shape.POLYGON) {
-      mPoints.clear();
-      // TESTING
-      mPoints.add(new Point(50,50));
-      mPoints.add(new Point(100, 50));
-      mPoints.add(new Point(200,200));
-      mPoints.add(new Point(50, 200));
-      mPoints.add(new Point(0, 100));
       mBounds = getBounds();
       mView.invalidate();
     }
-    mView.invalidate(getPaddedScreenSpaceBounds());
+    else {
+      if (mBounds.isEmpty()) {
+        resetBounds();
+      }
+      mView.invalidate(getPaddedScreenSpaceBounds());
+    }
   }
-  
+
   public Shape getShape() {
     return mShape;
   }
@@ -223,9 +243,11 @@ public class NeighbourhoodView {
   private float mLastDistanceX;
   private float mLastDistanceY;
   private Action mLastAction = Action.NONE;
+  
+  private Point mSelectedPoint;
 
   // The action currently taking place
-  public enum Action { NONE, MOVE, RESIZE, SCALE }
+  public enum Action { NONE, MOVE, RESIZE, SCALE, MOVE_POINT }
 
   // The edge or pair of edges that are currently selected
   public enum Edge { NONE, TL, T, TR, R, BR, B, BL, L, ALL }
@@ -233,23 +255,51 @@ public class NeighbourhoodView {
   /** 
    * Handles a down event.
    */
-  // TODO: Add drawing polygons
+  // TODO: Deal with complex polygons
   public void handleDown(MotionEvent event) {
     float[] p = convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
     float y = p[1];
 
-    if ( (mEdge = checkEdges(x, y)) != Edge.NONE) {
-      mAction = Action.RESIZE;
+    // Polygons
+    if (mShape == Shape.POLYGON) {
+      mSelectedPoint = checkPoints(x, y);
+      if (mSelectedPoint != null) {
+        mAction = Action.MOVE_POINT;
+      }
+      else {
+        // Create a new point
+        addPoint((int)x, (int)y);
+      }
     }
-    // Check if touch was within neighbourhood
-    else if (mBounds.contains((int)x, (int)y)) {
-      mAction = Action.MOVE;      
+    // Deal with non-polygons
+    else {
+      if ( (mEdge = checkEdges(x, y)) != Edge.NONE) {
+        mAction = Action.RESIZE;
+      }
+      // Check if touch was within neighbourhood
+      else if (mBounds.contains((int)x, (int)y)) {
+        mAction = Action.MOVE;      
+      }
     }
 
     // Record position
     mLastX = x;
     mLastY = y;
+  }
+
+  public void addPoint(int x, int y) {
+    Point point = new Point((int)x, (int)y);
+    mPoints.add(point);
+    // Update the bounds
+    mBounds = getBounds();
+
+    if (mBounds.isEmpty()) {
+      mView.invalidate();
+    }
+    else {
+      mView.invalidate(getPaddedScreenSpaceBounds());
+    }
   }
 
   /**
@@ -266,7 +316,7 @@ public class NeighbourhoodView {
     int bottom = mBounds.bottom;
 
     Edge rtn = Edge.NONE;
-    
+
     float shift = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_SHIFT;
     float padding = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_PADDING;
 
@@ -285,6 +335,23 @@ public class NeighbourhoodView {
   }
 
   /**
+   * Given the touched point determines which point of the polygon should be selected.
+   * @param x
+   * @param y
+   * @return the touched point or null if no point is being touched
+   */
+  private Point checkPoints(float x, float y) {
+    float padding = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_PADDING;
+    for (int i = 0; i < mPoints.size(); i ++) {
+      Point p = mPoints.get(i);
+      if ( Math.abs(p.x - x) <= padding && Math.abs(p.y - y) <= padding) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Handles an up event.
    */
   public void handleUp(MotionEvent event) {
@@ -296,8 +363,11 @@ public class NeighbourhoodView {
       case RESIZE:
         mView.followResize(this);
         break;
+      case MOVE_POINT:
+        // TODO: does move point need to handle up
+        break;
     }
-    
+
     // Reset current action
     mAction = Action.NONE;
     mView.invalidate(getPaddedScreenSpaceBounds());
@@ -306,7 +376,9 @@ public class NeighbourhoodView {
   /**
    * handles motion to move the neighbourhood.
    */
+  // TODO: Break down handleMove
   // TODO: Make work with polygons
+  // TODO: Why are we recording the last point like 7 times
   public void handleMove(MotionEvent event) {
     float[] p = convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
@@ -335,7 +407,7 @@ public class NeighbourhoodView {
 
     // Check if any action is being performed
     if (mAction != Action.NONE) {
-      
+
       // rectangle that needs redraw
       Rect dirty = getPaddedScreenSpaceBounds();
 
@@ -361,7 +433,7 @@ public class NeighbourhoodView {
           mLastX = x;
           mLastY = y;
           break;
-        // TODO: Constrain scale to screen and maintain aspect ratio
+          // TODO: Constrain scale to screen and maintain aspect ratio
         case SCALE:
           float x1 = event.getX(1);
           float y1 = event.getY(1);
@@ -386,12 +458,20 @@ public class NeighbourhoodView {
           mLastX = midX;
           mLastY = midY;
           break;
+        case MOVE_POINT:
+          dx = x - mLastX;
+          dy = y - mLastY;
+          mSelectedPoint.offset((int)dx, (int)dy);
+          mBounds = getBounds();
+          mLastX = x;
+          mLastY = y;
+          break;
       }
 
       // Reflect change on screen
       dirty.union(getPaddedScreenSpaceBounds());
       mView.invalidate(dirty);      
-      
+
     }
   }
 
@@ -505,17 +585,14 @@ public class NeighbourhoodView {
     padding += 1;
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
     mMatrix.mapRect(r);
-    r.left    -= padding;
-    r.top     -= padding; 
-    r.right   += padding; 
-    r.bottom  += padding;
+    r.inset(-padding, -padding);
     return new Rect(
-      Math.round(r.left), 
-      Math.round(r.top), 
-      Math.round(r.right), 
-      Math.round(r.bottom));
+        Math.round(r.left), 
+        Math.round(r.top), 
+        Math.round(r.right), 
+        Math.round(r.bottom));
   }
-  
+
   /**
    * Converts mPoints to an array of primitive floats
    * @return
@@ -530,7 +607,7 @@ public class NeighbourhoodView {
     }
     return fs;
   }
-  
+
   private float[] getScreenSpacePoints() {
     float[] ps = getPoints();
     mMatrix.mapPoints(ps);
@@ -542,9 +619,9 @@ public class NeighbourhoodView {
    * @param canvas
    */
   protected void draw(Canvas canvas) {
-    
+
     RectF bounds = getScreenSpaceBounds();
-    
+
     Path shapePath = new Path();
 
     switch (mShape) {
@@ -558,11 +635,14 @@ public class NeighbourhoodView {
       case POLYGON:
         float[] ps = getScreenSpacePoints();
         int size = ps.length;
-        // Move to last point
-        shapePath.moveTo(ps[size-2], ps[size-1]); 
-        // Connect all points
-        for (int i = 0; i < size; i += 2) {
-          shapePath.lineTo( ps[i], ps[i+1]);
+        // We can only draw a shape if we have more than 1 point
+        if (size > 1) {
+          // Move to last point
+          shapePath.moveTo(ps[size-2], ps[size-1]); 
+          // Connect all points
+          for (int i = 0; i < size; i += 2) {
+            shapePath.lineTo( ps[i], ps[i+1]);
+          }
         }
         break;
     }

@@ -28,7 +28,8 @@ import android.widget.SpinnerAdapter;
 
 // TODO: Support down to 2.1
 // TODO: Shift of the main UI thread possibly
-// TODO: Restore user matrix
+// TODO: Restore view zoom properly
+// TODO: Implement reset button
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
@@ -368,6 +369,9 @@ implements ActionBar.OnNavigationListener {
       case R.id.menu_about:
         showAbout();
         return true;
+      case R.id.menu_reset:
+        reset();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -379,6 +383,13 @@ implements ActionBar.OnNavigationListener {
   public void showAbout() {
     Intent i = new Intent(this, AboutActivity.class);
     startActivity(i);
+  }
+  
+  /**
+   * Reset the neighbourhood.
+   */
+  public void reset() {
+    mNeighbourhoodView.reset();
   }
 
 }

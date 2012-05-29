@@ -423,21 +423,27 @@ public class SelectView extends ImageView {
 
     float vw = getWidth();
     float vh = getHeight();
+    float zoom;
+    // Skip everything and zoom completely out
+    if (bounds.isEmpty()) {
+      zoom = MIN_SCALE;
+    }
+    else {
+      float z1 = vw / w * SCALE_PADDING;
+      float z2 = vh / h * SCALE_PADDING;
 
-    float z1 = vw / w * SCALE_PADDING;
-    float z2 = vh / h * SCALE_PADDING;
-
-    float zoom = Math.min(z1, z2); 
-    zoom *= getScale();
-    // Limit the zoom
-    zoom = Math.min(MAX_SCALE, zoom);
-    zoom = Math.max(MIN_SCALE, zoom);
+      zoom = Math.min(z1, z2); 
+      zoom *= getScale();
+      // Limit the zoom
+      zoom = Math.min(MAX_SCALE, zoom);
+      zoom = Math.max(MIN_SCALE, zoom);
+    }
 
     // Check if zoom has changed enough to need updating or we are at minimum zoom
     if ((Math.abs(zoom - getScale()) / zoom) > SCALE_THRESHOLD || zoom == MIN_SCALE) {
       float dx = (vw / 2f) - bounds.centerX();
       float dy = (vh / 2f) - bounds.centerY();
-      
+
       // Check if we are zoomed out enough to center
       RectF imageBounds = getImageScreenBounds();
       float dScale = zoom / getScale();
