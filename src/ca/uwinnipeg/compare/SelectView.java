@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -98,7 +99,6 @@ public class SelectView extends ImageView {
         for (NeighbourhoodView n : mNeighbourhoods) {
           if (n.isFocused()) {
             n.handleUp(event);
-            follow(n);
           }          
         }
         return true;
@@ -191,110 +191,78 @@ public class SelectView extends ImageView {
       n.draw(canvas);
     }
   }
-  
+
   // User matrix operations
-  
+
   // Used to create operations that run on their own threads
   private Handler mHandler = new Handler();
-  
+
   // Used to access the values of the user matrix
   private float[] mUserVals = new float[9];
-  
+
   private float getValue(int key) {
     // read values
     mUserMatrix.getValues(mUserVals);
     return mUserVals[key];
   }
-  
+
   private float getTranslateX() {
     return getValue(Matrix.MTRANS_X);
   }
-  
+
   private float getTranslateY() {
     return getValue(Matrix.MTRANS_Y);
   }
-  
+
   private float getScale() {
     return getValue(Matrix.MSCALE_X);
   }
-  
+
+  // Pan
+
   public void panBy(float dx, float dy) {
     mUserMatrix.postTranslate(dx, dy);
     updateFinalMatrix();
   }
-  
+
   public void panTo(float x, float y) {
     float dx = x - getTranslateX();
     float dy = y - getTranslateY();
     panBy(dx, dy);
   }
-  
+
   public void panBy(float dx, float dy, final float duration) {
     final float startX = getTranslateX();
     final float startY = getTranslateY();
     final float dxPerMs = dx / duration;
     final float dyPerMs = dy / duration;
-    final long startTime = System.currentTimeMillis();
-    
+
     // create a runnable that will be repeated until duration, and thus target, is met
-    mHandler.post(new Runnable() {      
-      //@Override
-      public void run() {
-        long now = System.currentTimeMillis();
-        float elapsed = Math.min(duration, now - startTime);
+    new TransformRunnable(mHandler, duration) {
+      @Override
+      public void action(float elapsed) {
         float targetX = startX + dxPerMs * elapsed;
         float targetY = startY + dyPerMs * elapsed;
         panTo(targetX, targetY);
-        
-        if (elapsed < duration) {
-          mHandler.post(this); // rerun if duration has not been met
-        }
       }
-    });
+    }.run();
   }
-  
+
   public void panTo(float x, float y, float duration) {
     float dx = x - getTranslateX();
     float dy = y - getTranslateY();
     panBy(dx, dy, duration);
   }
-  
-  public void centerX() {
-    panTo(0, getTranslateY());
-  }
-  
-  public void centerX(float duration) {
-    panTo(0, getTranslateY(), duration);
-  }
-  
-  public void centerY() {
-    panTo(getTranslateX(), 0);
-  }
-  
-  public void centerY(float duration) {
-    panTo(getTranslateX(), 0, duration);
-  }
-  
-  public void center() {
-    panTo(0, 0);
-  } 
-  
-  public void center(float duration) {
-    panTo(0, 0, duration);
-  }
-  
+    
+    // Zoom
+
   public void zoomBy(float dScale, float x, float y) {
-    // Map point to correctly zoom
-    //float[] pts = { x, y };
-    //mBaseMatrix.mapPoints(pts);
-    // Apply scale
-    //mUserMatrix.postScale(dScale, dScale, pts[0], pts[1]);
     mUserMatrix.postScale(dScale, dScale, x, y);
     updateFinalMatrix();
   }
 
   /**
-   * Zooms by the given delta scale to the image's center.
+   * Zooms by the given delta scale to the view's center.
    * @param dScale
    */
   public void zoomBy(float dScale) {
@@ -313,22 +281,15 @@ public class SelectView extends ImageView {
   public void zoomBy(float dScale, final float x, final float y, final float duration) {
     final float startScale = getScale();
     final float dScalePerMs = dScale / duration;
-    final long startTime = System.currentTimeMillis();
 
     // create a runnable that will be repeated until duration, and thus target, is met
-    mHandler.post(new Runnable() {      
-      //@Override
-      public void run() {
-        long now = System.currentTimeMillis();
-        float elapsed = Math.min(duration, now - startTime);
+    new TransformRunnable(mHandler, duration) {      
+      @Override
+      public void action(float elapsed) {
         float targetScale = startScale + dScalePerMs * elapsed;
         zoomTo(targetScale, x, y);
-
-        if (elapsed < duration) {
-          mHandler.post(this); // rerun if duration has not been met
-        }
       }
-    });
+    }.run();
   }
 
   public void zoomBy(float dScale, float duration) {
@@ -341,71 +302,188 @@ public class SelectView extends ImageView {
   }  
 
   public void zoomTo(float scale, float duration) {
-    float dScale = scale / getScale();
+    float dScale = scale - getScale();
     zoomBy(dScale, getWidth()/2f, getHeight()/2f, duration);
+  }
+  
+  public void panByZoomTo(float dx, float dy, float scale, final float duration) {
+    final float startX = getTranslateX();
+    final float startY = getTranslateY();
+    final float dxPerMs = dx / duration;
+    final float dyPerMs = dy / duration;
+    
+    final float startScale = getScale();
+    final float dScalePerMs = (scale - startScale) / duration;
+    
+    // create a runnable that will be repeated until duration, and thus target, is met
+    new TransformRunnable(mHandler, duration) {
+      private boolean mPanned = false;
+      @Override
+      public void action(float elapsed) {
+        // Pan first
+        if (elapsed * 2 < duration) {
+          float targetX = startX + dxPerMs * elapsed * 2;
+          float targetY = startY + dyPerMs * elapsed * 2;
+          panTo(targetX, targetY);
+        }
+        // Make sure we made it all the way there
+        else if (!mPanned) {
+          float targetX = startX + dxPerMs * duration;
+          float targetY = startY + dyPerMs * duration;
+          panTo(targetX, targetY);
+          mPanned = true;
+        }
+        // Zoom
+        else {
+          float targetScale = startScale + dScalePerMs * elapsed;
+          zoomTo(targetScale);
+        }
+      }
+    }.run();
   }
 
   // Neighbourhood following
-  
+
   private static final float FOLLOW_DURATION = 300f;
-  
-  private static final float SOME_CONSTANT = 0.6f; // TODO: rename
-  private static final float SOME_THRESHOLD = 0.1f;
-  private static final float MAX_SCALE = 4f;
-  private static final float MIN_SCALE = 1f;
-  
-  private Runnable followRunnable = null;
 
   /**
    * Zoom to fit and pan to center the given neighbourhood in the view.
    * @param nv
-   */  
-  // TODO: Center the image at 1x scale
-  public void follow(NeighbourhoodView nv) {
-    //zoomTo(1.5f); // TODO: TESTING    
-    RectF bounds = nv.getScreenSpaceBounds();    
+   */
+  public void followMove(NeighbourhoodView nv) {
+    // Determine the zoom required
+    RectF bounds = nv.getScreenSpaceBounds();
+
+    float dx = 0;
+    float dy = 0;
+
+    float vw = getWidth();
+    float vh = getHeight();
+
+    // re-center if the neighbourhood leaves or gets too close to the edge of screen
     RectF screen = new RectF(getLeft(), getTop(), getRight(), getBottom());
+
+    if (!screen.contains(bounds)) {
+      dx = ((vw / 2f) - bounds.centerX());
+      dy = ((vh / 2f) - bounds.centerY());
+    }
+    
+    // Get the bounds of the image
+    RectF imageBounds = getImageScreenBounds();
+    float iw = imageBounds.width();
+    float ih = imageBounds.height();
+    
+    // Show the entire axis if it can fit on the screen
+    if (iw <= vw) {
+      dx = (vw / 2f) - imageBounds.centerX();
+    }
+
+    if (ih <= vh) {
+      dy = (vh / 2f) - imageBounds.centerY();
+    }
+
+    panBy(dx, dy, FOLLOW_DURATION);
+  }
+
+  private static final float SCALE_PADDING = 0.6f; // TODO: rename
+  private static final float SCALE_THRESHOLD = 0.1f;
+  private static final float MAX_SCALE = 4f; // can't zoom more than 4X
+  private static final float MIN_SCALE = 0.9f;  // can't zoom to less than 1x
+
+  public void followResize(NeighbourhoodView nv) {
+    RectF bounds = nv.getScreenSpaceBounds();
     
     float w = bounds.width();
     float h = bounds.height();
-    
+
     float vw = getWidth();
     float vh = getHeight();
-    
-    float z1 = vw / w * SOME_CONSTANT;
-    float z2 = vh / h * SOME_CONSTANT;
-    
+
+    float z1 = vw / w * SCALE_PADDING;
+    float z2 = vh / h * SCALE_PADDING;
+
     float zoom = Math.min(z1, z2); 
     zoom *= getScale();
+    // Limit the zoom
     zoom = Math.min(MAX_SCALE, zoom);
     zoom = Math.max(MIN_SCALE, zoom);
-    
-    if ((Math.abs(zoom - getScale()) / zoom) > SOME_THRESHOLD) {
-      zoomTo(zoom, bounds.centerX(), bounds.centerY(), FOLLOW_DURATION);
-    }
-    
-    // re-center if the neighbourhood leaves or gets too close to the edge of screen     
-    if (!screen.contains(bounds)) {
-      center(nv, FOLLOW_DURATION);
+
+    // Check if zoom has changed enough to need updating or we are at minimum zoom
+    if ((Math.abs(zoom - getScale()) / zoom) > SCALE_THRESHOLD || zoom == MIN_SCALE) {
+      float dx = (vw / 2f) - bounds.centerX();
+      float dy = (vh / 2f) - bounds.centerY();
+      
+      // Check if we are zoomed out enough to center
+      RectF imageBounds = getImageScreenBounds();
+      float dScale = zoom / getScale();
+      float iw = imageBounds.width() * dScale;
+      float ih = imageBounds.height() * dScale;
+      
+      if (iw <= vw) {
+        dx = (vw / 2f) - imageBounds.centerX();
+      }
+
+      if (ih <= vh) {
+        dy = (vh / 2f) - imageBounds.centerY();
+      }
+      
+      // Pan and zoom
+      panByZoomTo(dx, dy, zoom, FOLLOW_DURATION);
     }
   }
   
-  // TODO: remove this duplication
-  // FIXME: Doesn't work with scaling
+  private RectF getImageScreenBounds() {
+    RectF imageBounds = new RectF(
+        0, 
+        0, 
+        mBitmap.getBitmap().getWidth(), 
+        mBitmap.getBitmap().getHeight());
+    mFinalMatrix.mapRect(imageBounds);
+
+    
+    return imageBounds;
+  }
+  
   /**
-   * Center the given neighbourhood in the view.
-   * @param nv
-   */  
-  public void center(NeighbourhoodView nv, float duration) {
-    RectF bounds = nv.getScreenSpaceBounds(); 
+   * A runnable that fires a series of events using the elapsed time.
+   * @author garrett
+   *
+   */
+  public abstract class TransformRunnable implements Runnable {
+    private Handler mHandler;    
+    private float mDuration;
+    private long mStartTime = -1;
     
-    float vw = getWidth();
-    float vh = getHeight();
+    public TransformRunnable(Handler hand, float dur) {
+      mHandler = hand;
+      mDuration = dur;
+    }
+
+    @Override
+    public void run() {
+      // Setup start time on first run
+      if (mStartTime == -1) {
+        mStartTime = System.currentTimeMillis();
+        mHandler.post(this);
+        return;
+      }
+      
+      long now = System.currentTimeMillis();
+      float elapsed = Math.min(mDuration, now - mStartTime);
+      // Take its action
+      action(elapsed);
+      // Check if it should rerun or run the next in the chain
+      if (elapsed < mDuration) {
+        mHandler.post(this);
+      }
+    }
     
-    float dx = (vw / 2f) - (bounds.centerX());
-    float dy = (vh / 2f) - (bounds.centerY());
+    /**
+     * The action taken by this runnable.
+     * @param elapsed the elapsed time since start time
+     */
+    public abstract void action(float elapsed);
     
-    panBy(dx, dy, duration);
   }
 
 }

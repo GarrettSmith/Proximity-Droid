@@ -20,6 +20,7 @@ import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 
@@ -81,6 +82,9 @@ implements ActionBar.OnNavigationListener {
 
     mContentResolver = getContentResolver();
 
+    getWindow().setFlags(
+        WindowManager.LayoutParams.FLAG_FULLSCREEN, 
+        WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
     // setup view
     mSelectView = (SelectView) findViewById(R.id.select_view);

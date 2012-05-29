@@ -262,6 +262,14 @@ public class NeighbourhoodView {
    * Handles an up event.
    */
   public void handleUp(MotionEvent event) {
+    switch(mAction) {
+      case MOVE: 
+        mView.followMove(this);
+        break;
+      case RESIZE:
+        mView.followResize(this);
+        break;
+    }
     mAction = Action.NONE;
   }
 
