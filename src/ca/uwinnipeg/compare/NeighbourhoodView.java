@@ -127,6 +127,10 @@ public class NeighbourhoodView {
   public void setImageRect(Rect imageRect) {
     mImageRect = new Rect(imageRect);
   }
+  
+  public void setScreenMatrix(Matrix m) {
+    mMatrix.set(m);
+  }
 
   // TODO: Make bounds handle polygons
   public Rect getBounds() {    

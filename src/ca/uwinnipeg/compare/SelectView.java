@@ -6,11 +6,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -25,20 +23,20 @@ public class SelectView extends ImageView {
 
   // This matrix transforms the image to fit within the screen. 
   // The image is scaled to fit the screen using letterboxing.
-  protected Matrix mBaseMatrix = new Matrix();
+  private final Matrix mBaseMatrix = new Matrix();
 
   // This matrix reflects the transforms (scales and transforms) that the user has made while v
   // viewing the matrix.
-  protected Matrix mUserMatrix = new Matrix();
+  private final Matrix mUserMatrix = new Matrix();
 
   // This is the matrix created from the base and user matrix.
   private final Matrix mFinalMatrix = new Matrix();
 
   // This is the bitmap currently being displayed.
-  protected final RotatedBitmap mBitmap = new RotatedBitmap(null);
+  private final RotatedBitmap mBitmap = new RotatedBitmap(null);
 
   // This is the neighbourhood being selected for the image.
-  protected ArrayList<NeighbourhoodView> mNeighbourhoods = new ArrayList<NeighbourhoodView>();
+  private ArrayList<NeighbourhoodView> mNeighbourhoods = new ArrayList<NeighbourhoodView>();
 
   public void add(NeighbourhoodView nv) {
     mNeighbourhoods.add(nv);
@@ -86,7 +84,6 @@ public class SelectView extends ImageView {
 
   @Override 
   public boolean onTouchEvent(MotionEvent event) {
-    // TODO: Get event action properly for different api levels
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN: 
         for (NeighbourhoodView n : mNeighbourhoods) {
@@ -117,6 +114,8 @@ public class SelectView extends ImageView {
   @Override
   public void setImageBitmap(Bitmap bm) {
     setImageBitmap(bm, RotatedBitmap.NORMAL);
+    center();
+    zoomTo(MIN_SCALE, getWidth()/2f, getHeight()/2f);
   }
 
   protected void setImageBitmap(Bitmap bm, int or) {
@@ -128,7 +127,8 @@ public class SelectView extends ImageView {
 
   // Matrix updates
   private void updateBaseMatrix() {
-    if (mBitmap.getBitmap() == null) return; // do nothing if there is not image to work with
+    // do nothing if there is no image to work with
+    if (mBitmap.getBitmap() == null) return;
 
     float viewW = getWidth();
     float viewH = getHeight();
@@ -173,14 +173,13 @@ public class SelectView extends ImageView {
     setImageMatrix(mFinalMatrix); // Apply the final matrix to the image
 
     // Let neighbourhoods know the final matrix has changed
-    // TODO: THIS SHOULDN'T MATTER BECAUSE THEY HAVE A REFERENCE OF THE MATRIX, but should they?
-    //for (NeighbourhoodView n : mNeighbourhoods) {
-    //  n.setMatrix(mFinalMatrix);
-    //}
+    for (NeighbourhoodView n : mNeighbourhoods) {
+      n.setScreenMatrix(mFinalMatrix);
+    }
   }
 
   public Matrix getFinalMatrix() {
-    return mFinalMatrix;
+    return new Matrix(mFinalMatrix);
   }
 
   @Override
@@ -252,6 +251,18 @@ public class SelectView extends ImageView {
     float dx = x - getTranslateX();
     float dy = y - getTranslateY();
     panBy(dx, dy, duration);
+  }
+  
+  public void center() {
+    RectF imageBounds = getImageScreenBounds();
+    
+    float vw = getWidth();
+    float vh = getHeight();
+    
+    float dx = (vw / 2f) - imageBounds.centerX();
+    float dy = (vh / 2f) - imageBounds.centerY();
+
+    panBy(dx, dy);
   }
     
     // Zoom
@@ -385,10 +396,10 @@ public class SelectView extends ImageView {
     panBy(dx, dy, FOLLOW_DURATION);
   }
 
-  private static final float SCALE_PADDING = 0.6f; // TODO: rename
+  private static final float SCALE_PADDING = 0.6f;
   private static final float SCALE_THRESHOLD = 0.1f;
-  private static final float MAX_SCALE = 4f; // can't zoom more than 4X
-  private static final float MIN_SCALE = 0.9f;  // can't zoom to less than 1x
+  private static final float MAX_SCALE = 4f;
+  private static final float MIN_SCALE = 0.9f;
 
   public void followResize(NeighbourhoodView nv) {
     RectF bounds = nv.getScreenSpaceBounds();
