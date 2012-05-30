@@ -26,7 +26,7 @@ public class Polygon {
    * @param orig the original polygon to copy
    * @param bounds the bounds of the image this polygon is contained in
    */
-  public Polygon(Polygon orig, Rect bounds) {
+  public Polygon(Polygon orig) {
     set(orig);
   }
   
@@ -170,16 +170,14 @@ public class Polygon {
    */
   public Rect getBounds() {
     Rect bounds = new Rect();
-    if (mPoints.size() > 1) {
+    if (mPoints.size() > 0) {
       Point p1 = mPoints.get(0);
-      Point p2 = mPoints.get(1);
 
       // create an initial bounds from the first two points
-      bounds.set(p1.x, p1.y, p2.x, p2.y);
-      bounds.sort(); // make sure the left is actually on the left etc.
+      bounds.set(p1.x, p1.y, p1.x, p1.y);
 
       // Get the union of each point to get the final bounds
-      for (int i = 2; i < mPoints.size(); i++) {
+      for (int i = 1; i < mPoints.size(); i++) {
         Point p = mPoints.get(i);
         bounds.union(p.x, p.y);
       }
@@ -258,7 +256,7 @@ public class Polygon {
    * @param m
    * @return
    */
-  public Path getPath(Matrix m) {
+  public Path getPath() {
 
     Path path = new Path();
 
@@ -278,9 +276,6 @@ public class Polygon {
       
       // close the path
       path.close();
-      
-      // apply the matrix
-      path.transform(m);
     }
 
     return path;

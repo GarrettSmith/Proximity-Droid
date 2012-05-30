@@ -1,7 +1,6 @@
 /**
  * 
  */
-// TODO: Implement polygons
 // TODO: Look into making rotate not affect input
 // TODO: Use spinner for title
 // TODO: Add hiding bars
@@ -24,6 +23,7 @@ import android.view.MotionEvent;
  *
  */
 // TODO: Add drawing center point
+// TODO: Split this neighbourhoodView up
 public class NeighbourhoodView {
 
   public static final String TAG = "NeighbourhoodView";
@@ -57,7 +57,7 @@ public class NeighbourhoodView {
   boolean mFocused;
 
   // The matrix used to move from image space to screen space
-  private Matrix mMatrix; 
+  private Matrix mScreenMatrix; 
 
   // The image bounds in image space
   private Rect mImageBounds;
@@ -73,7 +73,7 @@ public class NeighbourhoodView {
     mView = v;
 
     // Grab the matrix
-    mMatrix = mView.getFinalMatrix();
+    mScreenMatrix = mView.getFinalMatrix();
 
     // Borrow the view's resources
     Resources rs = v.getResources();
@@ -143,7 +143,7 @@ public class NeighbourhoodView {
   }
 
   public void setScreenMatrix(Matrix m) {
-    mMatrix.set(m);
+    mScreenMatrix.set(m);
   }
 
   public Rect getBounds() {
@@ -278,7 +278,6 @@ public class NeighbourhoodView {
         mAction = Action.RESIZE;
       }
       else {
-        // TODO: add point between nearest points
         // Create a new point
         addPoint((int)x, (int)y);
       }
@@ -300,7 +299,8 @@ public class NeighbourhoodView {
     mLastY = y;
   }
   
-  public Point addPoint(int x, int y) {
+  // TODO: Prevent crossing over
+  private Point addPoint(int x, int y) {
     Point newPoint = null;    
     // only add a point if it is within image bounds
     if (mImageBounds.contains(x, y)) {
@@ -415,11 +415,13 @@ public class NeighbourhoodView {
         break;
       case MOVE_POINT:
         //delete the selected point if it is outside of the image bounds
+        //TODO: Find a way to remove points while zoomed in, maybe drag to end of screen?
         if (!mImageBounds.contains(mSelectedPoint.x, mSelectedPoint.y)) {
           mPoly.removePoint(mSelectedPoint);
           updateBounds();
           mView.invalidate();
         }
+        mView.followResize(this);
         break;
     }
 
@@ -489,7 +491,7 @@ public class NeighbourhoodView {
           mLastX = x;
           mLastY = y;
           break;
-          // TODO: Constrain scale to screen and maintain aspect ratio
+          // TODO: Re-think scale action
         case SCALE:
           float x1 = event.getX(1);
           float y1 = event.getY(1);
@@ -518,7 +520,6 @@ public class NeighbourhoodView {
           dx = x - mLastX;
           dy = y - mLastY;
           mSelectedPoint.offset((int)dx, (int)dy);
-          // TODO: Alert that the point will be deleted
           updateBounds();
           mLastX = x;
           mLastY = y;
@@ -537,7 +538,7 @@ public class NeighbourhoodView {
    * @param dx
    * @param dy
    */
-  // TODO: can we avoid this duplication?
+  // TODO: can we avoid this duplication? We can using set bounds
   private void move(int dx, int dy) {
     if (mShape == Shape.POLYGON) {
       // Move the neighbourhood by the change
@@ -647,7 +648,7 @@ public class NeighbourhoodView {
   private float[] convertToImageSpace(float x, float y) {
     float[] point = new float[]{x, y};
     Matrix inverse = new Matrix();
-    mMatrix.invert(inverse);
+    mScreenMatrix.invert(inverse);
     inverse.mapPoints(point);
     return point;
   }
@@ -658,7 +659,7 @@ public class NeighbourhoodView {
    */
   public RectF getScreenSpaceBounds() {
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
-    mMatrix.mapRect(r);
+    mScreenMatrix.mapRect(r);
     r.left    = Math.round(r.left);
     r.top     = Math.round(r.top);
     r.right   = Math.round(r.right); 
@@ -671,7 +672,7 @@ public class NeighbourhoodView {
         (int)(mFocused ? HANDLE_SIZE: UNFOCUSED_PAINT.getStrokeWidth());
     padding += 1;
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
-    mMatrix.mapRect(r);
+    mScreenMatrix.mapRect(r);
     r.inset(-padding, -padding);
     return new Rect(
         Math.round(r.left), 
@@ -684,11 +685,36 @@ public class NeighbourhoodView {
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
-  // TODO: Only draw relevant handles while resizing
   protected void draw(Canvas canvas) {
 
-    RectF bounds = getScreenSpaceBounds();
+    Path shapePath = getShapePath();
 
+    if (mFocused) {        
+
+      // dim outside
+      drawUnselected(canvas, shapePath);
+
+      // draw handles
+      if (mAction == Action.MOVE_POINT) {
+        drawSelected(canvas);
+      }
+      else {      
+        drawHandles(canvas);          
+      }
+    }
+    else {
+      // just draw the shape
+      canvas.drawPath(shapePath, UNFOCUSED_PAINT);
+    }
+
+    // Draw bounds guide for non rectangles
+    if (mShape != Shape.RECTANGLE) {
+      canvas.drawRect(getScreenSpaceBounds(), GUIDE_PAINT);
+    }
+  }
+  
+  private Path getShapePath() {
+    RectF bounds = getScreenSpaceBounds();
     Path shapePath = new Path();
 
     switch (mShape) {
@@ -699,33 +725,18 @@ public class NeighbourhoodView {
         shapePath.addOval(bounds, Path.Direction.CW);
         break;
       case POLYGON:
-        shapePath.addPath(mPoly.getPath(mMatrix));
+        Polygon p = new Polygon(mPoly);
+        // remove the selected point from the drawn poly if it was moved outside of the image bounds
+        if (mAction == Action.MOVE_POINT && 
+            !mImageBounds.contains(mSelectedPoint.x, mSelectedPoint.y)) {
+          p.removePoint(mPoly.indexOf(mSelectedPoint));
+        }
+        shapePath.addPath(p.getPath());
+        shapePath.transform(mScreenMatrix);
         break;
     }
-
-    if (mFocused) {        
-
-      // Darken outside
-      drawUnselected(canvas, shapePath);
-
-      // Don't draw handles while moving
-      if (mAction != Action.MOVE) {
-        if (mAction == Action.MOVE_POINT) {
-          drawSelected(canvas);
-        }
-        else {      
-          drawHandles(canvas);          
-        }
-      }
-    }
-    else {
-      canvas.drawPath(shapePath, UNFOCUSED_PAINT);
-    }
-
-    // Draw bounds guide for non rectangles
-    if (mShape != Shape.RECTANGLE) {
-      canvas.drawRect(bounds, GUIDE_PAINT);
-    }
+    
+    return shapePath;
   }
   
   private void drawUnselected(Canvas canvas, Path shapePath) {
@@ -740,31 +751,36 @@ public class NeighbourhoodView {
    * Draws handle on the neighbourhood
    * @param canvas
    */
-  // TODO: Don't have handles zoom
   private void drawHandles(Canvas canvas) {
-    Path handlePath = new Path();
-    
-    if (mShape == Shape.POLYGON) {
-      float[] ps = mPoly.toFloatArray();
-      mMatrix.mapPoints(ps);
-      for (int i = 0; i < ps.length; i += 2) {
-        handlePath.addPath(HANDLE_PATH, ps[i], ps[i+1]);
-      }      
-    }
-    else {
-      RectF screenBounds = getScreenSpaceBounds();
-      if (mAction == Action.RESIZE) {
-        // Draw only the resized handle
-        handlePath.addPath(getHandlePath(mSelectedEdge, screenBounds));
+    // Don't draw handles while moving
+    if (mAction != Action.MOVE) {
+      Path handlePath = new Path();
+
+      if (mShape == Shape.POLYGON) {
+        // don't draw handles when resizing polygons
+        if (mAction != Action.RESIZE) {
+          float[] ps = mPoly.toFloatArray();
+          mScreenMatrix.mapPoints(ps);
+          for (int i = 0; i < ps.length; i += 2) {
+            handlePath.addPath(HANDLE_PATH, ps[i], ps[i+1]);
+          }      
+        }
       }
       else {
-        // Draw a handle in the middle of each side
-        handlePath.addPath(getHandlePath(screenBounds));
+        RectF screenBounds = getScreenSpaceBounds();
+        if (mAction == Action.RESIZE) {
+          // Draw only the resized handle
+          handlePath.addPath(getHandlePath(mSelectedEdge, screenBounds));
+        }
+        else {
+          // Draw a handle in the middle of each side
+          handlePath.addPath(getHandlePath(screenBounds));
+        }
       }
+
+      // draw handles
+      canvas.drawPath(handlePath, HANDLE_PAINT);
     }
-    
-    // draw handles
-    canvas.drawPath(handlePath, HANDLE_PAINT);
   }
   
   private Path getHandlePath(Edge edg, RectF bounds) {
@@ -841,10 +857,9 @@ public class NeighbourhoodView {
       selectedPath.moveTo(p1.x, p1.y);
       selectedPath.lineTo(p2.x, p2.y);
       selectedPath.lineTo(p3.x, p3.y);
-      selectedPath.close();
       
       // transform by the screen
-      selectedPath.transform(mMatrix);
+      selectedPath.transform(mScreenMatrix);
       // draw handles
       canvas.drawPath(selectedPath, REMOVE_POINT_PAINT);
       
@@ -856,7 +871,7 @@ public class NeighbourhoodView {
     
     // Find the dimension
     float[] p = {x, y};
-    mMatrix.mapPoints(p);
+    mScreenMatrix.mapPoints(p);
     
     // add the handle
     selectedPath.addPath(HANDLE_PATH, p[0], p[1]);

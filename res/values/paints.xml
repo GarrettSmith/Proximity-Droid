@@ -3,7 +3,7 @@
     <color name="neighbourhood_focused_color">#00FFFF</color>
     <dimen name="neighbourhood_focused_stroke">1dp</dimen>
     <color name="neighbourhood_unfocused_color">#AA00FFFF</color>
-    <color name="neighbourhood_guide_color">#33FFFFFF</color>
+    <color name="neighbourhood_guide_color">#55FFFFFF</color>
     <dimen name="neighbourhood_guide_stroke">0px</dimen>
     <color name="neighbourhood_unselected_color">#99000000</color>
     <dimen name="neighbourhood_handle_size">12dp</dimen>
