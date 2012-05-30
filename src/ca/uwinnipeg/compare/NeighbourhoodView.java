@@ -482,19 +482,43 @@ public class NeighbourhoodView {
    * @param dx
    * @param dy
    */
+  // TODO: can we avoid this duplication?
   private void move(int dx, int dy) {
-    // Move the neighbourhood by the change
-    mBounds.offset(dx, dy);
+    if (mShape == Shape.POLYGON) {
+      // Move the neighbourhood by the change
+      mPoly.offset(dx, dy);
 
-    // constrain top and left
-    mBounds.offsetTo(
-        Math.max(0, mBounds.left),
-        Math.max(0, mBounds.top));
+      Rect bounds = mPoly.getBounds();
 
-    // constrain bottom and right
-    mBounds.offsetTo(
-        Math.min(mImageBounds.width() - mBounds.width(), mBounds.left),
-        Math.min(mImageBounds.height() - mBounds.height(), mBounds.top));
+      // constrain top and left
+      mPoly.offsetTo(
+          Math.max(0, bounds.left),
+          Math.max(0, bounds.top));
+      
+      bounds = mPoly.getBounds();
+
+      // constrain bottom and right
+      mPoly.offsetTo(
+          Math.min(mImageBounds.width() - bounds.width(), bounds.left),
+          Math.min(mImageBounds.height() - bounds.height(), bounds.top));
+      
+      updateBounds();
+    }
+    else {
+
+      // Move the neighbourhood by the change
+      mBounds.offset(dx, dy);
+
+      // constrain top and left
+      mBounds.offsetTo(
+          Math.max(0, mBounds.left),
+          Math.max(0, mBounds.top));
+
+      // constrain bottom and right
+      mBounds.offsetTo(
+          Math.min(mImageBounds.width() - mBounds.width(), mBounds.left),
+          Math.min(mImageBounds.height() - mBounds.height(), mBounds.top));
+    }
   }
 
   /**

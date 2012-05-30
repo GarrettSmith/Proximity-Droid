@@ -187,6 +187,13 @@ public class Polygon {
     }
   }
   
+  public void offsetTo(int x, int y) {
+    Rect bounds = getBounds();    
+    int dx = x - bounds.left;
+    int dy = y - bounds.top;
+    offset(dx, dy);
+  }
+  
   /**
    * Checks if the given point is within the polygon.
    * Adapted from http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
@@ -195,7 +202,6 @@ public class Polygon {
    * @return
    */
   public boolean contains(int x, int y) {
-    // TODO: Add check if if polygon contains point
     boolean inside = false;
     for (int i = 0, j = (mPoints.size() - 1); i < mPoints.size(); j = i++) {
       Point pi = mPoints.get(i);
