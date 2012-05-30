@@ -23,6 +23,7 @@ import android.view.MotionEvent;
  * @author Garrett Smith
  *
  */
+// TODO: Add drawing center point
 public class NeighbourhoodView {
 
   public static final String TAG = "NeighbourhoodView";
@@ -103,7 +104,7 @@ public class NeighbourhoodView {
       UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
       
       SELECTED_POINT_PAINT.setStyle(Paint.Style.FILL);
-      SELECTED_POINT_PAINT.setColor(rs.getColor(R.color.neighbourhood_selected_point_color));
+      SELECTED_POINT_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
       SELECTED_POINT_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
       
       REMOVE_POINT_PAINT.setStyle(Paint.Style.STROKE);
@@ -163,7 +164,14 @@ public class NeighbourhoodView {
    */
   public void setBounds(Rect r) {
     Rect dirty = new Rect(getPaddedScreenSpaceBounds());
-    mBounds.set(r);
+    if (mShape == Shape.POLYGON) {
+      mPoly.setBounds(r);
+      updateBounds();
+    }
+    else {
+      //mBounds.set(r);
+      mBounds = r;
+    }
     dirty.union(getPaddedScreenSpaceBounds());
     mView.invalidate(dirty);
   }
@@ -231,7 +239,7 @@ public class NeighbourhoodView {
   protected static final float MIN_SIZE = 0.2f;
 
   private Action mAction = Action.NONE;
-  private Edge mEdge = Edge.NONE;
+  private Edge mSelectedEdge = Edge.NONE;
 
   // The Previously touched position IN IMAGE SPACE
   private float mLastX;
@@ -253,7 +261,6 @@ public class NeighbourhoodView {
   /** 
    * Handles a down event.
    */
-  // TODO: Deal with complex polygons
   public void handleDown(MotionEvent event) {
     float[] p = convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
@@ -267,14 +274,19 @@ public class NeighbourhoodView {
       else if(mPoly.contains((int)x, (int)y)) {        
         mAction = Action.MOVE;
       }
+      else if ( (mSelectedEdge = checkEdges(x, y)) != Edge.NONE) { // TODO: remove down duplication
+        mAction = Action.RESIZE;
+      }
       else {
+        // TODO: add point between nearest points
         // Create a new point
         addPoint((int)x, (int)y);
       }
+      
     }
     // Deal with non-polygons
     else {
-      if ( (mEdge = checkEdges(x, y)) != Edge.NONE) {
+      if ( (mSelectedEdge = checkEdges(x, y)) != Edge.NONE) {
         mAction = Action.RESIZE;
       }
       // Check if touch was within neighbourhood
@@ -380,6 +392,7 @@ public class NeighbourhoodView {
   // TODO: Break down handleMove
   // TODO: Make work with polygons
   // TODO: Why are we recording the last point like 7 times
+  // FIXME: Redraw moving single point properly
   public void handleMove(MotionEvent event) {
     float[] p = convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
@@ -429,7 +442,7 @@ public class NeighbourhoodView {
           // Calculate change in position of first point
           dx = x - mLastX;
           dy = y - mLastY;
-          resize((int)dx, (int)dy, mEdge);
+          resize((int)dx, (int)dy, mSelectedEdge);
           // Record position
           mLastX = x;
           mLastY = y;
@@ -527,45 +540,51 @@ public class NeighbourhoodView {
    * @param dy
    * @param edg
    */
-  private void resize(int dx, int dy, Edge edg) {
+  private void resize(int dx, int dy, Edge edg, Rect newBounds) {
     int minSize = 
         (int) (Math.min(mView.getWidth(), mView.getHeight()) * MIN_SIZE / mView.getScale());
     switch (edg) {
       case L: 
         // constrain to image area
-        mBounds.left = Math.max(0, mBounds.left + dx); 
+        newBounds.left = Math.max(0, newBounds.left + dx); 
         // prevent flipping and keep min size
-        mBounds.left = Math.min(mBounds.left, mBounds.right - minSize); 
+        newBounds.left = Math.min(newBounds.left, newBounds.right - minSize); 
         break;
       case R: 
-        mBounds.right = Math.min(mImageBounds.right, mBounds.right + dx);
-        mBounds.right = Math.max(mBounds.right, mBounds.left + minSize);
+        newBounds.right = Math.min(mImageBounds.right, newBounds.right + dx);
+        newBounds.right = Math.max(newBounds.right, newBounds.left + minSize);
         break;
       case T: 
-        mBounds.top = Math.max(0, mBounds.top + dy);
-        mBounds.top = Math.min(mBounds.top, mBounds.bottom - minSize);
+        newBounds.top = Math.max(0, newBounds.top + dy);
+        newBounds.top = Math.min(newBounds.top, newBounds.bottom - minSize);
         break;
       case B: 
-        mBounds.bottom = Math.min(mImageBounds.bottom, mBounds.bottom + dy);
-        mBounds.bottom = Math.max(mBounds.bottom, mBounds.top + minSize);
+        newBounds.bottom = Math.min(mImageBounds.bottom, newBounds.bottom + dy);
+        newBounds.bottom = Math.max(newBounds.bottom, newBounds.top + minSize);
         break;
       case TL:
-        resize(dx, dy, Edge.T);
-        resize(dx, dy, Edge.L);
+        resize(dx, dy, Edge.T, newBounds);
+        resize(dx, dy, Edge.L, newBounds);
         break;
       case TR:
-        resize(dx, dy, Edge.T);
-        resize(dx, dy, Edge.R);
+        resize(dx, dy, Edge.T, newBounds);
+        resize(dx, dy, Edge.R, newBounds);
         break;
       case BL:
-        resize(dx, dy, Edge.B);
-        resize(dx, dy, Edge.L);
+        resize(dx, dy, Edge.B, newBounds);
+        resize(dx, dy, Edge.L, newBounds);
         break;
       case BR:
-        resize(dx, dy, Edge.B);
-        resize(dx, dy, Edge.R);
+        resize(dx, dy, Edge.B, newBounds);
+        resize(dx, dy, Edge.R, newBounds);
         break;
     }
+  }
+  
+  private void resize(int dx, int dy, Edge edg) {
+    Rect newBounds = getBounds();
+    resize(dx, dy, edg, newBounds);
+    setBounds(newBounds);
   }
 
   /**
@@ -679,37 +698,81 @@ public class NeighbourhoodView {
    * Draws handle on the neighbourhood
    * @param canvas
    */
+  // TODO: Don't have handles zoom
   private void drawHandles(Canvas canvas) {
     Path handlePath = new Path();
     
     if (mShape == Shape.POLYGON) {
-      for (Point p : mPoly.getPoints()) {
-        // check if the current point is selected
-        handlePath.addPath(HANDLE_PATH, p.x, p.y);
+      float[] ps = mPoly.toFloatArray();
+      mMatrix.mapPoints(ps);
+      for (int i = 0; i < ps.length; i += 2) {
+        handlePath.addPath(HANDLE_PATH, ps[i], ps[i+1]);
       }      
     }
     else {
-
-      float l = mBounds.left;
-      float r = mBounds.right;
-      float t = mBounds.top;
-      float b = mBounds.bottom;
-
-      float midX = l + mBounds.width() / 2;
-      float midY = t + mBounds.height() / 2;
-
-      // Draw a handle in the middle of each side
-      handlePath.addPath(HANDLE_PATH, midX, t);
-      handlePath.addPath(HANDLE_PATH, midX, b);
-      handlePath.addPath(HANDLE_PATH, l, midY);
-      handlePath.addPath(HANDLE_PATH, r, midY);
+      RectF screenBounds = getScreenSpaceBounds();
+      if (mAction == Action.RESIZE) {
+        // Draw only the resized handle
+        handlePath.addPath(getHandlePath(mSelectedEdge, screenBounds));
+      }
+      else {
+        // Draw a handle in the middle of each side
+        handlePath.addPath(getHandlePath(screenBounds));
+      }
     }
-    
-    // transform by the screen
-    handlePath.transform(mMatrix);
     
     // draw handles
     canvas.drawPath(handlePath, HANDLE_PAINT);
+  }
+  
+  private Path getHandlePath(Edge edg, RectF bounds) {
+    Path p = new Path();
+
+    float l = bounds.left;
+    float r = bounds.right;
+    float t = bounds.top;
+    float b = bounds.bottom;
+
+    float midX = l + bounds.width() / 2;
+    float midY = t + bounds.height() / 2;
+    
+    switch (edg) {
+      case L:
+        p.addPath(HANDLE_PATH, l, midY);
+        break;
+      case R: 
+        p.addPath(HANDLE_PATH, r, midY);
+        break;
+      case T: 
+        p.addPath(HANDLE_PATH, midX, t);
+        break;
+      case B: 
+        p.addPath(HANDLE_PATH, midX, b);
+        break;
+      case TL:
+        p.addPath(getHandlePath(Edge.T, bounds));
+        p.addPath(getHandlePath(Edge.L, bounds));
+        break;
+      case TR:
+        p.addPath(getHandlePath(Edge.T, bounds));
+        p.addPath(getHandlePath(Edge.R, bounds));
+        break;
+      case BL:
+        p.addPath(getHandlePath(Edge.B, bounds));
+        p.addPath(getHandlePath(Edge.L, bounds));
+        break;
+      case BR:
+        p.addPath(getHandlePath(Edge.B, bounds));
+        p.addPath(getHandlePath(Edge.R, bounds));
+        break;
+    }
+    return p;
+  }
+  
+  private Path getHandlePath(RectF bounds) {
+    Path p = getHandlePath(Edge.TL, bounds);
+    p.addPath(getHandlePath(Edge.BR, bounds));
+    return p;
   }
   
   /**
@@ -749,10 +812,12 @@ public class NeighbourhoodView {
     
     // draw the handle
     
+    // Find the dimension
+    float[] p = {x, y};
+    mMatrix.mapPoints(p);
+    
     // add the handle
-    selectedPath.addPath(HANDLE_PATH, x, y);    
-    // transform by the screen
-    selectedPath.transform(mMatrix);
+    selectedPath.addPath(HANDLE_PATH, p[0], p[1]);
     // draw handles
     canvas.drawPath(selectedPath, SELECTED_POINT_PAINT); 
   }

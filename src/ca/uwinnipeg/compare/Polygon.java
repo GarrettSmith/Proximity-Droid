@@ -7,8 +7,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Matrix;
 
-// TODO: add drawing handles.
-// TODO: add drawing points outside of bounds differently.
 /**
  * A polygon used by neighbourhoods.
  * @author garrett
@@ -172,10 +170,32 @@ public class Polygon {
    * 
    * @param bounds
    */
-  public void setBounds(Rect bounds) {
-    // TODO: Add setting polygon bounds
+  public void setBounds(Rect newBounds) {
+
+    int newWidth = newBounds.width();
+    int newHeight = newBounds.height();
+
+    // Scale to fit in the new bounds if there is more than one point 
+    // and the width and height of the new bounds are non zero.
+    if (mPoints.size() > 1 && newWidth != 0 && newHeight != 0) {
+
+      Rect oldBounds = getBounds();
+      int oldWidth = oldBounds.width();
+      int oldHeight = oldBounds.height();
+
+      float widthRatio = newWidth / (float)oldWidth;
+      float heightRatio = newHeight / (float)oldHeight;
+
+      for (Point p : mPoints) {
+        p.x *= widthRatio;
+        p.y *= heightRatio;
+      }
+
+    }
+    // Offset to the new bounds
+    offsetTo(newBounds.left, newBounds.top);
   }
-  
+
   /**
    * Moves the polygon by the given deltas.
    * @param dx

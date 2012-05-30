@@ -8,6 +8,5 @@
     <color name="neighbourhood_unselected_color">#99000000</color>
     <dimen name="neighbourhood_handle_size">12dp</dimen>
     <color name="neighbourhood_remove_point_color">#e00</color>
-    <color name="neighbourhood_selected_point_color">#fff</color>
     
 </resources>
