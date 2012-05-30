@@ -8,8 +8,6 @@
 // TODO: Look into old shape being drawn after changing shape
 package ca.uwinnipeg.compare;
 
-import java.util.ArrayList;
-
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -32,16 +30,21 @@ public class NeighbourhoodView {
   // The default ratio of padding when resetting the neighbour hood size
   public static final float PADDING_RATIO = 1/8f;
 
+  // Flags if one time setup has been done
+  private static boolean SETUP = false;
+  
   //Paint shared by all neighbourhoods
-  private static Paint FOCUSED_PAINT;
-  private static Paint UNFOCUSED_PAINT;
-  private static Paint GUIDE_PAINT;
-  private static Paint HANDLE_PAINT;
-  private static Paint UNSELECTED_PAINT;  
+  private static final Paint FOCUSED_PAINT = new Paint();
+  private static final Paint UNFOCUSED_PAINT = new Paint();
+  private static final Paint GUIDE_PAINT = new Paint();
+  private static final Paint HANDLE_PAINT = new Paint();
+  private static final Paint UNSELECTED_PAINT = new Paint();
+  private static final Paint SELECTED_POINT_PAINT = new Paint(); 
+  private static final Paint REMOVE_POINT_PAINT = new Paint();
 
   // Handle drawing constants
   private static float HANDLE_SIZE;
-  private static Path HANDLE_PATH;
+  private static final Path HANDLE_PATH = new Path();
 
   // The bounds of the neighbourhood IN IMAGE SPACE
   private Rect mBounds = new Rect();
@@ -56,14 +59,14 @@ public class NeighbourhoodView {
   private Matrix mMatrix; 
 
   // The image bounds in image space
-  private Rect mImageRect;
+  private Rect mImageBounds;
 
   public enum Shape { RECTANGLE, OVAL, POLYGON }
 
   private Shape mShape = Shape.RECTANGLE;
 
   // The list of points that make up the polygon
-  private ArrayList<Point> mPoints = new ArrayList<Point>();
+  private Polygon mPoly = new Polygon();
 
   public NeighbourhoodView(SelectView v){
     mView = v;
@@ -74,37 +77,42 @@ public class NeighbourhoodView {
     // Borrow the view's resources
     Resources rs = v.getResources();
 
-    // One-time setup paint
-    if (FOCUSED_PAINT == null) {
-      FOCUSED_PAINT = new Paint();
+    // One-time setup
+    if (!SETUP) {
+      SETUP = true;
+      
       FOCUSED_PAINT.setStyle(Paint.Style.STROKE);
       FOCUSED_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_focused_stroke));
       FOCUSED_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
       FOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      UNFOCUSED_PAINT = new Paint();
       UNFOCUSED_PAINT.setStyle(Paint.Style.FILL);
       UNFOCUSED_PAINT.setColor(rs.getColor(R.color.neighbourhood_unfocused_color));
       UNFOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      GUIDE_PAINT = new Paint();
       GUIDE_PAINT.setStyle(Paint.Style.STROKE);
       GUIDE_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_guide_stroke));
       GUIDE_PAINT.setColor(rs.getColor(R.color.neighbourhood_guide_color));
       GUIDE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      HANDLE_PAINT = new Paint();
       HANDLE_PAINT.setStyle(Paint.Style.FILL);
       HANDLE_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
       HANDLE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      UNSELECTED_PAINT = new Paint();
       UNSELECTED_PAINT.setColor(rs.getColor(R.color.neighbourhood_unselected_color));
       UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      
+      SELECTED_POINT_PAINT.setStyle(Paint.Style.FILL);
+      SELECTED_POINT_PAINT.setColor(rs.getColor(R.color.neighbourhood_selected_point_color));
+      SELECTED_POINT_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      
+      REMOVE_POINT_PAINT.setStyle(Paint.Style.STROKE);
+      REMOVE_POINT_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_focused_stroke));
+      REMOVE_POINT_PAINT.setColor(rs.getColor(R.color.neighbourhood_remove_point_color));
+      REMOVE_POINT_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
       HANDLE_SIZE = rs.getDimension(R.dimen.neighbourhood_handle_size);
 
-      HANDLE_PATH = new Path();
       float halfSize = HANDLE_SIZE / 2;
       HANDLE_PATH.addRect(-halfSize, -halfSize, halfSize, halfSize, Path.Direction.CW);
       Matrix m = new Matrix();
@@ -130,7 +138,7 @@ public class NeighbourhoodView {
    * Perform initial setup so we can translate to image space later on when handling input.
    */
   public void setImageRect(Rect imageRect) {
-    mImageRect = new Rect(imageRect);
+    mImageBounds = new Rect(imageRect);
   }
 
   public void setScreenMatrix(Matrix m) {
@@ -138,27 +146,13 @@ public class NeighbourhoodView {
   }
 
   public Rect getBounds() {
-    Rect bounds = new Rect();
-    // Calculate the bounds of the polygon with more than one point
-    // Otherwise the bounds is an empty rect
+    Rect bounds;
+    // Calculate the bounds of the polygon
     if (mShape == Shape.POLYGON) {
-      if (mPoints.size() > 1) {
-        Point p1 = mPoints.get(0);
-        Point p2 = mPoints.get(1);
-
-        // create an initial bounds from the first two points
-        bounds.set(p1.x, p1.y, p2.x, p2.y);
-        bounds.sort(); // make sure the left is actually on the left etc.
-
-        // Get the union of each point to get the final bounds
-        for (int i = 2; i < mPoints.size(); i++) {
-          Point p = mPoints.get(i);
-          bounds.union(p.x, p.y);
-        }
-      }
+      bounds = mPoly.getBounds();
     }
     else {
-      bounds.set(mBounds);
+      bounds = new Rect(mBounds);
     }
     return bounds;
   }
@@ -174,41 +168,29 @@ public class NeighbourhoodView {
     mView.invalidate(dirty);
   }
 
-  public void reset() {
-    if (mShape == Shape.POLYGON) {
-      mPoints.clear();
-      mBounds = getBounds();
-    }
-    else {
-      resetBounds();
-    }
-
-    // Check if we need to follow the focused neighbourhood
-    if (mFocused) {
-      mView.followResize(this);
-    }
-    mView.invalidate();
-  }
-
   /**
    * Sets the bounds to a default value.
    */
   public void resetBounds() {
     // can't do anything if you don't have an image to work with yet
-    if (mImageRect == null) return;
+    if (mImageBounds == null) return;
 
-    int w = mImageRect.width();
-    int h = mImageRect.height();
+    int w = mImageBounds.width();
+    int h = mImageBounds.height();
     // Use the smaller side to determine the padding
     // This makes it feel more uniform
     int padding = (int)(Math.min(w, h) * PADDING_RATIO);
     setBounds(new Rect(padding, padding, w-padding, h-padding));
   }
+  
+  public void updateBounds() {
+    mBounds.set(getBounds());
+  }
 
   public void setShape(Shape s) {
     mShape = s;
     if (mShape == Shape.POLYGON) {
-      mBounds = getBounds();
+      updateBounds();
       mView.invalidate();
     }
     else {
@@ -224,6 +206,22 @@ public class NeighbourhoodView {
   }
 
   // Movement and Events
+
+  public void reset() {
+    if (mShape == Shape.POLYGON) {
+      mPoly.clear();
+      updateBounds();
+    }
+    else {
+      resetBounds();
+    }
+  
+    // Check if we need to follow the focused neighbourhood
+    if (mFocused) {
+      mView.followResize(this);
+    }
+    mView.invalidate();
+  }
 
   // The amount a touch can be off and still be considered touching an edge
   protected static final float TOUCH_PADDING = 0.05f;
@@ -262,10 +260,12 @@ public class NeighbourhoodView {
     float y = p[1];
 
     // Polygons
-    if (mShape == Shape.POLYGON) {
-      mSelectedPoint = checkPoints(x, y);
-      if (mSelectedPoint != null) {
+    if (mShape == Shape.POLYGON) {      
+      if ((mSelectedPoint = checkPoints(x, y)) != null) {
         mAction = Action.MOVE_POINT;
+      }
+      else if(mPoly.contains((int)x, (int)y)) {        
+        mAction = Action.MOVE;
       }
       else {
         // Create a new point
@@ -287,37 +287,15 @@ public class NeighbourhoodView {
     mLastX = x;
     mLastY = y;
   }
-
-  /**
-   * Adds a point to the polygon if it is within the image bounds.
-   * @param x
-   * @param y
-   * @return the point added or null if the point would be outside the image bounds
-   */
-  // TODO: Add point between nearby points
-  public Point addPoint(int x, int y) {
-    // Prevent points from being added outside of image bounds
-    if (mImageRect.contains(x, y)) {
-      Point point = new Point((int)x, (int)y);
-      mPoints.add(point);
-      // Update the bounds
-      mBounds = getBounds();
-
-      if (mBounds.isEmpty()) {
-        mView.invalidate();
-      }
-      else {
-        mView.invalidate(getPaddedScreenSpaceBounds());
-      }
-      return point;
-    }
-    return null;
-  }
   
-  public Point removePoint(Point p) {
-    mPoints.remove(mSelectedPoint);
-    mBounds = getBounds();
-    mView.invalidate();
+  public Point addPoint(int x, int y) {
+    Point p = null;
+    if (mImageBounds.contains(x, y)) {
+      p = mPoly.addPoint(x, y);
+      updateBounds();
+      // TODO: Invalidate dirty rect when adding points to poly
+      mView.invalidate();
+    }
     return p;
   }
 
@@ -361,8 +339,7 @@ public class NeighbourhoodView {
    */
   private Point checkPoints(float x, float y) {
     float padding = Math.max(mView.getWidth(), mView.getHeight()) * TOUCH_PADDING;
-    for (int i = 0; i < mPoints.size(); i ++) {
-      Point p = mPoints.get(i);
+    for (Point p : mPoly.getPoints()) {
       if ( Math.abs(p.x - x) <= padding && Math.abs(p.y - y) <= padding) {
         return p;
       }
@@ -384,8 +361,10 @@ public class NeighbourhoodView {
         break;
       case MOVE_POINT:
         //delete the selected point if it is outside of the image bounds
-        if (!mImageRect.contains(mSelectedPoint.x, mSelectedPoint.y)) {
-          removePoint(mSelectedPoint);
+        if (!mImageBounds.contains(mSelectedPoint.x, mSelectedPoint.y)) {
+          mPoly.removePoint(mSelectedPoint);
+          updateBounds();
+          mView.invalidate();
         }
         break;
     }
@@ -485,7 +464,7 @@ public class NeighbourhoodView {
           dy = y - mLastY;
           mSelectedPoint.offset((int)dx, (int)dy);
           // TODO: Alert that the point will be deleted
-          mBounds = getBounds();
+          updateBounds();
           mLastX = x;
           mLastY = y;
           break;
@@ -514,8 +493,8 @@ public class NeighbourhoodView {
 
     // constrain bottom and right
     mBounds.offsetTo(
-        Math.min(mImageRect.width() - mBounds.width(), mBounds.left),
-        Math.min(mImageRect.height() - mBounds.height(), mBounds.top));
+        Math.min(mImageBounds.width() - mBounds.width(), mBounds.left),
+        Math.min(mImageBounds.height() - mBounds.height(), mBounds.top));
   }
 
   /**
@@ -535,7 +514,7 @@ public class NeighbourhoodView {
         mBounds.left = Math.min(mBounds.left, mBounds.right - minSize); 
         break;
       case R: 
-        mBounds.right = Math.min(mImageRect.right, mBounds.right + dx);
+        mBounds.right = Math.min(mImageBounds.right, mBounds.right + dx);
         mBounds.right = Math.max(mBounds.right, mBounds.left + minSize);
         break;
       case T: 
@@ -543,7 +522,7 @@ public class NeighbourhoodView {
         mBounds.top = Math.min(mBounds.top, mBounds.bottom - minSize);
         break;
       case B: 
-        mBounds.bottom = Math.min(mImageRect.bottom, mBounds.bottom + dy);
+        mBounds.bottom = Math.min(mImageBounds.bottom, mBounds.bottom + dy);
         mBounds.bottom = Math.max(mBounds.bottom, mBounds.top + minSize);
         break;
       case TL:
@@ -617,31 +596,10 @@ public class NeighbourhoodView {
   }
 
   /**
-   * Converts mPoints to an array of primitive floats
-   * @return
-   */
-  private float[] getPoints() {
-    final int size = mPoints.size();
-    float[] fs = new float[size * 2];
-    for (int i = 0; i < size; i++) {
-      Point p = mPoints.get(i);
-      fs[i * 2]     = p.x;
-      fs[i * 2 + 1] = p.y;
-    }
-    return fs;
-  }
-
-  private float[] getScreenSpacePoints() {
-    float[] ps = getPoints();
-    mMatrix.mapPoints(ps);
-    return ps;
-  }
-
-  /**
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
-  // TODO: Break down neighbourhood drawing
+  // TODO: Only draw relevant handles while resizing
   protected void draw(Canvas canvas) {
 
     RectF bounds = getScreenSpaceBounds();
@@ -653,60 +611,26 @@ public class NeighbourhoodView {
         shapePath.addRect(bounds, Path.Direction.CW);
         break;
       case OVAL:
-        canvas.drawRect(bounds, GUIDE_PAINT);
         shapePath.addOval(bounds, Path.Direction.CW);
         break;
       case POLYGON:
-        float[] ps = getScreenSpacePoints();
-        int size = ps.length;
-        // We can only draw a shape if we have more than 1 point
-        if (size > 1) {
-          // Move to last point
-          shapePath.moveTo(ps[size-2], ps[size-1]); 
-          // Connect all points
-          for (int i = 0; i < size; i += 2) {
-            shapePath.lineTo( ps[i], ps[i+1]);
-          }
-        }
+        shapePath.addPath(mPoly.getPath(mMatrix));
         break;
     }
 
     if (mFocused) {        
 
       // Darken outside
-      canvas.save();
-      canvas.clipPath(shapePath, Region.Op.DIFFERENCE);
-      canvas.drawPaint(UNSELECTED_PAINT);
-      canvas.drawPath(shapePath, FOCUSED_PAINT);
-      canvas.restore();
+      drawUnselected(canvas, shapePath);
 
       // Don't draw handles while moving
       if (mAction != Action.MOVE) {
-        // Draw handles
-        Path handlePath = new Path();
-        if (mShape == Shape.POLYGON) {
-          float[] ps = getScreenSpacePoints();
-          for (int i = 0; i < ps.length; i += 2) {
-            handlePath.addPath(HANDLE_PATH, ps[i], ps[i+1]);
-          }
+        if (mAction == Action.MOVE_POINT) {
+          drawSelected(canvas);
         }
-        else {        
-          float l = bounds.left;
-          float r = bounds.right;
-          float t = bounds.top;
-          float b = bounds.bottom;
-
-          float midX = l + bounds.width() / 2;
-          float midY = t + bounds.height() / 2;
-
-          // Draw a handle in the middle of each side
-          handlePath.addPath(HANDLE_PATH, midX, t);
-          handlePath.addPath(HANDLE_PATH, midX, b);
-          handlePath.addPath(HANDLE_PATH, l, midY);
-          handlePath.addPath(HANDLE_PATH, r, midY);
+        else {      
+          drawHandles(canvas);          
         }
-
-        canvas.drawPath(handlePath, HANDLE_PAINT);
       }
     }
     else {
@@ -717,6 +641,96 @@ public class NeighbourhoodView {
     if (mShape != Shape.RECTANGLE) {
       canvas.drawRect(bounds, GUIDE_PAINT);
     }
+  }
+  
+  private void drawUnselected(Canvas canvas, Path shapePath) {
+    canvas.save();
+    canvas.clipPath(shapePath, Region.Op.DIFFERENCE);
+    canvas.drawPaint(UNSELECTED_PAINT);
+    canvas.restore();
+    canvas.drawPath(shapePath, FOCUSED_PAINT);
+  }
+  
+  /**
+   * Draws handle on the neighbourhood
+   * @param canvas
+   */
+  private void drawHandles(Canvas canvas) {
+    Path handlePath = new Path();
+    
+    if (mShape == Shape.POLYGON) {
+      for (Point p : mPoly.getPoints()) {
+        // check if the current point is selected
+        handlePath.addPath(HANDLE_PATH, p.x, p.y);
+      }      
+    }
+    else {
+
+      float l = mBounds.left;
+      float r = mBounds.right;
+      float t = mBounds.top;
+      float b = mBounds.bottom;
+
+      float midX = l + mBounds.width() / 2;
+      float midY = t + mBounds.height() / 2;
+
+      // Draw a handle in the middle of each side
+      handlePath.addPath(HANDLE_PATH, midX, t);
+      handlePath.addPath(HANDLE_PATH, midX, b);
+      handlePath.addPath(HANDLE_PATH, l, midY);
+      handlePath.addPath(HANDLE_PATH, r, midY);
+    }
+    
+    // transform by the screen
+    handlePath.transform(mMatrix);
+    
+    // draw handles
+    canvas.drawPath(handlePath, HANDLE_PAINT);
+  }
+  
+  /**
+   * Draws the selected handle and lines attached to it differently
+   * @param canvas
+   */
+  private void drawSelected(Canvas canvas) {   
+    
+    int x = mSelectedPoint.x;
+    int y = mSelectedPoint.y;
+    
+    Path selectedPath = new Path();
+
+    // recolour lines when point is out of bounds
+    if (!mImageBounds.contains(x, y)) {  
+      
+      int index = mPoly.indexOf(mSelectedPoint);
+      int size = mPoly.size();
+      
+      Point p1 = mPoly.getPoint((index - 1 + size) % size);
+      Point p2 = mSelectedPoint;
+      Point p3 = mPoly.getPoint((index + 1) % size);
+      
+      selectedPath.moveTo(p1.x, p1.y);
+      selectedPath.lineTo(p2.x, p2.y);
+      selectedPath.lineTo(p3.x, p3.y);
+      selectedPath.close();
+      
+      // transform by the screen
+      selectedPath.transform(mMatrix);
+      // draw handles
+      canvas.drawPath(selectedPath, REMOVE_POINT_PAINT);
+      
+      // reset to draw point
+      selectedPath.reset(); 
+    }  
+    
+    // draw the handle
+    
+    // add the handle
+    selectedPath.addPath(HANDLE_PATH, x, y);    
+    // transform by the screen
+    selectedPath.transform(mMatrix);
+    // draw handles
+    canvas.drawPath(selectedPath, SELECTED_POINT_PAINT); 
   }
 
 }
