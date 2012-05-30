@@ -120,9 +120,30 @@ public class Polygon {
    * @return
    */
   public Point addPoint(int x, int y) {
-    Point p = new Point(x, y);
-    mPoints.add(p);
+    return addPoint(new Point(x, y));
+  }
+  
+  /**
+   * Adds a point at the given index.
+   * @param index
+   * @param p
+   * @return
+   */
+  public Point addPoint(int index, Point p) {
+    Point point = new Point(p);
+    mPoints.add(index, point);
     return p;
+  }
+  
+  /**
+   * Adds a point at the given index.
+   * @param index
+   * @param x
+   * @param y
+   * @return
+   */
+  public Point addPoint(int index, int x, int y) {
+    return addPoint(index, new Point(x, y));
   }
 
   /**
