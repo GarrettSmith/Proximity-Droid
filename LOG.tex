@@ -179,4 +179,28 @@
     Points added to polygons are now added between the nearest point and the nearest neighbour of that point, this makes adding points to a polygon much more intuative but doesn't seem to quite solve the problem;
 \end{itemize}
 
+\section*{2012-05-31}
+\begin{itemize}
+  \item 
+    Created a repository for the shared proximity library;
+  \item
+    Created a probe function interface;
+  \item
+    Created an abstract perceptual system;
+  \item
+    Cached result of calculating object descriptions using probe functions;
+  \item
+    Added methods to find description-based neighbourhoods, hybrid neighbourhoods, and description-based intersections;
+  \item
+    Implementation still needs to be tested;
+  \item
+    Implemeneted hybrid intersections as it seemed like the next logical step;
+  \item
+    Implemented checking nearness and degree using intersect;
+  \item
+    Wrote most of the unit tests, only missing hybrid neighbourhood and intersect;
+  \item
+    Corrected most issues found by unit tests;
+\end{itemize}
+
 \end{document}

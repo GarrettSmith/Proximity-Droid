@@ -29,6 +29,7 @@ import android.widget.SpinnerAdapter;
 // TODO: Support down to 2.1
 // TODO: Shift of the main UI thread possibly
 // TODO: Restore view zoom properly
+// TODO: Deal with Failed Binder Transaction
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith

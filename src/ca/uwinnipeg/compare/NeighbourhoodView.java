@@ -217,7 +217,7 @@ public class NeighbourhoodView {
 
   public void reset() {
     if (mShape == Shape.POLYGON) {
-      mPoly.clear();
+      mPoly.reset();
       updateBounds();
     }
     else {

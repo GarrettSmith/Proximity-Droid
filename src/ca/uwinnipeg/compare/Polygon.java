@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.Matrix;
 
 /**
  * A polygon used by neighbourhoods.
@@ -98,7 +97,7 @@ public class Polygon {
   /**
    * Empties all points from the polygon.
    */
-  public void clear() {
+  public void reset() {
     mPoints.clear();
   }
 
