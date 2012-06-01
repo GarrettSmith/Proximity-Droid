@@ -299,51 +299,37 @@ public class NeighbourhoodView {
   
   // TODO: Prevent crossing over
   private Point addPoint(int x, int y) {
-    Point newPoint = null;    
+    Point newPoint = new Point(x, y);    
     // only add a point if it is within image bounds
     if (mImageBounds.contains(x, y)) {
+      int size = mPoly.size();
       int index = 0;
-      
       // if we have two or fewer points this doesn't matter
-//      if (mPoly.size() > 2) {
-//        // find the closest point that won't make us intersect our polygon
-//        float closest = Float.MAX_VALUE;
-//        for (Point p : mPoly.getPoints()) {
-//          if (!mPoly.intersectsLine(x, y, p.x, p.y)) {
-//            float d = MathUtil.distance(x, y, p.x, p.y);
-//            if (d < closest) {
-//              closest = d;
-//              index = mPoly.indexOf(p);
-//            }
-//          }
-//        }
-//
-//        int size = mPoly.size();
-//
-//        Point next = mPoly.getPoint((index + 1) % size);
-//        Point prev = mPoly.getPoint((index - 1 + size ) % size);
-//        
-//        // Check if one of the neighbours would make use intersect
-//        if (mPoly.intersectsLine(x, y, next.x, next.y)) {
-//          // if the next point intersects add between the closest and the next 
-//          index = (index - 1 + size) % size;
-//        }
-//        else if (!mPoly.intersectsLine(x, y, prev.x, prev.y)) {
-//          // if the previous point intersects leave things be
-//          
-//          // otherwise find the closer of the two
-//          float dNext = MathUtil.distance(x, y, next.x, next.y);
-//          float dPrev = MathUtil.distance(x, y, prev.x, prev.y);
-//
-//          //
-//          if (dPrev < dNext) {
-//            index = (index - 1 + size) % size;
-//          }    
-//        }
-//      }      
-      
+      if (size > 2) {
+        // find the closest pair of points point that won't make us intersect our polygon
+        float closest = Float.MAX_VALUE;
+        Point current, next;
+        for (int i = 0; i < size; i++) {
+          
+          current = mPoly.getPoint(i);
+          next = mPoly.getPoint((i + 1) % size);
+          
+          boolean currentIntersects = mPoly.intersectsLine(newPoint, current);
+          boolean nextIntersects = mPoly.intersectsLine(newPoint, current);
+
+          // only consider them if neither will cause an intersection
+          if (!(currentIntersects || nextIntersects)) {
+            float d = MathUtil.distance(newPoint, current);
+            if (d < closest) {
+              closest = d;
+              index = (i + 1) % size;
+            }
+          }
+        }
+      }        
+
       // Add the point between the nearest point and it's nearest, to the new point, neighbour
-      newPoint = mPoly.addPoint(index, x, y);
+      newPoint = mPoly.addPoint(index, newPoint);
       updateBounds();
       // TODO: Invalidate dirty rect when adding points to poly
       mView.invalidate();

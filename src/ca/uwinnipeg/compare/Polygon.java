@@ -250,6 +250,10 @@ public class Polygon {
     return inside;
   }
   
+  public boolean intersectsLine(Point p1, Point p2) {
+    return intersectsLine(p1.x, p1.y, p2.x, p2.y);
+  }
+  
   /**
    * From http://code.google.com/p/straightedge/
    * 
@@ -269,13 +273,19 @@ public class Polygon {
     }
     double ax = x2-x1;
     double ay = y2-y1;
-    Point pointIBefore = mPoints.get(mPoints.size()-1);
+    Point pofloatIBefore = mPoints.get(mPoints.size()-1);
     for (int i = 0; i < mPoints.size(); i++){
-      Point pointI = mPoints.get(i);
-      double x3 = pointIBefore.x;
-      double y3 = pointIBefore.y;
-      double x4 = pointI.x;
-      double y4 = pointI.y;
+      Point pofloatI = mPoints.get(i);
+      double x3 = pofloatIBefore.x;
+      double y3 = pofloatIBefore.y;
+      double x4 = pofloatI.x;
+      double y4 = pofloatI.y;
+      
+      // check for matching points
+      if ( (x1 == x3 && y1 == y3) || (x1 == x4 && y1 == y4) ||
+           (x2 == x3 && y2 == y3) || (x2 == x4 && y2 == y4) ) {
+        continue;
+      }
 
       double bx = x3-x4;
       double by = y3-y4;
@@ -286,24 +296,24 @@ public class Polygon {
       double commonDenominator = ay*bx - ax*by;
       if (commonDenominator > 0){
         if (alphaNumerator < 0 || alphaNumerator > commonDenominator){
-          pointIBefore = pointI;
+          pofloatIBefore = pofloatI;
           continue;
         }
       }else if (commonDenominator < 0){
         if (alphaNumerator > 0 || alphaNumerator < commonDenominator){
-          pointIBefore = pointI;
+          pofloatIBefore = pofloatI;
           continue;
         }
       }
       double betaNumerator = ax*cy - ay*cx;
       if (commonDenominator > 0){
         if (betaNumerator < 0 || betaNumerator > commonDenominator){
-          pointIBefore = pointI;
+          pofloatIBefore = pofloatI;
           continue;
         }
       }else if (commonDenominator < 0){
         if (betaNumerator > 0 || betaNumerator < commonDenominator){
-          pointIBefore = pointI;
+          pofloatIBefore = pofloatI;
           continue;
         }
       }
@@ -325,7 +335,7 @@ public class Polygon {
             }
           }
         }
-        pointIBefore = pointI;
+        pofloatIBefore = pofloatI;
         continue;
       }
       return true;
