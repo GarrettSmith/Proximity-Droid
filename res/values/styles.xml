@@ -3,7 +3,7 @@
 
     <drawable name="overlay_actionbar_background">#aa000000</drawable>
 
-    <style name="Overlay" parent="android:Theme.Holo">        
+    <style name="Overlay" parent="Theme.Sherlock">        
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:actionBarStyle">@style/overlay_actionbar</item>
     </style>

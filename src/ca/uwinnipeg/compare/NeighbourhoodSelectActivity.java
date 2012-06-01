@@ -3,7 +3,6 @@ package ca.uwinnipeg.compare;
 import java.io.IOException;
 
 import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -19,12 +18,15 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.util.Log;
 import android.view.Display;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
+
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 
 // TODO: Support down to 2.1
 // TODO: Shift of the main UI thread possibly
@@ -36,7 +38,7 @@ import android.widget.SpinnerAdapter;
  *
  */
 public class NeighbourhoodSelectActivity 
-extends Activity 
+extends SherlockActivity 
 implements ActionBar.OnNavigationListener {
 
   public static final String TAG = "NeighbourhoodSelect";
@@ -124,12 +126,7 @@ implements ActionBar.OnNavigationListener {
     }    
 
     // UI
-    if (android.os.Build.VERSION.SDK_INT >= 11) {
-      setupActionBar(shape);
-    }
-    else {
-      // TODO: Setup alternative to action bar
-    }
+    setupActionBar(shape);
 
     // Request a bitmap if not given one
     if (mBitmap == null) {
@@ -142,9 +139,8 @@ implements ActionBar.OnNavigationListener {
 
   }
 
-  @TargetApi(11)
   private void setupActionBar(NeighbourhoodView.Shape shape) {
-    mActionBar = getActionBar();
+    mActionBar = getSupportActionBar();
     mActionBar.setDisplayHomeAsUpEnabled(true);
 
     // Action bar navigation
@@ -357,7 +353,7 @@ implements ActionBar.OnNavigationListener {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    MenuInflater inflater = getMenuInflater();
+    MenuInflater inflater = getSupportMenuInflater();
     inflater.inflate(R.menu.neighbourhood_select, menu);
     mSelectView.updateFinalMatrix(); // recenter
     return true;

@@ -1,10 +1,3 @@
-/**
- * 
- */
-// TODO: Look into making rotate not affect input
-// TODO: Use spinner for title
-// TODO: Add hiding bars
-// TODO: Look into old shape being drawn after changing shape
 package ca.uwinnipeg.compare;
 
 import android.content.res.Resources;
@@ -24,6 +17,11 @@ import android.view.MotionEvent;
  */
 // TODO: Add drawing center point
 // TODO: Split this neighbourhoodView up
+// TODO: Add a point if you just click on the resize
+// TODO: Look into making rotate not affect input
+// TODO: Use spinner for title
+// TODO: Add hiding bars
+// TODO: Look into old shape being drawn after changing shape
 public class NeighbourhoodView {
 
   public static final String TAG = "NeighbourhoodView";
