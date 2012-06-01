@@ -28,8 +28,8 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
-// TODO: Support down to 2.1
-// TODO: Shift of the main UI thread possibly
+// TODO: Fix spinner on 2.1
+// TODO: Shift off the main UI thread possibly
 // TODO: Restore view zoom properly
 // TODO: Deal with Failed Binder Transaction
 /**

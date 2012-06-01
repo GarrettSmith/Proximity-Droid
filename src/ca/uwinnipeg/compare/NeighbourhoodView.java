@@ -305,31 +305,42 @@ public class NeighbourhoodView {
       int index = 0;
       
       // if we have two or fewer points this doesn't matter
-      if (mPoly.size() > 2) {
-        // find the closest point
-        float closest = Float.MAX_VALUE;
-        for (Point p : mPoly.getPoints()) {
-          float d = distance(x, y, p.x, p.y);
-          if (d < closest) {
-            closest = d;
-            index = mPoly.indexOf(p);
-          }
-        }
-        
-        // find the closer neighbour
-        int size = mPoly.size();
-
-        Point next = mPoly.getPoint((index + 1) % size);
-        Point prev = mPoly.getPoint((index - 1 + size ) % size);
-
-        float dNext = distance(x, y, next.x, next.y);
-        float dPrev = distance(x, y, prev.x, prev.y);
-
-        // if the previous point is closer than the next point add after the previous
-        if (dPrev > dNext) {
-          index = (index + 1) % size;
-        }    
-      }      
+//      if (mPoly.size() > 2) {
+//        // find the closest point that won't make us intersect our polygon
+//        float closest = Float.MAX_VALUE;
+//        for (Point p : mPoly.getPoints()) {
+//          if (!mPoly.intersectsLine(x, y, p.x, p.y)) {
+//            float d = MathUtil.distance(x, y, p.x, p.y);
+//            if (d < closest) {
+//              closest = d;
+//              index = mPoly.indexOf(p);
+//            }
+//          }
+//        }
+//
+//        int size = mPoly.size();
+//
+//        Point next = mPoly.getPoint((index + 1) % size);
+//        Point prev = mPoly.getPoint((index - 1 + size ) % size);
+//        
+//        // Check if one of the neighbours would make use intersect
+//        if (mPoly.intersectsLine(x, y, next.x, next.y)) {
+//          // if the next point intersects add between the closest and the next 
+//          index = (index - 1 + size) % size;
+//        }
+//        else if (!mPoly.intersectsLine(x, y, prev.x, prev.y)) {
+//          // if the previous point intersects leave things be
+//          
+//          // otherwise find the closer of the two
+//          float dNext = MathUtil.distance(x, y, next.x, next.y);
+//          float dPrev = MathUtil.distance(x, y, prev.x, prev.y);
+//
+//          //
+//          if (dPrev < dNext) {
+//            index = (index - 1 + size) % size;
+//          }    
+//        }
+//      }      
       
       // Add the point between the nearest point and it's nearest, to the new point, neighbour
       newPoint = mPoly.addPoint(index, x, y);
@@ -338,17 +349,6 @@ public class NeighbourhoodView {
       mView.invalidate();
     }
     return newPoint;
-  }
-  
-  // TODO: Move distance into a util class
-  public static float distance(Point p1, Point p2) {
-    return distance(p1.x, p1.y, p2.x, p2.y);
-  }
-  
-  public static float distance(int x1, int y1, int x2, int y2) {
-    int x = x1 - x2;
-    int y = y1 - y2;
-    return (float) Math.sqrt(x*x + y*y);
   }
 
   /**
@@ -432,9 +432,7 @@ public class NeighbourhoodView {
    * handles motion to move the neighbourhood.
    */
   // TODO: Break down handleMove
-  // TODO: Make work with polygons
   // TODO: Why are we recording the last point like 7 times
-  // FIXME: Redraw moving single point properly
   public void handleMove(MotionEvent event) {
     float[] p = convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
