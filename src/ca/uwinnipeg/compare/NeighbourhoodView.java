@@ -17,7 +17,6 @@ import android.view.MotionEvent;
  */
 // TODO: Add drawing center point
 // TODO: Split this neighbourhoodView up
-// TODO: Add a point if you just click on the resize
 // TODO: Look into making rotate not affect input
 // TODO: Use spinner for title
 // TODO: Add hiding bars
@@ -162,14 +161,8 @@ public class NeighbourhoodView {
    */
   public void setBounds(Rect r) {
     Rect dirty = new Rect(getPaddedScreenSpaceBounds());
-    if (mShape == Shape.POLYGON) {
-      mPoly.setBounds(r);
-      updateBounds();
-    }
-    else {
-      //mBounds.set(r);
-      mBounds = r;
-    }
+    mPoly.setBounds(r);
+    mBounds.set(r);
     dirty.union(getPaddedScreenSpaceBounds());
     mView.invalidate(dirty);
   }
@@ -189,22 +182,20 @@ public class NeighbourhoodView {
     setBounds(new Rect(padding, padding, w-padding, h-padding));
   }
   
-  public void updateBounds() {
-    mBounds.set(getBounds());
+  private void updateBounds() {
+    if (mShape == Shape.POLYGON) {
+      mBounds.set(getBounds());
+    }
+    else {
+      resetBounds();
+    }
   }
 
   public void setShape(Shape s) {
     mShape = s;
-    if (mShape == Shape.POLYGON) {
-      updateBounds();
-      mView.invalidate();
-    }
-    else {
-      if (mBounds.isEmpty()) {
-        resetBounds();
-      }
-      mView.invalidate(getPaddedScreenSpaceBounds());
-    }
+    mView.invalidate(getPaddedScreenSpaceBounds());
+    // update the bounds if the poly has one point or less
+    if (mPoly.size() < 2) updateBounds();
   }
 
   public Shape getShape() {
@@ -294,8 +285,7 @@ public class NeighbourhoodView {
     mLastY = y;
   }
   
-  // TODO: Prevent crossing over
-  private Point addPoint(int x, int y) {
+  public Point addPoint(int x, int y) {
     Point newPoint = new Point(x, y);    
     // only add a point if it is within image bounds
     if (mImageBounds.contains(x, y)) {
@@ -388,7 +378,6 @@ public class NeighbourhoodView {
         break;
       case MOVE_POINT:
         //delete the selected point if it is outside of the image bounds
-        //TODO: Find a way to remove points while zoomed in, maybe drag to end of screen?
         if (!mImageBounds.contains(mSelectedPoint.x, mSelectedPoint.y)) {
           mPoly.removePoint(mSelectedPoint);
           updateBounds();
@@ -509,7 +498,7 @@ public class NeighbourhoodView {
    * @param dx
    * @param dy
    */
-  private void move(int dx, int dy) {
+  public void move(int dx, int dy) {
     Rect bounds = getBounds();
 
     // move
@@ -534,45 +523,57 @@ public class NeighbourhoodView {
    * @param dy
    * @param edg
    */
-  private void resize(int dx, int dy, Edge edg) {
+  private void resize(int dx, int dy, Edge edg, Rect newBounds) {
     int minSize = 
         (int) (Math.min(mView.getWidth(), mView.getHeight()) * MIN_SIZE / mView.getScale());
     switch (edg) {
       case L: 
         // constrain to image area
-        mBounds.left = Math.max(0, mBounds.left + dx); 
+        newBounds.left = Math.max(0, newBounds.left + dx); 
         // prevent flipping and keep min size
-        mBounds.left = Math.min(mBounds.left, mBounds.right - minSize); 
+        newBounds.left = Math.min(newBounds.left, newBounds.right - minSize); 
         break;
       case R: 
-        mBounds.right = Math.min(mImageBounds.right, mBounds.right + dx);
-        mBounds.right = Math.max(mBounds.right, mBounds.left + minSize);
+        newBounds.right = Math.min(mImageBounds.right, newBounds.right + dx);
+        newBounds.right = Math.max(newBounds.right, newBounds.left + minSize);
         break;
       case T: 
-        mBounds.top = Math.max(0, mBounds.top + dy);
-        mBounds.top = Math.min(mBounds.top, mBounds.bottom - minSize);
+        newBounds.top = Math.max(0, newBounds.top + dy);
+        newBounds.top = Math.min(newBounds.top, newBounds.bottom - minSize);
         break;
       case B: 
-        mBounds.bottom = Math.min(mImageBounds.bottom, mBounds.bottom + dy);
-        mBounds.bottom = Math.max(mBounds.bottom, mBounds.top + minSize);
+        newBounds.bottom = Math.min(mImageBounds.bottom, newBounds.bottom + dy);
+        newBounds.bottom = Math.max(newBounds.bottom, newBounds.top + minSize);
         break;
       case TL:
-        resize(dx, dy, Edge.T);
-        resize(dx, dy, Edge.L);
+        resize(dx, dy, Edge.T, newBounds);
+        resize(dx, dy, Edge.L, newBounds);
         break;
       case TR:
-        resize(dx, dy, Edge.T);
-        resize(dx, dy, Edge.R);
+        resize(dx, dy, Edge.T, newBounds);
+        resize(dx, dy, Edge.R, newBounds);
         break;
       case BL:
-        resize(dx, dy, Edge.B);
-        resize(dx, dy, Edge.L);
+        resize(dx, dy, Edge.B, newBounds);
+        resize(dx, dy, Edge.L, newBounds);
         break;
       case BR:
-        resize(dx, dy, Edge.B);
-        resize(dx, dy, Edge.R);
+        resize(dx, dy, Edge.B, newBounds);
+        resize(dx, dy, Edge.R, newBounds);
         break;
     }
+  }
+  
+  /**
+   * Resizes the given edge by the given delta.
+   * @param dx
+   * @param dy
+   * @param edg
+   */
+  public void resize(int dx, int dy, Edge edg) {
+    Rect newBounds = getBounds();
+    resize(dx, dy, edg, newBounds);
+    setBounds(newBounds);
   }
 
   /**
@@ -612,7 +613,7 @@ public class NeighbourhoodView {
     return r;
   }
 
-  private Rect getPaddedScreenSpaceBounds() {
+  protected Rect getPaddedScreenSpaceBounds() {
     int padding = 
         (int)(mFocused ? HANDLE_SIZE: UNFOCUSED_PAINT.getStrokeWidth());
     padding += 1;

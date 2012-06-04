@@ -38,9 +38,24 @@ public class SelectView extends ImageView {
   // This is the neighbourhood being selected for the image.
   private ArrayList<NeighbourhoodView> mNeighbourhoods = new ArrayList<NeighbourhoodView>();
 
+  // Neighbourhood following
+  
+  private static final float FOLLOW_DURATION = 300f;
+
+  private static final float SCALE_PADDING = 0.6f;
+
+  private static final float SCALE_THRESHOLD = 0.1f;
+
+  private static final float MAX_SCALE = 6f;
+
+  private static final float MIN_SCALE = 0.9f;
+
   public void add(NeighbourhoodView nv) {
     mNeighbourhoods.add(nv);
-    invalidate(nv.getBounds()); // request redraw
+    if (nv.isFocused()) {
+      followResize(nv);
+    }
+    invalidate(nv.getPaddedScreenSpaceBounds());
   }
 
   // Ran to ensure the dimensions of the view are accessible to update the base matrix
@@ -77,6 +92,7 @@ public class SelectView extends ImageView {
     }
 
     if (mBitmap.getBitmap() != null) {
+      zoomTo(MIN_SCALE); // start zoomed out as much as possible
       updateFinalMatrix();
     }
 
@@ -369,8 +385,6 @@ public class SelectView extends ImageView {
 
   // Neighbourhood following
 
-  private static final float FOLLOW_DURATION = 300f;
-
   /**
    * Zoom to fit and pan to center the given neighbourhood in the view.
    * @param nv
@@ -409,11 +423,6 @@ public class SelectView extends ImageView {
 
     panBy(dx, dy, FOLLOW_DURATION);
   }
-
-  private static final float SCALE_PADDING = 0.6f;
-  private static final float SCALE_THRESHOLD = 0.1f;
-  private static final float MAX_SCALE = 6f;
-  private static final float MIN_SCALE = 0.9f;
 
   public void followResize(NeighbourhoodView nv) {
     RectF bounds = nv.getScreenSpaceBounds();

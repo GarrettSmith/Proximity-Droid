@@ -30,7 +30,6 @@ import com.actionbarsherlock.view.MenuItem;
 
 // TODO: Fix spinner on 2.1
 // TODO: Shift off the main UI thread possibly
-// TODO: Restore view zoom properly
 // TODO: Deal with Failed Binder Transaction
 /**
  * The activity can select neighbourhoods from an image. 
@@ -110,6 +109,7 @@ implements ActionBar.OnNavigationListener {
         mOnCreateRunnable = new Runnable() {
           public void run() {
             mNeighbourhoodView.setBounds(bounds);
+            // TODO: See if this follow needs to be put off
             mSelectView.followResize(mNeighbourhoodView);
           }
         };
@@ -174,8 +174,6 @@ implements ActionBar.OnNavigationListener {
     mNeighbourhoodView.setImageRect(imageRect);
 
     mNeighbourhoodView.resetBounds();
-    
-    mSelectView.followResize(mNeighbourhoodView);
   }
 
   @Override
