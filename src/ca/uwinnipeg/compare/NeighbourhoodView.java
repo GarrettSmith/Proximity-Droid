@@ -306,24 +306,16 @@ public class NeighbourhoodView {
       int index = 0;
       // if we have two or fewer points this doesn't matter
       if (size > 2) {
-        // find the closest pair of points point that won't make us intersect our polygon
+        // find the edge that is closest to the point
         float closest = Float.MAX_VALUE;
         Point current, next;
         for (int i = 0; i < size; i++) {
-          
           current = mPoly.getPoint(i);
           next = mPoly.getPoint((i + 1) % size);
-          
-          boolean currentIntersects = mPoly.intersectsLine(newPoint, current);
-          boolean nextIntersects = mPoly.intersectsLine(newPoint, current);
-
-          // only consider them if neither will cause an intersection
-          if (!(currentIntersects || nextIntersects)) {
-            float d = MathUtil.distance(newPoint, current);
-            if (d < closest) {
-              closest = d;
-              index = (i + 1) % size;
-            }
+          float d = MathUtil.pointLineDistance(current, next, newPoint);
+          if (d < closest) {
+            closest = d;
+            index = i + 1;
           }
         }
       }        

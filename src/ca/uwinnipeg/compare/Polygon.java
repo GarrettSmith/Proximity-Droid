@@ -250,97 +250,27 @@ public class Polygon {
     return inside;
   }
   
-  public boolean intersectsLine(Point p1, Point p2) {
-    return intersectsLine(p1.x, p1.y, p2.x, p2.y);
-  }
-  
   /**
-   * From http://code.google.com/p/straightedge/
    * 
-   * @param x1
-   * @param y1
-   * @param x2
-   * @param y2
+   * @param p1
+   * @param p2
    * @return
    */
-  // TODO: Figure out licence
-  public boolean intersectsLine(double x1, double y1, double x2, double y2){
-
-    // Sometimes this method fails if the 'lines'
-    // start and end on the same point, so here we check for that.
-    if (x1 == x2 && y1 == y2){
-      return false;
+  public Point intersect(Point p1, Point p2) {
+    
+    int size = mPoints.size();
+    
+    for (int i = 0; i < size; i++) {
+      int j = (i + 1) % size; // get the next point to make a segment
+      Point p3 = mPoints.get(i);
+      Point p4 = mPoints.get(j);
+      Point intersect = MathUtil.intersect(p1, p2, p3, p4);
+      if(intersect != null) {
+        return intersect;
+      }
     }
-    double ax = x2-x1;
-    double ay = y2-y1;
-    Point pofloatIBefore = mPoints.get(mPoints.size()-1);
-    for (int i = 0; i < mPoints.size(); i++){
-      Point pofloatI = mPoints.get(i);
-      double x3 = pofloatIBefore.x;
-      double y3 = pofloatIBefore.y;
-      double x4 = pofloatI.x;
-      double y4 = pofloatI.y;
-      
-      // check for matching points
-      if ( (x1 == x3 && y1 == y3) || (x1 == x4 && y1 == y4) ||
-           (x2 == x3 && y2 == y3) || (x2 == x4 && y2 == y4) ) {
-        continue;
-      }
 
-      double bx = x3-x4;
-      double by = y3-y4;
-      double cx = x1-x3;
-      double cy = y1-y3;
-
-      double alphaNumerator = by*cx - bx*cy;
-      double commonDenominator = ay*bx - ax*by;
-      if (commonDenominator > 0){
-        if (alphaNumerator < 0 || alphaNumerator > commonDenominator){
-          pofloatIBefore = pofloatI;
-          continue;
-        }
-      }else if (commonDenominator < 0){
-        if (alphaNumerator > 0 || alphaNumerator < commonDenominator){
-          pofloatIBefore = pofloatI;
-          continue;
-        }
-      }
-      double betaNumerator = ax*cy - ay*cx;
-      if (commonDenominator > 0){
-        if (betaNumerator < 0 || betaNumerator > commonDenominator){
-          pofloatIBefore = pofloatI;
-          continue;
-        }
-      }else if (commonDenominator < 0){
-        if (betaNumerator > 0 || betaNumerator < commonDenominator){
-          pofloatIBefore = pofloatI;
-          continue;
-        }
-      }
-      if (commonDenominator == 0){
-        // This code wasn't in Franklin Antonio's method. It was added by Keith Woodward.
-        // The lines are parallel.
-        // Check if they're collinear.
-        double collinearityTestForP3 = x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2);  // see http://mathworld.wolfram.com/Collinear.html
-        // If p3 is collinear with p1 and p2 then p4 will also be collinear, since p1-p2 is parallel with p3-p4
-        if (collinearityTestForP3 == 0){
-          // The lines are collinear. Now check if they overlap.
-          if (x1 >= x3 && x1 <= x4 || x1 <= x3 && x1 >= x4 ||
-              x2 >= x3 && x2 <= x4 || x2 <= x3 && x2 >= x4 ||
-              x3 >= x1 && x3 <= x2 || x3 <= x1 && x3 >= x2){
-            if (y1 >= y3 && y1 <= y4 || y1 <= y3 && y1 >= y4 ||
-                y2 >= y3 && y2 <= y4 || y2 <= y3 && y2 >= y4 ||
-                y3 >= y1 && y3 <= y2 || y3 <= y1 && y3 >= y2){
-              return true;
-            }
-          }
-        }
-        pofloatIBefore = pofloatI;
-        continue;
-      }
-      return true;
-    }
-    return false;
+   return null;
   }
 
   /**
