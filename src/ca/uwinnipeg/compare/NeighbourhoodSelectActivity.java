@@ -161,11 +161,8 @@ implements ActionBar.OnNavigationListener {
   private void init() {
     // set bitmap
     mSelectView.setImageBitmap(mBitmap, mOrientation);
-    // Setup neighbourhood
-    mNeighbourhoodView = new NeighbourhoodView(mSelectView);
-    mSelectView.add(mNeighbourhoodView);
-
-    mNeighbourhoodView.setFocused(true);
+    
+    mNeighbourhoodView = mSelectView.getNeighbourhood();
 
     int width = mBitmap.getWidth();
     int height = mBitmap.getHeight();
