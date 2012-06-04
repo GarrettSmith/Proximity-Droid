@@ -272,9 +272,6 @@ public class NeighbourhoodView {
       else if(mPoly.contains((int)x, (int)y)) {        
         mAction = Action.MOVE;
       }
-      else if ( (mSelectedEdge = checkEdges(x, y)) != Edge.NONE) { // TODO: remove down duplication
-        mAction = Action.RESIZE;
-      }
       else {
         // Create a new point
         addPoint((int)x, (int)y);
@@ -512,43 +509,23 @@ public class NeighbourhoodView {
    * @param dx
    * @param dy
    */
-  // TODO: can we avoid this duplication? We can using set bounds
   private void move(int dx, int dy) {
-    if (mShape == Shape.POLYGON) {
-      // Move the neighbourhood by the change
-      mPoly.offset(dx, dy);
+    Rect bounds = getBounds();
 
-      Rect bounds = mPoly.getBounds();
+    // move
+    bounds.offset(dx, dy);
 
-      // constrain top and left
-      mPoly.offsetTo(
-          Math.max(0, bounds.left),
-          Math.max(0, bounds.top));
-      
-      bounds = mPoly.getBounds();
+    // constrain top and left
+    bounds.offsetTo(
+        Math.max(0, bounds.left),
+        Math.max(0, bounds.top));
 
-      // constrain bottom and right
-      mPoly.offsetTo(
-          Math.min(mImageBounds.width() - bounds.width(), bounds.left),
-          Math.min(mImageBounds.height() - bounds.height(), bounds.top));
-      
-      updateBounds();
-    }
-    else {
+    // constrain bottom and right
+    bounds.offsetTo(
+        Math.min(mImageBounds.width() - bounds.width(), bounds.left),
+        Math.min(mImageBounds.height() - bounds.height(), bounds.top));
 
-      // Move the neighbourhood by the change
-      mBounds.offset(dx, dy);
-
-      // constrain top and left
-      mBounds.offsetTo(
-          Math.max(0, mBounds.left),
-          Math.max(0, mBounds.top));
-
-      // constrain bottom and right
-      mBounds.offsetTo(
-          Math.min(mImageBounds.width() - mBounds.width(), mBounds.left),
-          Math.min(mImageBounds.height() - mBounds.height(), mBounds.top));
-    }
+    setBounds(bounds);
   }
 
   /**
@@ -557,51 +534,45 @@ public class NeighbourhoodView {
    * @param dy
    * @param edg
    */
-  private void resize(int dx, int dy, Edge edg, Rect newBounds) {
+  private void resize(int dx, int dy, Edge edg) {
     int minSize = 
         (int) (Math.min(mView.getWidth(), mView.getHeight()) * MIN_SIZE / mView.getScale());
     switch (edg) {
       case L: 
         // constrain to image area
-        newBounds.left = Math.max(0, newBounds.left + dx); 
+        mBounds.left = Math.max(0, mBounds.left + dx); 
         // prevent flipping and keep min size
-        newBounds.left = Math.min(newBounds.left, newBounds.right - minSize); 
+        mBounds.left = Math.min(mBounds.left, mBounds.right - minSize); 
         break;
       case R: 
-        newBounds.right = Math.min(mImageBounds.right, newBounds.right + dx);
-        newBounds.right = Math.max(newBounds.right, newBounds.left + minSize);
+        mBounds.right = Math.min(mImageBounds.right, mBounds.right + dx);
+        mBounds.right = Math.max(mBounds.right, mBounds.left + minSize);
         break;
       case T: 
-        newBounds.top = Math.max(0, newBounds.top + dy);
-        newBounds.top = Math.min(newBounds.top, newBounds.bottom - minSize);
+        mBounds.top = Math.max(0, mBounds.top + dy);
+        mBounds.top = Math.min(mBounds.top, mBounds.bottom - minSize);
         break;
       case B: 
-        newBounds.bottom = Math.min(mImageBounds.bottom, newBounds.bottom + dy);
-        newBounds.bottom = Math.max(newBounds.bottom, newBounds.top + minSize);
+        mBounds.bottom = Math.min(mImageBounds.bottom, mBounds.bottom + dy);
+        mBounds.bottom = Math.max(mBounds.bottom, mBounds.top + minSize);
         break;
       case TL:
-        resize(dx, dy, Edge.T, newBounds);
-        resize(dx, dy, Edge.L, newBounds);
+        resize(dx, dy, Edge.T);
+        resize(dx, dy, Edge.L);
         break;
       case TR:
-        resize(dx, dy, Edge.T, newBounds);
-        resize(dx, dy, Edge.R, newBounds);
+        resize(dx, dy, Edge.T);
+        resize(dx, dy, Edge.R);
         break;
       case BL:
-        resize(dx, dy, Edge.B, newBounds);
-        resize(dx, dy, Edge.L, newBounds);
+        resize(dx, dy, Edge.B);
+        resize(dx, dy, Edge.L);
         break;
       case BR:
-        resize(dx, dy, Edge.B, newBounds);
-        resize(dx, dy, Edge.R, newBounds);
+        resize(dx, dy, Edge.B);
+        resize(dx, dy, Edge.R);
         break;
     }
-  }
-  
-  private void resize(int dx, int dy, Edge edg) {
-    Rect newBounds = getBounds();
-    resize(dx, dy, edg, newBounds);
-    setBounds(newBounds);
   }
 
   /**
