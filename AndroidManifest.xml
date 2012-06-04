@@ -1,18 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="ca.uwinnipeg.compare"
-      android:versionCode="1"
-      android:versionName="@string/app_versionName">
-    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="15" />
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <application android:label="@string/app_name" android:icon="@drawable/ic_launcher" android:hardwareAccelerated="false">
-        <activity android:name="NeighbourhoodSelectActivity"
-                  android:label="@string/app_name" android:uiOptions="splitActionBarWhenNarrow" android:theme="@style/Overlay">            
+    package="ca.uwinnipeg.compare"
+    android:versionCode="1"
+    android:versionName="@string/app_versionName" >
+
+    <uses-sdk
+        android:minSdkVersion="7"
+        android:targetSdkVersion="15" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <application
+        android:hardwareAccelerated="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name" >
+        <activity
+            android:name="NeighbourhoodSelectActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Overlay"
+            android:uiOptions="splitActionBarWhenNarrow" >
+        </activity>
+        <activity
+            android:name="AboutActivity"
+            android:label="@string/app_about"
+            android:theme="@style/Theme.Sherlock.Dialog" >
+        </activity>
+        <activity android:name="ca.uwinnipeg.proximitydroid.ProbeFuncSelectActivity" android:theme="@style/probe_func_list">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="AboutActivity" android:label="@string/app_about" android:theme="@style/Theme.Sherlock.Dialog"></activity>
     </application>
+
 </manifest>
