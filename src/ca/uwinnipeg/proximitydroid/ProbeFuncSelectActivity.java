@@ -35,15 +35,15 @@ public class ProbeFuncSelectActivity extends SherlockActivity {
   protected void onCreate(Bundle state) {
     super.onCreate(state);
     setContentView(R.layout.probe_func_select);
-    
+
     mListView = (ListView) findViewById(R.id.probe_func_select_list);
+
     
-    for (int i = 0; i < 7; i++) {
-      mProbeFuncs.add(new RedFunc());
-      mProbeFuncs.add(new GreenFunc());
-      mProbeFuncs.add(new BlueFunc());
-    }
-    
+    // TODO: Dynamically load default or previous probe functions
+    mProbeFuncs.add(new RedFunc());
+    mProbeFuncs.add(new GreenFunc());
+    mProbeFuncs.add(new BlueFunc());
+
     mListView.setAdapter(new ArrayAdapter<ProbeFunc<Integer>>(this, R.layout.probe_func_list_item, R.id.probe_func_name, mProbeFuncs));
   }
 

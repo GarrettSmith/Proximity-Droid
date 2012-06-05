@@ -14,7 +14,7 @@
         android:layout_marginRight="6dp"
         android:src="@drawable/ic_menu_accept" />
 
-    <CheckBox
+    <Switch
         android:id="@+id/probe_func_switch"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

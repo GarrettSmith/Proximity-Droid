@@ -22,7 +22,7 @@ import android.view.MotionEvent;
 // TODO: Use spinner for title
 // TODO: Add hiding bars
 // TODO: Look into old shape being drawn after changing shape
-public class NeighbourhoodView {
+public class RegionView {
 
   public static final String TAG = "NeighbourhoodView";
 
@@ -49,7 +49,7 @@ public class NeighbourhoodView {
   private Rect mBounds = new Rect();
 
   // The view containing this neighbourhood.
-  SelectView mView;
+  RegionSelectView mView;
 
   // Whether this neighbourhood is selected or not.
   boolean mFocused;
@@ -67,7 +67,7 @@ public class NeighbourhoodView {
   // The list of points that make up the polygon
   private Polygon mPoly = new Polygon();
 
-  public NeighbourhoodView(SelectView v){
+  public RegionView(RegionSelectView v){
     mView = v;
 
     // Grab the matrix

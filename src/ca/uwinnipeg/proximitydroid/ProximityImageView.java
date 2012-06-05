@@ -88,6 +88,10 @@ public class ProximityImageView extends ImageView {
     mBitmap.setOrientation(or);
     updateBaseMatrix(); // update the base matrix to reflect the new bitmap
   }
+  
+  protected void setImageBitmap(RotatedBitmap rbm) {
+    setImageBitmap(rbm.getBitmap(), rbm.getOrientation());
+  }
 
   protected RectF getImageScreenBounds() {
     RectF imageBounds = new RectF(

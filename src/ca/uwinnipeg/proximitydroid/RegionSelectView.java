@@ -11,23 +11,23 @@ import android.view.MotionEvent;
  * The view which the image and currently selected neighbourhood is drawn.
  *
  */
-public class SelectView extends ProximityImageView {  
+public class RegionSelectView extends ProximityImageView {  
 
   public static final String TAG = "SelectView";
   
-  protected NeighbourhoodView mNeighbourhood = new NeighbourhoodView(this);
+  protected RegionView mNeighbourhood = new RegionView(this);
 
   // Neighbourhood following  
   private static final float FOLLOW_DURATION = 300f;
   private static final float SCALE_PADDING = 0.6f;
   private static final float SCALE_THRESHOLD = 0.1f;
 
-  public SelectView(Context context){
+  public RegionSelectView(Context context){
     super(context);
     init();
   }
 
-  public SelectView(Context context, AttributeSet attr) {
+  public RegionSelectView(Context context, AttributeSet attr) {
     super(context, attr);
     init();
   }
@@ -36,7 +36,7 @@ public class SelectView extends ProximityImageView {
     mNeighbourhood.setFocused(true);
   }
 
-  public NeighbourhoodView getNeighbourhood() {
+  public RegionView getNeighbourhood() {
     return mNeighbourhood;
   }
   
@@ -76,7 +76,7 @@ public class SelectView extends ProximityImageView {
    * Pan to center the given neighbourhood in the view.
    * @param nv
    */
-  public void followMove(NeighbourhoodView nv) {
+  public void followMove(RegionView nv) {
     // Determine the zoom required
     RectF bounds = nv.getScreenSpaceBounds();
 
@@ -115,7 +115,7 @@ public class SelectView extends ProximityImageView {
    * Zoom to fit and pan to center the given neighbourhood in the view.
    * @param nv
    */
-  public void followResize(NeighbourhoodView nv) {
+  public void followResize(RegionView nv) {
     RectF bounds = nv.getScreenSpaceBounds();
     
     float w = bounds.width();
