@@ -1,5 +1,6 @@
-package ca.uwinnipeg.proximitydroid;
+package ca.uwinnipeg.proximitydroid.views;
 
+import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -89,7 +90,7 @@ public class ProximityImageView extends ImageView {
     updateBaseMatrix(); // update the base matrix to reflect the new bitmap
   }
   
-  protected void setImageBitmap(RotatedBitmap rbm) {
+  public void setImageBitmap(RotatedBitmap rbm) {
     setImageBitmap(rbm.getBitmap(), rbm.getOrientation());
   }
 

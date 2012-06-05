@@ -7,7 +7,8 @@ import android.os.Bundle;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
-import ca.uwinnipeg.compare.R;
+
+import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockActivity;
@@ -26,7 +27,7 @@ public class RegionSelectActivity
 extends SherlockActivity 
 implements ActionBar.OnNavigationListener {
 
-  public static final String TAG = "NeighbourhoodSelect";
+  public static final String TAG = "RegionSelectActivity";
 
   // Indices of the items in the drop down menu.
   // Must match the string array shape_list in arrays.xml and the ordinal values of
@@ -60,7 +61,7 @@ implements ActionBar.OnNavigationListener {
   @Override
   protected void onCreate(Bundle state){
     super.onCreate(state);    
-    setContentView(R.layout.neighbourhood_select);
+    setContentView(R.layout.region_select);
 
     // Make the window full screen
     getWindow().setFlags(
@@ -80,7 +81,7 @@ implements ActionBar.OnNavigationListener {
       final Rect bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
       String shapeStr = state.getString(BUNDLE_KEY_SHAPE);
       if (shapeStr != null) {
-        shape = RegionView.Shape.valueOf(shapeStr);
+        shape = RegionView.Shape.valueOf(RegionView.Shape.class, shapeStr);
       }
 
       // Create a runnable to restore the bounds after the shape has been restored
@@ -95,8 +96,8 @@ implements ActionBar.OnNavigationListener {
       }
       
     }
+    // Get information from the sent intent
     else {
-      // Check if an intent with a given bitmap and orientation was sent
       Intent intent = getIntent();
       Bundle extras = intent.getExtras();
       if (extras != null) {
@@ -160,8 +161,10 @@ implements ActionBar.OnNavigationListener {
   @Override
   protected void onSaveInstanceState(Bundle state) {    
     // Save the current image
-    state.putParcelable(BUNDLE_KEY_BITMAP, mBitmap.getBitmap());
-    state.putInt(BUNDLE_KEY_ORIENTATION, mBitmap.getOrientation());
+    if (mBitmap != null) {
+      state.putParcelable(BUNDLE_KEY_BITMAP, mBitmap.getBitmap());
+      state.putInt(BUNDLE_KEY_ORIENTATION, mBitmap.getOrientation());
+    }
     
     if (mRegionView != null) {
       state.putParcelable(BUNDLE_KEY_BOUNDS, mRegionView.getBounds());
@@ -194,31 +197,20 @@ implements ActionBar.OnNavigationListener {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getSupportMenuInflater();
-    inflater.inflate(R.menu.neighbourhood_select, menu);
-    mSelectView.updateFinalMatrix(); // recenter
+    inflater.inflate(R.menu.region_select, menu);
+    //mSelectView.updateFinalMatrix(); // recenter
     return true;
   }
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
-      case R.id.menu_about:
-        showAbout();
-        return true;
       case R.id.menu_reset:
         reset();
         return true;
       default:
         return super.onOptionsItemSelected(item);
     }
-  }
-
-  /**
-   * Displays the about dialog.
-   */
-  public void showAbout() {
-    Intent i = new Intent(this, AboutActivity.class);
-    startActivity(i);
   }
   
   /**

@@ -1,6 +1,6 @@
 package ca.uwinnipeg.proximitydroid;
 
-import ca.uwinnipeg.compare.R;
+import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -24,7 +24,7 @@ import android.view.MotionEvent;
 // TODO: Look into old shape being drawn after changing shape
 public class RegionView {
 
-  public static final String TAG = "NeighbourhoodView";
+  public static final String TAG = "RegionView";
 
   // The default ratio of padding when resetting the neighbour hood size
   public static final float PADDING_RATIO = 1/8f;
@@ -614,7 +614,7 @@ public class RegionView {
     return r;
   }
 
-  protected Rect getPaddedScreenSpaceBounds() {
+  public Rect getPaddedScreenSpaceBounds() {
     int padding = 
         (int)(mFocused ? HANDLE_SIZE: UNFOCUSED_PAINT.getStrokeWidth());
     padding += 1;
@@ -632,7 +632,7 @@ public class RegionView {
    * Draws the neighbourhood to the given canvas.
    * @param canvas
    */
-  protected void draw(Canvas canvas) {
+  public void draw(Canvas canvas) {
 
     Path shapePath = getShapePath();
 

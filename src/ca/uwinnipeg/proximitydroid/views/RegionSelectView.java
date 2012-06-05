@@ -1,5 +1,6 @@
-package ca.uwinnipeg.proximitydroid;
+package ca.uwinnipeg.proximitydroid.views;
 
+import ca.uwinnipeg.proximitydroid.RegionView;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.RectF;
@@ -41,7 +42,7 @@ public class RegionSelectView extends ProximityImageView {
   }
   
   @Override
-  protected void updateFinalMatrix() {
+  public void updateFinalMatrix() {
     super.updateFinalMatrix();
     // Let neighbourhood know the final matrix has changed
     mNeighbourhood.setScreenMatrix(getFinalMatrix());

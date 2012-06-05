@@ -1,6 +1,5 @@
 package ca.uwinnipeg.proximitydroid;
 
-import ca.uwinnipeg.compare.R;
 import android.app.Activity;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
