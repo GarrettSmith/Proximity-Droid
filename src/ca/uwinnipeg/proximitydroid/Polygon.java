@@ -19,14 +19,21 @@ public class Polygon {
    * Creates a new empty polygon.
    */
   public Polygon() {}
+  
   /**
-   * 
    * Creates a new polygon that is a copy of the given polygon.
    * @param orig the original polygon to copy
-   * @param bounds the bounds of the image this polygon is contained in
    */
   public Polygon(Polygon orig) {
     set(orig);
+  }
+  
+  /**
+   * Creates a new polygon from the given array of integers.
+   * @param points an array where every two integers represent a point
+   */
+  public Polygon(int[] points) {
+    set(points);
   }
   
   /**
@@ -63,6 +70,21 @@ public class Polygon {
     mPoints.toArray(points);
     return points;
   }
+  
+  /**
+   * Converts the points of the polygon to an array of ints.
+   * @return
+   */
+  public int[] toArray() {
+    final int size = mPoints.size();
+    int[] ps = new int[size * 2];
+    for (int i = 0; i < size; i++) {
+      Point p = mPoints.get(i);
+      ps[i * 2]     = p.x;
+      ps[i * 2 + 1] = p.y;
+    }
+    return ps;
+  }
 
   /**
    * Converts the points of the polygon to an array of floats.
@@ -91,6 +113,17 @@ public class Polygon {
     mPoints.clear();
     for (Point p : orig.mPoints) {
       addPoint(p);
+    }
+  }
+
+  /**
+   * Makes this polygon a copy of the given array representing a polygon.
+   * @param orig
+   */
+  public void set(int[] points) {
+    mPoints.clear();
+    for (int i = 0; i < points.length; i += 2) {
+      addPoint(points[i], points[i+1]);
     }
   }
   

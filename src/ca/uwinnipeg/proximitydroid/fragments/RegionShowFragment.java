@@ -3,11 +3,14 @@
  */
 package ca.uwinnipeg.proximitydroid.fragments;
 
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
+import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionShowView;
 
@@ -53,5 +56,13 @@ public class RegionShowFragment extends SherlockFragment {
   public void setBitmap(RotatedBitmap rbm) {
     mBitmap = rbm;
     mShowView.setImageBitmap(mBitmap);    
+  }
+  
+  public void addRegion(Rect bounds, Region.Shape shape, Polygon poly) {
+    Region reg = new Region(mShowView);
+    reg.setBounds(bounds);
+    reg.setPolygon(poly);
+    reg.setShape(shape);
+    mShowView.add(reg);
   }
 }

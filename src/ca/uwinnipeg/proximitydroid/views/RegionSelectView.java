@@ -1,11 +1,12 @@
 package ca.uwinnipeg.proximitydroid.views;
 
-import ca.uwinnipeg.proximitydroid.RegionView;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import ca.uwinnipeg.proximitydroid.Region;
+import ca.uwinnipeg.proximitydroid.SelectRegion;
 
 /**
  * 
@@ -16,7 +17,7 @@ public class RegionSelectView extends ProximityImageView {
 
   public static final String TAG = "SelectView";
   
-  protected RegionView mNeighbourhood = new RegionView(this);
+  protected SelectRegion mRegion = new SelectRegion(this);
 
   // Neighbourhood following  
   private static final float FOLLOW_DURATION = 300f;
@@ -34,31 +35,31 @@ public class RegionSelectView extends ProximityImageView {
   }
   
   private void init() {
-    mNeighbourhood.setFocused(true);
+    mRegion.setFocused(true);
   }
 
-  public RegionView getNeighbourhood() {
-    return mNeighbourhood;
+  public Region getNeighbourhood() {
+    return mRegion;
   }
   
   @Override
   public void updateFinalMatrix() {
     super.updateFinalMatrix();
     // Let neighbourhood know the final matrix has changed
-    mNeighbourhood.setScreenMatrix(getFinalMatrix());
+    mRegion.setScreenMatrix(getFinalMatrix());
   }
 
   @Override 
   public boolean onTouchEvent(MotionEvent event) {
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN: 
-        mNeighbourhood.handleDown(event);
+        mRegion.handleDown(event);
         return true;
       case MotionEvent.ACTION_UP: 
-        mNeighbourhood.handleUp(event);
+        mRegion.handleUp(event);
         return true;
       case MotionEvent.ACTION_MOVE: 
-        mNeighbourhood.handleMove(event);
+        mRegion.handleMove(event);
         return true;
       default:                      
         return false;
@@ -68,7 +69,7 @@ public class RegionSelectView extends ProximityImageView {
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
-    mNeighbourhood.draw(canvas);
+    mRegion.draw(canvas);
   }
 
   // Neighbourhood following
@@ -77,7 +78,7 @@ public class RegionSelectView extends ProximityImageView {
    * Pan to center the given neighbourhood in the view.
    * @param nv
    */
-  public void followMove(RegionView nv) {
+  public void followMove(Region nv) {
     // Determine the zoom required
     RectF bounds = nv.getScreenSpaceBounds();
 
@@ -116,7 +117,7 @@ public class RegionSelectView extends ProximityImageView {
    * Zoom to fit and pan to center the given neighbourhood in the view.
    * @param nv
    */
-  public void followResize(RegionView nv) {
+  public void followResize(Region nv) {
     RectF bounds = nv.getScreenSpaceBounds();
     
     float w = bounds.width();

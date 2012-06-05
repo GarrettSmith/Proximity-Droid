@@ -9,7 +9,7 @@ import java.util.List;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import ca.uwinnipeg.proximitydroid.RegionView;
+import ca.uwinnipeg.proximitydroid.Region;
 
 /**
  * @author Garrett Smith
@@ -20,7 +20,7 @@ public class RegionShowView extends ProximityImageView {
   public static final String TAG = "RegionShowView";
   
   // The regions of interest in this image
-  protected List<RegionView> mRegions = new ArrayList<RegionView>();
+  protected List<Region> mRegions = new ArrayList<Region>();
 
   public RegionShowView(Context context) {
     super(context);
@@ -30,12 +30,12 @@ public class RegionShowView extends ProximityImageView {
     super(context, attr);
   }
   
-  public void add(RegionView reg) {
+  public void add(Region reg) {
     mRegions.add(reg);
     invalidate(reg.getPaddedScreenSpaceBounds());
   }
   
-  public void remove(RegionView reg) {
+  public void remove(Region reg) {
     mRegions.remove(reg);
     invalidate(reg.getPaddedScreenSpaceBounds());
   }
@@ -43,7 +43,7 @@ public class RegionShowView extends ProximityImageView {
   @Override
   public void draw(Canvas canvas) {
     super.draw(canvas);
-    for (RegionView reg : mRegions) {
+    for (Region reg : mRegions) {
       reg.draw(canvas);
     }
   }

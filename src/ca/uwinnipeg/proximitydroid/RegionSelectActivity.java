@@ -4,10 +4,10 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
-
 import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -40,7 +40,7 @@ implements ActionBar.OnNavigationListener {
   private RotatedBitmap mBitmap;
 
   private RegionSelectView mSelectView;
-  private RegionView mRegionView;
+  private Region mRegionView;
 
   // Used to restore state properly without having the restored bounds overwritten.
   private Runnable mOnCreateRunnable = null;
@@ -50,10 +50,13 @@ implements ActionBar.OnNavigationListener {
   private SpinnerAdapter mSpinnerAdapter;
 
   // bundle keys
-  private static final String BUNDLE_KEY_BITMAP = "Bitmap";
-  private static final String BUNDLE_KEY_ORIENTATION = "Orientation";
   private static final String BUNDLE_KEY_BOUNDS = "Bounds";
   private static final String BUNDLE_KEY_SHAPE = "Shape";
+  
+  // Result keys
+  public static final String RESULT_KEY_BOUNDS = "Bounds";
+  public static final String RESULT_KEY_SHAPE = "Shape";
+  public static final String RESULT_KEY_POLY = "Poly";
 
   /**
    * Called when this Activity is first created.
@@ -71,7 +74,7 @@ implements ActionBar.OnNavigationListener {
     // setup view
     mSelectView = (RegionSelectView) findViewById(R.id.select_view);
 
-    RegionView.Shape shape = null;
+    Region.Shape shape = null;
     
     // Check if state needs to be restored
     if (state != null) {
@@ -81,7 +84,7 @@ implements ActionBar.OnNavigationListener {
       final Rect bounds = state.getParcelable(BUNDLE_KEY_BOUNDS);
       String shapeStr = state.getString(BUNDLE_KEY_SHAPE);
       if (shapeStr != null) {
-        shape = RegionView.Shape.valueOf(RegionView.Shape.class, shapeStr);
+        shape = Region.Shape.valueOf(Region.Shape.class, shapeStr);
       }
 
       // Create a runnable to restore the bounds after the shape has been restored
@@ -99,10 +102,7 @@ implements ActionBar.OnNavigationListener {
     // Get information from the sent intent
     else {
       Intent intent = getIntent();
-      Bundle extras = intent.getExtras();
-      if (extras != null) {
-        restoreBitmap(extras);
-      }
+      mBitmap = Util.loadImage(intent.getData(), getContentResolver(), getWindowManager());
     }    
 
     // UI
@@ -113,18 +113,19 @@ implements ActionBar.OnNavigationListener {
       init();
     } 
     else {
-      finish();
+      Log.e(TAG, "Bitmap was null.");
+      cancel();
     }
 
   }
   
   private void restoreBitmap(Bundle extras) {
-    Bitmap bm = (Bitmap) extras.getParcelable(BUNDLE_KEY_BITMAP);
-    int orientation = extras.getInt(BUNDLE_KEY_ORIENTATION);
+    Bitmap bm = (Bitmap) extras.getParcelable(ProximityDroidActivity.BUNDLE_KEY_BITMAP);
+    int orientation = extras.getInt(ProximityDroidActivity.BUNDLE_KEY_ORIENTATION);
     mBitmap = new RotatedBitmap(bm, orientation);
   }
 
-  private void setupActionBar(RegionView.Shape shape) {
+  private void setupActionBar(Region.Shape shape) {
     mActionBar = getSupportActionBar();
     mActionBar.setDisplayHomeAsUpEnabled(true);
 
@@ -162,8 +163,8 @@ implements ActionBar.OnNavigationListener {
   protected void onSaveInstanceState(Bundle state) {    
     // Save the current image
     if (mBitmap != null) {
-      state.putParcelable(BUNDLE_KEY_BITMAP, mBitmap.getBitmap());
-      state.putInt(BUNDLE_KEY_ORIENTATION, mBitmap.getOrientation());
+      state.putParcelable(ProximityDroidActivity.BUNDLE_KEY_BITMAP, mBitmap.getBitmap());
+      state.putInt(ProximityDroidActivity.BUNDLE_KEY_ORIENTATION, mBitmap.getOrientation());
     }
     
     if (mRegionView != null) {
@@ -177,13 +178,13 @@ implements ActionBar.OnNavigationListener {
   public boolean onNavigationItemSelected(int position, long itemId) {
     switch(position) {
       case BUTTON_RECTANGLE_INDEX:
-        mRegionView.setShape(RegionView.Shape.RECTANGLE);
+        mRegionView.setShape(Region.Shape.RECTANGLE);
         break;
       case BUTTON_OVAL_INDEX:
-        mRegionView.setShape(RegionView.Shape.OVAL);
+        mRegionView.setShape(Region.Shape.OVAL);
         break;
       case BUTTON_POLYGON_INDEX:
-        mRegionView.setShape(RegionView.Shape.POLYGON);
+        mRegionView.setShape(Region.Shape.POLYGON);
         break;     
     }
     // Check to see if bounds need to be restored
@@ -208,6 +209,12 @@ implements ActionBar.OnNavigationListener {
       case R.id.menu_reset:
         reset();
         return true;
+      case R.id.menu_accept:
+        accept();
+        return true;
+      case R.id.menu_cancel:
+        cancel();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -218,6 +225,28 @@ implements ActionBar.OnNavigationListener {
    */
   public void reset() {
     mRegionView.reset();
+  }
+  
+  /**
+   * Accepts the selected region and returns is as the result.
+   */
+  public void accept() {
+    // TODO: Attach required region info
+    Intent result = new Intent();
+    result.putExtra(RESULT_KEY_BOUNDS, mRegionView.getBounds());
+    result.putExtra(RESULT_KEY_SHAPE, mRegionView.getShape().toString());
+    result.putExtra(RESULT_KEY_POLY, mRegionView.getPolygon().toArray());
+    setResult(RESULT_OK, result);
+    finish();
+  }
+  
+  /**
+   * Cancels selecting the region.
+   */
+  public void cancel() {
+    Intent result = new Intent();
+    setResult(RESULT_CANCELED, result);
+    finish();
   }
 
 }
