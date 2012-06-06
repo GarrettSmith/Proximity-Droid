@@ -3,7 +3,12 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
@@ -23,7 +28,7 @@ import android.view.WindowManager;
  *
  */
 public class Util {
-  
+
   public static final String TAG = "Util";
 
   /**
@@ -58,7 +63,7 @@ public class Util {
     Bitmap bm = BitmapFactory.decodeFile(path, options);
     return new RotatedBitmap(bm, orientation);
   }
-  
+
   /**
    * Reads the exif orientation information of a file and returns a RotatedBitmap rotation value.
    * @param filePath
@@ -105,7 +110,7 @@ public class Util {
       int reqWidth, 
       int reqHeight,
       int rotation) {
-    
+
     // Raw height and width of image rotated properly
     int width, height;
     if (rotation == RotatedBitmap.CW || rotation == RotatedBitmap.CCW) {
@@ -117,7 +122,7 @@ public class Util {
       height = options.outHeight;
       width = options.outWidth;
     }
-    
+
     int inSampleSize = 1;
 
     if (height > reqHeight || width > reqWidth) {
@@ -145,7 +150,7 @@ public class Util {
     cursor.close();
     return rtn;
   }
-  
+
   /**
    * Returns the dimensions of the screen in a {@link Point}.
    * @return
@@ -164,4 +169,5 @@ public class Util {
     }
     return p;
   }
+
 }

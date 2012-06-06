@@ -54,9 +54,11 @@ public class PreferenceListFragment extends SherlockListFragment{
   };
   private ListView lv;
   private int xmlId;
+  private int layoutId = R.layout.preference_list_content;
   
-  public PreferenceListFragment(int xmlId){
+  public PreferenceListFragment(int xmlId, int layoutId){
       this.xmlId = xmlId;
+      this.layoutId = layoutId;
   }
   //must be provided
   public PreferenceListFragment(){
@@ -80,10 +82,12 @@ public class PreferenceListFragment extends SherlockListFragment{
   @Override
   public void onCreate(Bundle b) {
       super.onCreate(b);
-      if(b != null)
-          xmlId = b.getInt("xml");
+      if(b != null) {
+        xmlId = b.getInt("xml");
+        layoutId = b.getInt("layout");
+      }
       mPreferenceManager = onCreatePreferenceManager();
-      lv = (ListView) LayoutInflater.from(getActivity()).inflate(R.layout.preference_list_content, null);
+      lv = (ListView) LayoutInflater.from(getActivity()).inflate(layoutId, null);
       lv.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
       addPreferencesFromResource(xmlId);
       postBindPreferences();
@@ -118,6 +122,7 @@ public class PreferenceListFragment extends SherlockListFragment{
   @Override
   public void onSaveInstanceState(Bundle outState) {
       outState.putInt("xml", xmlId);
+      outState.putInt("layout", layoutId);
       super.onSaveInstanceState(outState);
 
   }
