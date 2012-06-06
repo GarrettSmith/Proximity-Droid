@@ -3,22 +3,23 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
@@ -46,7 +47,7 @@ import com.actionbarsherlock.view.MenuItem;
  */
 public class ProximityDroidActivity 
 extends SherlockFragmentActivity 
-implements OnPreferenceAttachedListener, OnPreferenceClickListener {
+implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreferenceChangeListener {
 
   public static final String TAG = "ProximityDroidActivity";
 
@@ -77,6 +78,8 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener {
   protected static final String BUNDLE_KEY_URI = "Uri";
   protected static final String BUNDLE_KEY_SHOW_FRAG = "Show Fragment";
   protected static final String BUNDLE_KEY_PROBE_FRAG = "Probe Fragment";
+
+  // Preferences
 
   @Override
   protected void onCreate(Bundle state) {
@@ -155,7 +158,6 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener {
         if (resultCode == Activity.RESULT_OK) addRegion(data);
         break;
     }
-
   }
 
   /**
@@ -233,11 +235,10 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener {
   @Override
   public void onPreferenceAttached(PreferenceScreen root, int xmlId) {
     if(root == null) return; //for whatever reason in very rare cases this is null   
-
+    
     // Load features
     loadProbeFuncs();
 
-    // TODO: Remember previous settings
     // Generate preference items from features    
     // generate a category for each given category    
     for (String catStr : mFeatures.keySet()) {
@@ -253,8 +254,14 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener {
         // generate a preference for each probe func
         for (ProbeFunc<Integer> func : funcs) {
           SwitchPreference pref = new SwitchPreference(this);
+          
+          // Set name and key
+          String key = catStr + "_" + func.toString();
           pref.setTitle(func.toString());
-          pref.setKey(catStr + "_" + func.toString());
+          pref.setKey(key);
+          
+          pref.setOnPreferenceClickListener(this);
+          pref.setOnPreferenceChangeListener(this);
           category.addPreference(pref);
         }
       }
@@ -316,6 +323,11 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener {
   public boolean onPreferenceClick(Preference preference) {
     String key = preference.getKey();
     Log.i(TAG, key + " was pressed.");
+    return true;
+  }
+
+  @Override
+  public boolean onPreferenceChange(Preference preference, Object newValue) {
     return true;
   }
 

@@ -21,10 +21,7 @@ public class ProbeFuncSelectFragment extends PreferenceListFragment {
 
   // The list of selected probe function
   protected List<ProbeFunc<Integer>> mProbeFuncs = new ArrayList<ProbeFunc<Integer>>();
-  
-  // Preferences
-  public static final String PREF_NAME = "FeaturePrefs";
-  
+    
   public ProbeFuncSelectFragment() {
     super(R.xml.feature_settings, R.layout.probe_func_select);
   }
