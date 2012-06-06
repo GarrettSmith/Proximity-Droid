@@ -6,6 +6,8 @@ package ca.uwinnipeg.proximitydroid.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +36,9 @@ public class ProbeFuncSelectFragment extends SherlockListFragment {
 
   // The list of selected probe function
   protected List<ProbeFunc<Integer>> mProbeFuncs = new ArrayList<ProbeFunc<Integer>>();
+  
+  // Preferences
+  public static final String PREF_NAME = "FeaturePrefs";
 
   @Override
   public View onCreateView(
@@ -52,16 +57,20 @@ public class ProbeFuncSelectFragment extends SherlockListFragment {
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-
+    super.onActivityCreated(savedInstanceState);  
+    // Setup list
     mListView = getListView();
-
     mListView.setAdapter(
         new ArrayAdapter<ProbeFunc<Integer>>(
             getActivity(), 
             R.layout.probe_func_list_item, 
             R.id.probe_func_name, 
             mProbeFuncs));
+  }
+  
+  @Override
+  public void onDetach() {
+    super.onDetach();
   }
 
 }
