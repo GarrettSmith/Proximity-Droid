@@ -10,4 +10,7 @@
     <string name="about_thanks_title">Thanks to</string>
     <string name="menu_reset">Reset</string>
     <string name="menu_add">Add a Region</string>
+    <string name="menu_features">Select Features</string>
+    <string name="menu_show_features">Show Features</string>
+    <string name="menu_hide_features">Hide Features</string>
 </resources>

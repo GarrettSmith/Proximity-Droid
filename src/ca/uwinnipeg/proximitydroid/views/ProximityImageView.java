@@ -73,7 +73,15 @@ public class ProximityImageView extends ImageView {
       zoomTo(MIN_SCALE); // start zoomed out as much as possible
       updateFinalMatrix();
     }
-
+    
+  }
+  
+  @Override
+  protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    super.onSizeChanged(w, h, oldw, oldh);
+    if (mBitmap.getBitmap() != null) {
+      //updateBaseMatrix();
+    }
   }
 
   @Override

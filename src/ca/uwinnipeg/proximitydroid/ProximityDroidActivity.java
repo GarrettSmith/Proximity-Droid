@@ -5,15 +5,12 @@ package ca.uwinnipeg.proximitydroid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -26,6 +23,7 @@ import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.provider.MediaStore.Images;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximity.image.AlphaFunc;
@@ -62,11 +60,14 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
   protected Map<String, List<ProbeFunc<Integer>>> mFeatures = 
       new HashMap<String, List<ProbeFunc<Integer>>>();
 
+  // Fragments
   private RegionShowFragment mShowFrag;
   private ProbeFuncSelectFragment mProbeFrag;
-
+      
   private ContentResolver mContentResolver;
   private FragmentManager mFragmentManager;
+  
+  protected boolean mSmallScreen;
 
   // Intents
   private static final int REQUEST_CODE_SELECT_IMAGE = 0;
@@ -79,8 +80,6 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
   protected static final String BUNDLE_KEY_SHOW_FRAG = "Show Fragment";
   protected static final String BUNDLE_KEY_PROBE_FRAG = "Probe Fragment";
 
-  // Preferences
-
   @Override
   protected void onCreate(Bundle state) {
     super.onCreate(state);
@@ -88,6 +87,8 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
 
     mContentResolver = getContentResolver();
     mFragmentManager = getSupportFragmentManager();
+    
+    mSmallScreen = findViewById(R.id.fragment_container) != null;
 
     // restore previous state
     if (state != null) {
@@ -96,6 +97,14 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
           (RegionShowFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_SHOW_FRAG);
       mProbeFrag = 
           (ProbeFuncSelectFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_PROBE_FRAG);
+
+      // hide probe frag on small screens
+      if (mSmallScreen) {
+        mFragmentManager.beginTransaction()
+        .hide(mProbeFrag)
+        .commit();
+      }
+      
       // restore the bitmap
       Bitmap bm = (Bitmap) state.getParcelable(BUNDLE_KEY_BITMAP);
       int orientation = state.getInt(BUNDLE_KEY_ORIENTATION);
@@ -107,11 +116,20 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
     }
     // load fragments if we are not using the large tablet display
     // Don't create fragments if we are restoring state
-    else if (findViewById(R.id.fragment_container) != null) {
+    else if (mSmallScreen) {
       mShowFrag = new RegionShowFragment();
+      mProbeFrag = new ProbeFuncSelectFragment();
 
-      // add the fragment to the view
-      mFragmentManager.beginTransaction().add(R.id.fragment_container, mShowFrag).commit();
+      // add the fragments to the view
+      mFragmentManager.beginTransaction()
+        .add(R.id.fragment_container, mShowFrag)
+        .add(R.id.fragment_container, mProbeFrag)
+        .commit();
+      
+      // hide probe frag
+      mFragmentManager.beginTransaction()
+        .hide(mProbeFrag)
+        .commit();
     }
     // Get fragments by their id
     else {
@@ -130,9 +148,9 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
 
   @Override
   protected void onSaveInstanceState(Bundle state) {
-    // save the fragments
-    if (mShowFrag != null)  mFragmentManager.putFragment(state, BUNDLE_KEY_SHOW_FRAG, mShowFrag);
-    if (mProbeFrag != null) mFragmentManager.putFragment(state, BUNDLE_KEY_PROBE_FRAG, mProbeFrag);
+    // save the fragments   
+    if (mShowFrag.isAdded()) mFragmentManager.putFragment(state, BUNDLE_KEY_SHOW_FRAG, mShowFrag);
+    if (mProbeFrag.isAdded()) mFragmentManager.putFragment(state, BUNDLE_KEY_PROBE_FRAG, mProbeFrag);
     // Save the bitmap
     if (mBitmap != null) {
       state.putParcelable(BUNDLE_KEY_BITMAP, mBitmap.getBitmap());
@@ -176,26 +194,26 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
    * @param data
    */
   private void addRegion(Intent data) {
-    if (mShowFrag != null) {
       Rect bounds = (Rect) data.getParcelableExtra(RegionSelectActivity.RESULT_KEY_BOUNDS);
       String shapeStr = data.getStringExtra(RegionSelectActivity.RESULT_KEY_SHAPE);
       Region.Shape shape = Region.Shape.valueOf(Region.Shape.class, shapeStr);
       Polygon poly = new Polygon(data.getIntArrayExtra(RegionSelectActivity.RESULT_KEY_POLY));
       mShowFrag.addRegion(bounds, shape, poly);
-    }
   }
 
   //Updates the bitmap of the region showing fragment
   private void updateBitmap() {
-    if (mShowFrag != null) {
       mShowFrag.setBitmap(mBitmap);
-    }
   }
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getSupportMenuInflater();
     inflater.inflate(R.menu.region_show, menu);
+    // setup toggle button text
+    if (!mSmallScreen) {
+      menu.findItem(R.id.menu_features).setTitle(R.string.menu_hide_features);
+    }
     return true;
   }
 
@@ -208,6 +226,9 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
       case R.id.menu_add:
         addRegion();
         return true;
+      case R.id.menu_features:
+        toggleFeatures();
+        return true;  
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -230,6 +251,27 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
     i.setData(mUri);
     // start the activity
     startActivityForResult(i, REQUEST_CODE_ADD_REGION);
+  }
+  
+  /**
+   * Toggles the display of the features fragment.
+   */
+  private void toggleFeatures() {
+    FragmentTransaction transaction = mFragmentManager.beginTransaction();
+    transaction.setCustomAnimations(
+        R.anim.slide_in, 
+        R.anim.slide_out, 
+        R.anim.slide_in, 
+        R.anim.slide_out);
+    // toggle hiding probe frag
+    if (mProbeFrag.isHidden()) {
+      transaction
+      .show(mProbeFrag);
+    }
+    else {
+      transaction.hide(mProbeFrag);
+    }
+    transaction.commit();
   }
 
   @Override
@@ -277,46 +319,7 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
     colourFuncs.add(new GreenFunc());
     colourFuncs.add(new BlueFunc());
 
-    // load probe funcs from external storage
-    // check if external storage is mounted
-//    mFeatures.put("Custom", new ArrayList<ProbeFunc<Integer>>());
-//    List<ProbeFunc<Integer>> customFuncs = mFeatures.get("Custom");
-//    if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-//      File dir = new File(Environment.getExternalStorageDirectory(), "proximitydroid/probefuncs/");
-//      ClassLoader classLoader;
-//      classLoader = new dalvik.system.PathClassLoader(dir.getPath(), ClassLoader.getSystemClassLoader());
-//
-//      // get all .class files
-//      File[] files = dir.listFiles(new FilenameFilter() {        
-//        @Override
-//        public boolean accept(File dir, String filename) {
-//          return filename.endsWith(".apk");
-//        }
-//      });
-//      File dexOutputDir = this.getDir("dex", 0);
-//      for (File f : files) {
-//        classLoader = new dalvik.system.PathClassLoader(f.getPath(), ClassLoader.getSystemClassLoader());
-//        // get the name of the file stripping the .class, this is the name of the class
-//        String className = f.getName().substring(0, f.getName().length() - 4);
-//
-//        try {
-//          // load the class
-//          Class<?> clazz = Class.forName(className, true, classLoader);;
-//
-//          // check if the class is a probe func
-//          if (clazz.isAssignableFrom(ProbeFunc.class)) {
-//            try {
-//              // add the func to the list of custom funcs
-//              customFuncs.add((ProbeFunc<Integer>) clazz.newInstance());
-//            } catch (InstantiationException e) {
-//            } catch (IllegalAccessException e) {
-//            }
-//          }
-//
-//        } catch (ClassNotFoundException e) {
-//        }
-//      }
-//    }
+    // TODO: load probe funcs from external storage
   }
 
   @Override
