@@ -75,7 +75,7 @@ public class Region {
       Resources rs = v.getResources();
 
       REGION_PAINT.setStyle(Paint.Style.STROKE);
-      REGION_PAINT.setColor(rs.getColor(R.color.neighbourhood_unfocused_color));
+      REGION_PAINT.setColor(rs.getColor(R.color.region_unfocused_color));
       REGION_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
     }
   }

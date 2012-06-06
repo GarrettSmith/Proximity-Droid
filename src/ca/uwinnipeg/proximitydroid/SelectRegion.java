@@ -61,36 +61,38 @@ public class SelectRegion extends Region {
     super(v);
     
     if (!SETUP) {
+      SETUP = true;
+      
       // Borrow the view's resources
       Resources rs = v.getResources();
 
       FOCUSED_PAINT.setStyle(Paint.Style.STROKE);
-      FOCUSED_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_focused_stroke));
-      FOCUSED_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
+      FOCUSED_PAINT.setStrokeWidth(rs.getDimension(R.dimen.region_focused_stroke));
+      FOCUSED_PAINT.setColor(rs.getColor(R.color.region_focused_color));
       FOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
       GUIDE_PAINT.setStyle(Paint.Style.STROKE);
-      GUIDE_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_guide_stroke));
-      GUIDE_PAINT.setColor(rs.getColor(R.color.neighbourhood_guide_color));
+      GUIDE_PAINT.setStrokeWidth(rs.getDimension(R.dimen.region_guide_stroke));
+      GUIDE_PAINT.setColor(rs.getColor(R.color.region_guide_color));
       GUIDE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
       HANDLE_PAINT.setStyle(Paint.Style.FILL);
-      HANDLE_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
+      HANDLE_PAINT.setColor(rs.getColor(R.color.region_focused_color));
       HANDLE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      UNSELECTED_PAINT.setColor(rs.getColor(R.color.neighbourhood_unselected_color));
+      UNSELECTED_PAINT.setColor(rs.getColor(R.color.region_unselected_color));
       UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
       SELECTED_POINT_PAINT.setStyle(Paint.Style.FILL);
-      SELECTED_POINT_PAINT.setColor(rs.getColor(R.color.neighbourhood_focused_color));
+      SELECTED_POINT_PAINT.setColor(rs.getColor(R.color.region_focused_color));
       SELECTED_POINT_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
       REMOVE_POINT_PAINT.setStyle(Paint.Style.STROKE);
-      REMOVE_POINT_PAINT.setStrokeWidth(rs.getDimension(R.dimen.neighbourhood_focused_stroke));
-      REMOVE_POINT_PAINT.setColor(rs.getColor(R.color.neighbourhood_remove_point_color));
+      REMOVE_POINT_PAINT.setStrokeWidth(rs.getDimension(R.dimen.region_focused_stroke));
+      REMOVE_POINT_PAINT.setColor(rs.getColor(R.color.region_remove_point_color));
       REMOVE_POINT_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      HANDLE_SIZE = rs.getDimension(R.dimen.neighbourhood_handle_size);
+      HANDLE_SIZE = rs.getDimension(R.dimen.region_handle_size);
 
       float halfSize = HANDLE_SIZE / 2;
       HANDLE_PATH.addRect(-halfSize, -halfSize, halfSize, halfSize, Path.Direction.CW);

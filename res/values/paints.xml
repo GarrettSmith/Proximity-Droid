@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="neighbourhood_focused_color">#00FFFF</color>
-    <dimen name="neighbourhood_focused_stroke">1dp</dimen>
-    <color name="neighbourhood_unfocused_color">#AA00FFFF</color>
-    <color name="neighbourhood_guide_color">#55FFFFFF</color>
-    <dimen name="neighbourhood_guide_stroke">0px</dimen>
-    <color name="neighbourhood_unselected_color">#99000000</color>
-    <dimen name="neighbourhood_handle_size">12dp</dimen>
-    <color name="neighbourhood_remove_point_color">#e00</color>
+    <color name="region_focused_color">#00FFFF</color>
+    <dimen name="region_focused_stroke">1dp</dimen>
+    <color name="region_unfocused_color">#FF00FFFF</color>
+    <color name="region_guide_color">#55FFFFFF</color>
+    <dimen name="region_guide_stroke">0px</dimen>
+    <color name="region_unselected_color">#99000000</color>
+    <dimen name="region_handle_size">12dp</dimen>
+    <color name="region_remove_point_color">#e00</color>
     
 </resources>

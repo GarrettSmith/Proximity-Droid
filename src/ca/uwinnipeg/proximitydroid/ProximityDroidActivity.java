@@ -12,7 +12,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore.Images;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
 import ca.uwinnipeg.proximitydroid.fragments.ProbeFuncSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment;
 
@@ -126,7 +125,6 @@ public class ProximityDroidActivity extends SherlockFragmentActivity {
         }
         break;
       case REQUEST_CODE_ADD_REGION:
-        // TODO: Add the returned region
         if (resultCode == Activity.RESULT_OK) addRegion(data);
         break;
     }
