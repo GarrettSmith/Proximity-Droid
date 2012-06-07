@@ -12,7 +12,6 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -32,7 +31,10 @@ import ca.uwinnipeg.proximity.image.GreenFunc;
 import ca.uwinnipeg.proximity.image.RedFunc;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.ProbeFuncSelectFragment;
+import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
+import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnRegionSelectedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment;
+import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.RegionProvider;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
@@ -44,8 +46,12 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 public class ProximityDroidActivity 
-extends SherlockFragmentActivity 
-implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreferenceChangeListener {
+  extends SherlockFragmentActivity 
+  implements OnPreferenceAttachedListener, 
+    OnPreferenceClickListener, 
+    OnPreferenceChangeListener,
+    OnRegionSelectedListener,
+    RegionProvider {
 
   public static final String TAG = "ProximityDroidActivity";
 
@@ -63,11 +69,15 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
   // Fragments
   private RegionShowFragment mShowFrag;
   private ProbeFuncSelectFragment mProbeFrag;
-      
+
+  public final String SELECT_TAG = "Select RegionView";
+
   private ContentResolver mContentResolver;
   private FragmentManager mFragmentManager;
-  
+
   protected boolean mSmallScreen;
+
+  protected List<Region> mRegions = new ArrayList<Region>();
 
   // Intents
   private static final int REQUEST_CODE_SELECT_IMAGE = 0;
@@ -81,14 +91,24 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
   protected static final String BUNDLE_KEY_PROBE_FRAG = "Probe Fragment";
 
   @Override
+  public List<Region> getRegions() {
+    return mRegions;
+  }
+
+  @Override
+  public RotatedBitmap getBitmap() {
+    return mBitmap;
+  }
+
+  @Override
   protected void onCreate(Bundle state) {
     super.onCreate(state);
     setContentView(R.layout.main);
 
     mContentResolver = getContentResolver();
     mFragmentManager = getSupportFragmentManager();
-    
-    mSmallScreen = findViewById(R.id.fragment_container) != null;
+
+    mSmallScreen = findViewById(R.id.main_layout) == null;
 
     // restore previous state
     if (state != null) {
@@ -104,7 +124,7 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
         .hide(mProbeFrag)
         .commit();
       }
-      
+
       // restore the bitmap
       Bitmap bm = (Bitmap) state.getParcelable(BUNDLE_KEY_BITMAP);
       int orientation = state.getInt(BUNDLE_KEY_ORIENTATION);
@@ -122,19 +142,20 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
 
       // add the fragments to the view
       mFragmentManager.beginTransaction()
-        .add(R.id.fragment_container, mShowFrag)
-        .add(R.id.fragment_container, mProbeFrag)
-        .commit();
-      
-      // hide probe frag
-      mFragmentManager.beginTransaction()
-        .hide(mProbeFrag)
-        .commit();
+      .add(R.id.fragment_container, mShowFrag)
+      .add(R.id.fragment_container, mProbeFrag)
+      .hide(mProbeFrag)
+      .commit();
     }
     // Get fragments by their id
     else {
-      mShowFrag = 
-          (RegionShowFragment) mFragmentManager.findFragmentById(R.id.show_fragment);
+      mShowFrag = new RegionShowFragment();
+
+      // add the fragment to the view
+      mFragmentManager.beginTransaction()
+      .add(R.id.fragment_container, mShowFrag)
+      .commit();
+
       mProbeFrag = 
           (ProbeFuncSelectFragment) mFragmentManager.findFragmentById(R.id.probe_func_fragment);
     }    
@@ -172,9 +193,6 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
           finish();
         }
         break;
-      case REQUEST_CODE_ADD_REGION:
-        if (resultCode == Activity.RESULT_OK) addRegion(data);
-        break;
     }
   }
 
@@ -189,21 +207,9 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
     updateBitmap();
   }
 
-  /**
-   * Adds the returned region.
-   * @param data
-   */
-  private void addRegion(Intent data) {
-      Rect bounds = (Rect) data.getParcelableExtra(RegionSelectActivity.RESULT_KEY_BOUNDS);
-      String shapeStr = data.getStringExtra(RegionSelectActivity.RESULT_KEY_SHAPE);
-      Region.Shape shape = Region.Shape.valueOf(Region.Shape.class, shapeStr);
-      Polygon poly = new Polygon(data.getIntArrayExtra(RegionSelectActivity.RESULT_KEY_POLY));
-      mShowFrag.addRegion(bounds, shape, poly);
-  }
-
   //Updates the bitmap of the region showing fragment
   private void updateBitmap() {
-      mShowFrag.setBitmap(mBitmap);
+    mShowFrag.setBitmap(mBitmap);
   }
 
   @Override
@@ -246,13 +252,45 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
    * Creates a new region and adds it to the image
    */
   private void addRegion() {
-    Intent i = new Intent(this, RegionSelectActivity.class);
-    // give it the image and orientation to work with
-    i.setData(mUri);
-    // start the activity
-    startActivityForResult(i, REQUEST_CODE_ADD_REGION);
+
+    // swap the select fragment in
+    FragmentTransaction transaction = mFragmentManager.beginTransaction();
+
+    // slide if we are showing the features list with a small screen
+    if (mSmallScreen) {
+      transaction
+      .remove(mProbeFrag);
+      if (mProbeFrag.isVisible()) {
+        transaction.setCustomAnimations(
+            0, 
+            R.anim.slide_out, 
+            R.anim.slide_in, 
+            android.R.anim.fade_out);
+      }
+      else {
+        transaction.setCustomAnimations(
+            android.R.anim.fade_in, 
+            android.R.anim.fade_out, 
+            android.R.anim.fade_in, 
+            android.R.anim.fade_out);
+      }
+    }
+
+    transaction
+    .replace(R.id.fragment_container, new RegionSelectFragment(mBitmap), SELECT_TAG)
+    .addToBackStack(null)
+    .commit();
   }
-  
+
+  public void onRegionSelected(Region region) { 
+    mRegions.add(region);
+    mFragmentManager.popBackStack();
+  }
+
+  public void onRegionCanceled() {
+    mFragmentManager.popBackStack();
+  }
+
   /**
    * Toggles the display of the features fragment.
    */
@@ -265,11 +303,18 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
         R.anim.slide_out);
     // toggle hiding probe frag
     if (mProbeFrag.isHidden()) {
-      transaction
-      .show(mProbeFrag);
+      transaction.show(mProbeFrag);
+      if (mSmallScreen) {
+        transaction.addToBackStack(null);
+      }
     }
     else {
-      transaction.hide(mProbeFrag);
+      if (mSmallScreen) {
+        mFragmentManager.popBackStack();
+      }
+      else {
+        transaction.hide(mProbeFrag);
+      }
     }
     transaction.commit();
   }
@@ -277,7 +322,7 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
   @Override
   public void onPreferenceAttached(PreferenceScreen root, int xmlId) {
     if(root == null) return; //for whatever reason in very rare cases this is null   
-    
+
     // Load features
     loadProbeFuncs();
 
@@ -296,12 +341,12 @@ implements OnPreferenceAttachedListener, OnPreferenceClickListener, OnPreference
         // generate a preference for each probe func
         for (ProbeFunc<Integer> func : funcs) {
           SwitchPreference pref = new SwitchPreference(this);
-          
+
           // Set name and key
           String key = catStr + "_" + func.toString();
           pref.setTitle(func.toString());
           pref.setKey(key);
-          
+
           pref.setOnPreferenceClickListener(this);
           pref.setOnPreferenceChangeListener(this);
           category.addPreference(pref);

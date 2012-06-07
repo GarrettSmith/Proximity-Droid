@@ -5,7 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import ca.uwinnipeg.proximitydroid.Region;
+import ca.uwinnipeg.proximitydroid.RegionView;
 import ca.uwinnipeg.proximitydroid.SelectRegion;
 
 /**
@@ -38,7 +38,7 @@ public class RegionSelectView extends ProximityImageView {
     mRegion.setFocused(true);
   }
 
-  public Region getNeighbourhood() {
+  public RegionView getNeighbourhood() {
     return mRegion;
   }
   
@@ -78,7 +78,7 @@ public class RegionSelectView extends ProximityImageView {
    * Pan to center the given neighbourhood in the view.
    * @param nv
    */
-  public void followMove(Region nv) {
+  public void followMove(RegionView nv) {
     // Determine the zoom required
     RectF bounds = nv.getScreenSpaceBounds();
 
@@ -117,7 +117,7 @@ public class RegionSelectView extends ProximityImageView {
    * Zoom to fit and pan to center the given neighbourhood in the view.
    * @param nv
    */
-  public void followResize(Region nv) {
+  public void followResize(RegionView nv) {
     RectF bounds = nv.getScreenSpaceBounds();
     
     float w = bounds.width();

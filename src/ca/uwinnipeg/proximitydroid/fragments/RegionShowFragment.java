@@ -3,14 +3,16 @@
  */
 package ca.uwinnipeg.proximitydroid.fragments;
 
-import android.graphics.Rect;
+import java.util.List;
+
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
+import ca.uwinnipeg.proximitydroid.RegionView;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionShowView;
 
@@ -21,13 +23,17 @@ import com.actionbarsherlock.app.SherlockFragment;
  *
  */
 public class RegionShowFragment extends SherlockFragment {
-  
-  // The bitmap being displayed
-  protected RotatedBitmap mBitmap;
-  
-  private RegionShowView mShowView; 
 
   public static final String TAG = "RegionShowFragment";
+  
+  private RegionShowView mShowView; 
+  
+  private RegionProvider mProvider;
+  
+  public interface RegionProvider {
+    public List<Region> getRegions();
+    public RotatedBitmap getBitmap();
+  }
   
   @Override
   public View onCreateView(
@@ -36,33 +42,38 @@ public class RegionShowFragment extends SherlockFragment {
       Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
     mShowView =  (RegionShowView) inflater.inflate(R.layout.region_show, container, false);
+    if (mProvider != null) setupView();
     return mShowView;
   }
   
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    // retain state even if activity is destroyed
-    setRetainInstance(true);
+  public void onAttach(Activity activity) {
+    super.onAttach(activity);    
+    try {
+      mProvider = (RegionProvider) activity;
+    } catch (ClassCastException e) {
+      throw new ClassCastException(activity.toString() + 
+          " must implement RegionProvider");
+    }
+    setupView();    
   }
   
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-    // restore the view's bitmap
-    if (mBitmap != null) mShowView.setImageBitmap(mBitmap);
+  private void setupView() {
+    RotatedBitmap bm = mProvider.getBitmap();
+    if (bm != null) {
+      setBitmap(bm);
+    }
+    
+    for (Region r : mProvider.getRegions()) {
+      RegionView rv = new RegionView(mShowView);
+      rv.setBounds(r.getBounds());
+      rv.setPolygon(r.getPolygon());
+      rv.setShape(r.getShape());
+      mShowView.add(rv);
+    }
   }
   
-  public void setBitmap(RotatedBitmap rbm) {
-    mBitmap = rbm;
-    mShowView.setImageBitmap(mBitmap);    
-  }
-  
-  public void addRegion(Rect bounds, Region.Shape shape, Polygon poly) {
-    Region reg = new Region(mShowView);
-    reg.setBounds(bounds);
-    reg.setPolygon(poly);
-    reg.setShape(shape);
-    mShowView.add(reg);
+  public void setBitmap(RotatedBitmap bm) {
+    mShowView.setImageBitmap(bm);
   }
 }

@@ -18,7 +18,7 @@ import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
  * @author Garrett Smith
  *
  */
-public class SelectRegion extends Region {  
+public class SelectRegion extends RegionView {  
 
   // Paint shared by all select regions
   private static final Paint FOCUSED_PAINT = new Paint();

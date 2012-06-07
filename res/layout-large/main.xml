@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal" >
@@ -10,16 +11,14 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1" >
+
         <!-- Preview: layout=@layout/probe_func_select -->
     </fragment>
 
-    <fragment
-        android:id="@+id/show_fragment"
-        android:name="ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="2" >
-        <!-- Preview: layout=@layout/region_show -->
-    </fragment>
+    <FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/fragment_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent" />
 
 </LinearLayout>
