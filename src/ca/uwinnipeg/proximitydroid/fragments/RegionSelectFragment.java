@@ -111,6 +111,7 @@ implements ActionBar.OnNavigationListener {
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     inflater.inflate(R.menu.region_select, menu);
+    
     // Setup the actionbar
     // TODO: Remove this cast
     ActionBar bar = ((SherlockFragmentActivity)getActivity()).getSupportActionBar();

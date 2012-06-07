@@ -30,10 +30,12 @@ import ca.uwinnipeg.proximity.image.BlueFunc;
 import ca.uwinnipeg.proximity.image.GreenFunc;
 import ca.uwinnipeg.proximity.image.RedFunc;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
-import ca.uwinnipeg.proximitydroid.fragments.ProbeFuncSelectFragment;
+import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment;
+import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment.OnToggleSelectedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnRegionSelectedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment;
+import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.OnAddRegionListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.RegionProvider;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -51,7 +53,9 @@ public class ProximityDroidActivity
     OnPreferenceClickListener, 
     OnPreferenceChangeListener,
     OnRegionSelectedListener,
-    RegionProvider {
+    RegionProvider,
+    OnAddRegionListener,
+    OnToggleSelectedListener {
 
   public static final String TAG = "ProximityDroidActivity";
 
@@ -68,7 +72,7 @@ public class ProximityDroidActivity
 
   // Fragments
   private RegionShowFragment mShowFrag;
-  private ProbeFuncSelectFragment mProbeFrag;
+  private FeatureSelectFragment mProbeFrag;
 
   public final String SELECT_TAG = "Select RegionView";
 
@@ -76,12 +80,15 @@ public class ProximityDroidActivity
   private FragmentManager mFragmentManager;
 
   protected boolean mSmallScreen;
+  
+  public enum Mode {SHOW, SELECT};
+  
+  protected Mode mMode = Mode.SHOW;
 
   protected List<Region> mRegions = new ArrayList<Region>();
 
   // Intents
   private static final int REQUEST_CODE_SELECT_IMAGE = 0;
-  private static final int REQUEST_CODE_ADD_REGION = 1;
 
   // bundle keys
   protected static final String BUNDLE_KEY_BITMAP = "Bitmap";
@@ -116,7 +123,7 @@ public class ProximityDroidActivity
       mShowFrag = 
           (RegionShowFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_SHOW_FRAG);
       mProbeFrag = 
-          (ProbeFuncSelectFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_PROBE_FRAG);
+          (FeatureSelectFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_PROBE_FRAG);
 
       // hide probe frag on small screens
       if (mSmallScreen) {
@@ -138,7 +145,7 @@ public class ProximityDroidActivity
     // Don't create fragments if we are restoring state
     else if (mSmallScreen) {
       mShowFrag = new RegionShowFragment();
-      mProbeFrag = new ProbeFuncSelectFragment();
+      mProbeFrag = new FeatureSelectFragment();
 
       // add the fragments to the view
       mFragmentManager.beginTransaction()
@@ -157,7 +164,7 @@ public class ProximityDroidActivity
       .commit();
 
       mProbeFrag = 
-          (ProbeFuncSelectFragment) mFragmentManager.findFragmentById(R.id.probe_func_fragment);
+          (FeatureSelectFragment) mFragmentManager.findFragmentById(R.id.probe_func_fragment);
     }    
 
     // request an image
@@ -215,11 +222,7 @@ public class ProximityDroidActivity
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getSupportMenuInflater();
-    inflater.inflate(R.menu.region_show, menu);
-    // setup toggle button text
-    if (!mSmallScreen) {
-      menu.findItem(R.id.menu_features).setTitle(R.string.menu_hide_features);
-    }
+    inflater.inflate(R.menu.main, menu);
     return true;
   }
 
@@ -229,12 +232,6 @@ public class ProximityDroidActivity
       case R.id.menu_about:
         showAbout();
         return true;
-      case R.id.menu_add:
-        addRegion();
-        return true;
-      case R.id.menu_features:
-        toggleFeatures();
-        return true;  
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -251,15 +248,17 @@ public class ProximityDroidActivity
   /**
    * Creates a new region and adds it to the image
    */
-  private void addRegion() {
+  public void onAddRegion() {
+    
+    mMode = Mode.SELECT;
+    invalidateOptionsMenu();
 
     // swap the select fragment in
     FragmentTransaction transaction = mFragmentManager.beginTransaction();
 
     // slide if we are showing the features list with a small screen
     if (mSmallScreen) {
-      transaction
-      .remove(mProbeFrag);
+      transaction.remove(mProbeFrag);
       if (mProbeFrag.isVisible()) {
         transaction.setCustomAnimations(
             0, 
@@ -284,39 +283,12 @@ public class ProximityDroidActivity
 
   public void onRegionSelected(Region region) { 
     mRegions.add(region);
-    mFragmentManager.popBackStack();
+    onRegionCanceled();
   }
 
   public void onRegionCanceled() {
+    mMode = Mode.SHOW;
     mFragmentManager.popBackStack();
-  }
-
-  /**
-   * Toggles the display of the features fragment.
-   */
-  private void toggleFeatures() {
-    FragmentTransaction transaction = mFragmentManager.beginTransaction();
-    transaction.setCustomAnimations(
-        R.anim.slide_in, 
-        R.anim.slide_out, 
-        R.anim.slide_in, 
-        R.anim.slide_out);
-    // toggle hiding probe frag
-    if (mProbeFrag.isHidden()) {
-      transaction.show(mProbeFrag);
-      if (mSmallScreen) {
-        transaction.addToBackStack(null);
-      }
-    }
-    else {
-      if (mSmallScreen) {
-        mFragmentManager.popBackStack();
-      }
-      else {
-        transaction.hide(mProbeFrag);
-      }
-    }
-    transaction.commit();
   }
 
   @Override
@@ -377,6 +349,34 @@ public class ProximityDroidActivity
   @Override
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     return true;
+  }
+
+  @Override
+  public void onToggleSelected(MenuItem item) {
+    FragmentTransaction transaction = mFragmentManager.beginTransaction();
+    transaction.setCustomAnimations(
+        R.anim.slide_in, 
+        R.anim.slide_out, 
+        R.anim.slide_in, 
+        R.anim.slide_out);
+    // toggle hiding probe frag
+    if (mProbeFrag.isHidden()) {
+      item.setTitle(R.string.menu_hide_features);
+      transaction.show(mProbeFrag);
+      if (mSmallScreen) {
+        transaction.addToBackStack(null);
+      }
+    }
+    else {
+      item.setTitle(R.string.menu_show_features);
+      if (mSmallScreen) {
+        mFragmentManager.popBackStack();
+      }
+      else {
+        transaction.hide(mProbeFrag);
+      }
+    }
+    transaction.commit();    
   }
 
 }

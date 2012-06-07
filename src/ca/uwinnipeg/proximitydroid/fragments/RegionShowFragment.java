@@ -17,6 +17,9 @@ import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionShowView;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 
 /**
  * @author Garrett Smith
@@ -33,6 +36,19 @@ public class RegionShowFragment extends SherlockFragment {
   public interface RegionProvider {
     public List<Region> getRegions();
     public RotatedBitmap getBitmap();
+  }
+  
+  private OnAddRegionListener mListener;
+  
+  public interface OnAddRegionListener {
+    public  void onAddRegion();
+  }
+  
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // declare there are items to be added to the action bar
+    setHasOptionsMenu(true);
   }
   
   @Override
@@ -55,6 +71,13 @@ public class RegionShowFragment extends SherlockFragment {
       throw new ClassCastException(activity.toString() + 
           " must implement RegionProvider");
     }
+    super.onAttach(activity);    
+    try {
+      mListener = (OnAddRegionListener) activity;
+    } catch (ClassCastException e) {
+      throw new ClassCastException(activity.toString() + 
+          " must implement OnAddRegionListener");
+    }
     setupView();    
   }
   
@@ -75,5 +98,21 @@ public class RegionShowFragment extends SherlockFragment {
   
   public void setBitmap(RotatedBitmap bm) {
     mShowView.setImageBitmap(bm);
+  } 
+  
+  @Override
+  public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    inflater.inflate(R.menu.region_show, menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.menu_add:
+        mListener.onAddRegion();
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
   }
 }
