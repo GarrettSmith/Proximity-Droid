@@ -12,10 +12,8 @@
         <item >Polygon</item>
     </string-array>
     <string-array name="operations_list">
-        <item >View Regions</item><item >Description-based Neighbourhoods</item>
-        <item >Hybrid Neighbourhoods</item>
-        <item >Description-based Intersection</item>
-        <item >Hybrid Intersection</item>
+        <item >Regions</item><item >Pivot Neighbourhoods</item>
+        <item >Region Intersection</item>
         
     </string-array>
     

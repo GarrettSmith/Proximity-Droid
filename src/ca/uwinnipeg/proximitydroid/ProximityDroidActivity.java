@@ -33,9 +33,8 @@ import ca.uwinnipeg.proximity.image.GreenFunc;
 import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximity.image.RedFunc;
-import ca.uwinnipeg.proximitydroid.fragments.DescBasedNeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment;
-import ca.uwinnipeg.proximitydroid.fragments.HybridNeighbourhoodFragment;
+import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
@@ -83,8 +82,8 @@ public class ProximityDroidActivity
   protected SpinnerAdapter mSpinnerAdapter;
   
   public static final int LIST_SHOW_INDEX = 0;
-  public static final int LIST_DESC_NH_INDEX = 1;
-  public static final int LIST_HYBRID_NH_INDEX = 2;
+  public static final int LIST_NH_INDEX = 1;
+  public static final int LIST_INT_INDEX = 2;
 
   public final String SHOW_TAG = "Show Region";
   public final String SELECT_TAG = "Select Region";
@@ -158,6 +157,7 @@ public class ProximityDroidActivity
       // hide probe frag on small screens
       if (mSmallScreen) {
         mFragmentManager.beginTransaction()
+        .add(R.id.fragment_container, mProbeFrag)
         .hide(mProbeFrag)
         .commit();
       }
@@ -251,12 +251,12 @@ public class ProximityDroidActivity
         showShowFragment();
         break;
         
-      case LIST_DESC_NH_INDEX:
-        showDescBasedNHFragment();
+      case LIST_NH_INDEX:
+        showNeighbourhoodFragment();
         break;
 
-      case LIST_HYBRID_NH_INDEX:
-        showHybridNHFragment();
+      case LIST_INT_INDEX:
+        showIntersectFragment();
         break;
     }
     return true;
@@ -266,12 +266,12 @@ public class ProximityDroidActivity
     switchImageFragment(new RegionShowFragment());    
   }
   
-  public void showDescBasedNHFragment() {
-    switchImageFragment(new DescBasedNeighbourhoodFragment());  
+  public void showNeighbourhoodFragment() {
+    switchImageFragment(new NeighbourhoodFragment());  
   }
   
-  public void showHybridNHFragment() {
-    switchImageFragment(new HybridNeighbourhoodFragment());  
+  public void showIntersectFragment() {
+    switchImageFragment(new IntersectFragment());  
   }
   
   protected void switchImageFragment(RegionShowFragment frag) {
@@ -298,7 +298,7 @@ public class ProximityDroidActivity
         showAbout();
         return true;
       case R.id.menu_features:
-        toggleFeatures(item, mProbeFrag.isHidden());
+        toggleFeatures(item, (mProbeFrag.isHidden() || !mProbeFrag.isAdded()));
         return true;
       default:
         return super.onOptionsItemSelected(item);
@@ -314,20 +314,21 @@ public class ProximityDroidActivity
         R.anim.slide_out);
     // toggle hiding probe frag
     if (show) {
-      item.setTitle(R.string.menu_hide_features);
-      transaction.add(R.id.fragment_container, mProbeFrag);
+
       if (mSmallScreen) {
+        transaction.add(R.id.fragment_container, mProbeFrag);
         transaction.addToBackStack(null);
       }
+      transaction.show(mProbeFrag);
+
     }
     else {
-      item.setTitle(R.string.menu_show_features);
+      
       if (mSmallScreen) {
-        mFragmentManager.popBackStack();
-      }
-      else {
         transaction.remove(mProbeFrag);
       }
+      transaction.hide(mProbeFrag);
+      
     }
     transaction.commit();
     updateToggleText(item, show);

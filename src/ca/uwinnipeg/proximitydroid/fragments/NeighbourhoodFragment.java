@@ -17,7 +17,8 @@ import ca.uwinnipeg.proximitydroid.Region;
  * @author Garrett Smith
  *
  */
-public class DescBasedNeighbourhoodFragment extends RegionShowFragment {
+// TODO: Make epsilon selectable
+public class NeighbourhoodFragment extends RegionShowFragment {
   
   @Override
   protected List<Pixel> getRelevantPixels(
@@ -26,8 +27,7 @@ public class DescBasedNeighbourhoodFragment extends RegionShowFragment {
     for (Region r : regions) {
       Pixel center = r.getCenterPixel(image);
       Set<Pixel> regionPixels = r.getPixels(image);
-      Set<Pixel> nhPixels = system.getDescriptionBasedNeighbourhood(center, regionPixels);
-      Log.i("Hello!", "Count: " + nhPixels.size());
+      Set<Pixel> nhPixels = system.getHybridNeighbourhood(center, regionPixels, 0.1);
       pixels.addAll(nhPixels);
     }
     return pixels;

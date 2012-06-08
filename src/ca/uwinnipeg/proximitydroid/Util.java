@@ -46,6 +46,10 @@ public class Util {
     Point displaySize = Util.getDisplaySize(wm);
     int width = displaySize.x;
     int height = displaySize.y;
+    
+    // TODO: figure out this size
+    width = 500;
+    height = 500;
 
     // Read the bitmap's size
     BitmapFactory.Options options = new BitmapFactory.Options();
@@ -125,9 +129,9 @@ public class Util {
 
     if (height > reqHeight || width > reqWidth) {
       if (width > height) {
-        inSampleSize = Math.round((float)height / (float)reqHeight * 4);
+        inSampleSize = Math.round((float)height / (float)reqHeight);
       } else {
-        inSampleSize = Math.round((float)width / (float)reqWidth * 4);
+        inSampleSize = Math.round((float)width / (float)reqWidth);
       }
     }
     return inSampleSize;
