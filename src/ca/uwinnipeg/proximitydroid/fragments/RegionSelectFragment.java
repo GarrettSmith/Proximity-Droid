@@ -15,15 +15,13 @@ import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 
 import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
 import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
 // TODO: Fix spinner on 2.1
-// TODO: Deal with Failed Binder Transaction
-// TODO: Change to fragment?
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
@@ -61,6 +59,14 @@ implements ActionBar.OnNavigationListener {
   public interface OnRegionSelectedListener {
     public void onRegionSelected(Region region);
     public void onRegionCanceled();
+  }
+  
+  ListNavigationProvider mProvider;
+  public interface ListNavigationProvider {
+    public void setListNavigationCallbacks(
+        SpinnerAdapter adapter, 
+        OnNavigationListener listener);
+    public void resetListNavigationCallbacks();
   }
 
   public RegionSelectFragment(RotatedBitmap rbm) {
@@ -106,33 +112,30 @@ implements ActionBar.OnNavigationListener {
       throw new ClassCastException(activity.toString() + 
           " must implement OnRegionSelectedListener");
     }
+    try {
+      mProvider = (ListNavigationProvider) activity;
+    } catch (ClassCastException e) {
+      throw new ClassCastException(activity.toString() + 
+          " must implement ListNavigationProvider");
+    }
   }
 
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     inflater.inflate(R.menu.region_select, menu);
     
-    // Setup the actionbar
-    // TODO: Remove this cast
-    ActionBar bar = ((SherlockFragmentActivity)getActivity()).getSupportActionBar();
-
     // Action bar navigation
     mSpinnerAdapter = ArrayAdapter.createFromResource(
         getActivity(), 
         R.array.shape_list, 
         android.R.layout.simple_spinner_dropdown_item);
-
-    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
-    bar.setListNavigationCallbacks(mSpinnerAdapter, this);
+    mProvider.setListNavigationCallbacks(mSpinnerAdapter, this);
   }
 
   @Override
   public void onDestroyOptionsMenu() {
     super.onDestroyOptionsMenu();
-    // Tear down the actionbar
-    // TODO: Remove this cast
-    ActionBar bar = ((SherlockFragmentActivity)getActivity()).getSupportActionBar();
-    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+    mProvider.resetListNavigationCallbacks();
   }
 
   @Override

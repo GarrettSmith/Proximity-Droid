@@ -20,17 +20,17 @@ public class ProximityImageView extends ImageView {
 
   // This matrix transforms the image to fit within the screen. 
   // The image is scaled to fit the screen using letterboxing.
-  private final Matrix mBaseMatrix = new Matrix();
+  protected final Matrix mBaseMatrix = new Matrix();
 
   // This matrix reflects the transforms (scales and transforms) that the user has made while v
   // viewing the matrix.
-  private final Matrix mUserMatrix = new Matrix();
+  protected final Matrix mUserMatrix = new Matrix();
 
   // This is the matrix created from the base and user matrix.
-  private final Matrix mFinalMatrix = new Matrix();
+  protected final Matrix mFinalMatrix = new Matrix();
 
   // This is the bitmap currently being displayed.
-  private final RotatedBitmap mBitmap = new RotatedBitmap(null);
+  protected final RotatedBitmap mBitmap = new RotatedBitmap(null);
 
   // Transform constants
   protected static final float MAX_SCALE = 6f;
@@ -77,10 +77,11 @@ public class ProximityImageView extends ImageView {
   }
   
   @Override
+  // TODO: Have this smoothly resize
   protected void onSizeChanged(int w, int h, int oldw, int oldh) {
     super.onSizeChanged(w, h, oldw, oldh);
     if (mBitmap.getBitmap() != null) {
-      //updateBaseMatrix();
+      updateBaseMatrix();
     }
   }
 

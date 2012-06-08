@@ -13,4 +13,5 @@
     <string name="menu_features">Select Features</string>
     <string name="menu_show_features">Show Features</string>
     <string name="menu_hide_features">Hide Features</string>
+    <string name="menu_clear">Clear Regions</string>
 </resources>

@@ -480,7 +480,6 @@ public class SelectRegion extends RegionView {
     return p;
   }
 
-  // FIXME: Fix handle path, it looks like a star
   private Path getHandlePath(RectF bounds) {
     Path p = getHandlePath(Edge.TL, bounds);
     p.addPath(getHandlePath(Edge.BR, bounds));

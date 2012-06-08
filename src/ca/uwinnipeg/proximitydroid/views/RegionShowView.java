@@ -4,6 +4,7 @@
 package ca.uwinnipeg.proximitydroid.views;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import android.content.Context;
@@ -11,6 +12,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.RegionView;
 
@@ -28,6 +30,9 @@ public class RegionShowView extends ProximityImageView {
   
   // The regions of interest in this image
   protected List<RegionView> mRegions = new ArrayList<RegionView>();
+  
+  // The list of relevant pixels to draw
+  protected List<Pixel> mPixels = new ArrayList<Pixel>();
 
   public RegionShowView(Context context) {
     super(context);
@@ -66,6 +71,15 @@ public class RegionShowView extends ProximityImageView {
     }
   }
   
+  public void clearPixels() {
+    mPixels.clear();
+  }
+  
+  public void setRelevantPixels(Collection<Pixel> pixels) {
+    mPixels.clear();
+    mPixels.addAll(pixels);
+  }
+  
   @Override
   public void draw(Canvas canvas) {
     super.draw(canvas);
@@ -82,6 +96,15 @@ public class RegionShowView extends ProximityImageView {
     // draw all the regions
     for (RegionView reg : mRegions) {
       reg.draw(canvas);
+    }    
+    
+    // draw all relevant pixels
+    float[] pxl = new float[2];
+    for (Pixel p : mPixels) {
+      pxl[0] = p.x;
+      pxl[1] = p.y;
+      mFinalMatrix.mapPoints(pxl);
+      canvas.drawPoint(pxl[0], pxl[1], RegionView.REGION_PAINT);
     }
   }
 

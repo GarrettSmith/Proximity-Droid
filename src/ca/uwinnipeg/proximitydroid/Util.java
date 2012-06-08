@@ -3,12 +3,8 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.nio.IntBuffer;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
@@ -22,6 +18,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
+import ca.uwinnipeg.proximity.image.Image;
 
 /**
  * @author Garrett Smith
@@ -168,6 +165,15 @@ public class Util {
       p.y = display.getHeight();
     }
     return p;
+  }
+  
+  // TODO: Move off of UI thread
+  public static Image bitmapToImage(Bitmap bm) {
+    int width = bm.getWidth();
+    int height = bm.getHeight();
+    IntBuffer intBuff = IntBuffer.allocate(width * height);
+    bm.copyPixelsToBuffer(intBuff);
+    return new Image(intBuff.array(), width, height);
   }
 
 }

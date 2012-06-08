@@ -10,7 +10,7 @@
         android:name="ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1" >
+        android:layout_weight="0.3" >
 
         <!-- Preview: layout=@layout/probe_func_select -->
     </fragment>
@@ -18,7 +18,8 @@
     <FrameLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/fragment_container"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent" />
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.7" />
 
 </LinearLayout>
