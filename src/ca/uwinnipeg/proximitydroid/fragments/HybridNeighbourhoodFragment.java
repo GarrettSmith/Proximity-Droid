@@ -17,7 +17,7 @@ import ca.uwinnipeg.proximitydroid.Region;
  * @author Garrett Smith
  *
  */
-public class DescBasedNeighbourhoodFragment extends RegionShowFragment {
+public class HybridNeighbourhoodFragment extends RegionShowFragment {
   
   @Override
   protected List<Pixel> getRelevantPixels(
@@ -26,7 +26,7 @@ public class DescBasedNeighbourhoodFragment extends RegionShowFragment {
     for (Region r : regions) {
       Pixel center = r.getCenterPixel(image);
       Set<Pixel> regionPixels = r.getPixels(image);
-      Set<Pixel> nhPixels = system.getDescriptionBasedNeighbourhood(center, regionPixels);
+      Set<Pixel> nhPixels = system.getHybridNeighbourhood(center, regionPixels, 0.1);
       Log.i("Hello!", "Count: " + nhPixels.size());
       pixels.addAll(nhPixels);
     }

@@ -35,6 +35,7 @@ import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximity.image.RedFunc;
 import ca.uwinnipeg.proximitydroid.fragments.DescBasedNeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment;
+import ca.uwinnipeg.proximitydroid.fragments.HybridNeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
@@ -54,6 +55,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @author Garrett Smith
  *
  */
+// TODO: add enabled probe funcs
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener, 
@@ -82,6 +84,7 @@ public class ProximityDroidActivity
   
   public static final int LIST_SHOW_INDEX = 0;
   public static final int LIST_DESC_NH_INDEX = 1;
+  public static final int LIST_HYBRID_NH_INDEX = 2;
 
   public final String SHOW_TAG = "Show Region";
   public final String SELECT_TAG = "Select Region";
@@ -247,8 +250,13 @@ public class ProximityDroidActivity
       case LIST_SHOW_INDEX:
         showShowFragment();
         break;
+        
       case LIST_DESC_NH_INDEX:
         showDescBasedNHFragment();
+        break;
+
+      case LIST_HYBRID_NH_INDEX:
+        showHybridNHFragment();
         break;
     }
     return true;
@@ -260,6 +268,10 @@ public class ProximityDroidActivity
   
   public void showDescBasedNHFragment() {
     switchImageFragment(new DescBasedNeighbourhoodFragment());  
+  }
+  
+  public void showHybridNHFragment() {
+    switchImageFragment(new HybridNeighbourhoodFragment());  
   }
   
   protected void switchImageFragment(RegionShowFragment frag) {

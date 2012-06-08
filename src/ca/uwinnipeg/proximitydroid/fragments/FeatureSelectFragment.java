@@ -6,14 +6,8 @@ package ca.uwinnipeg.proximitydroid.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.Activity;
-import android.os.Bundle;
 import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximitydroid.R;
-
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
 
 /**
  * @author Garrett Smith

@@ -102,6 +102,7 @@ public class Util {
    * @param rotation same as RotatedBitmap
    * @return
    */
+  // TODO: figure out optimal size
   public static int calculateInSampleSize(
       BitmapFactory.Options options, 
       int reqWidth, 
@@ -124,9 +125,9 @@ public class Util {
 
     if (height > reqHeight || width > reqWidth) {
       if (width > height) {
-        inSampleSize = Math.round((float)height / (float)reqHeight);
+        inSampleSize = Math.round((float)height / (float)reqHeight * 4);
       } else {
-        inSampleSize = Math.round((float)width / (float)reqWidth);
+        inSampleSize = Math.round((float)width / (float)reqWidth * 4);
       }
     }
     return inSampleSize;
