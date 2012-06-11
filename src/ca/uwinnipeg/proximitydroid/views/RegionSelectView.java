@@ -5,8 +5,6 @@ import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import ca.uwinnipeg.proximitydroid.RegionView;
-import ca.uwinnipeg.proximitydroid.SelectRegion;
 
 /**
  * 
@@ -17,7 +15,7 @@ public class RegionSelectView extends ProximityImageView {
 
   public static final String TAG = "SelectView";
   
-  protected SelectRegion mRegion = new SelectRegion(this);
+  protected SelectRegionView mRegion = new SelectRegionView(this);
 
   // Neighbourhood following  
   private static final float FOLLOW_DURATION = 300f;

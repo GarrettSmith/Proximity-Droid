@@ -1,4 +1,4 @@
-package ca.uwinnipeg.proximitydroid;
+package ca.uwinnipeg.proximitydroid.views;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -8,7 +8,13 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import ca.uwinnipeg.proximitydroid.views.ProximityImageView;
+import ca.uwinnipeg.proximitydroid.MathUtil;
+import ca.uwinnipeg.proximitydroid.Polygon;
+import ca.uwinnipeg.proximitydroid.R;
+import ca.uwinnipeg.proximitydroid.Region;
+import ca.uwinnipeg.proximitydroid.R.color;
+import ca.uwinnipeg.proximitydroid.Region.Edge;
+import ca.uwinnipeg.proximitydroid.Region.Shape;
 
 /**
  * @author Garrett Smith

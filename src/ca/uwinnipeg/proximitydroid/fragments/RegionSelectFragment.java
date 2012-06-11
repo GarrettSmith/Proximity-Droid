@@ -10,9 +10,9 @@ import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
-import ca.uwinnipeg.proximitydroid.RegionView;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
+import ca.uwinnipeg.proximitydroid.views.RegionView;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;

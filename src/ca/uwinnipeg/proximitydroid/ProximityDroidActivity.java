@@ -11,6 +11,7 @@ import java.util.Map;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -34,6 +35,7 @@ import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximity.image.RedFunc;
 import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment;
+import ca.uwinnipeg.proximitydroid.fragments.IntersectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
@@ -98,16 +100,10 @@ public class ProximityDroidActivity
   protected Map<String, ProbeFunc<Pixel>> mProbeFuncs = new HashMap<String, ProbeFunc<Pixel>>();
   
   protected Image mImage;
-  protected PerceptualSystem<Pixel> mSystem = new PerceptualSystem<Pixel>();  
 
   @Override
   public Image getImage() {
     return mImage;
-  }
-
-  @Override
-  public PerceptualSystem<Pixel> getSystem() {
-    return mSystem;
   }
 
   // Intents
@@ -188,6 +184,18 @@ public class ProximityDroidActivity
     if (mUri == null) {
       Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
       startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
+    }
+  }
+  
+  @Override
+  protected void onStart() {
+    super.onStart();    
+    // add enabled probe funcs
+    SharedPreferences settings = getPreferences(0);
+    for (String key : mProbeFuncs.keySet()) {
+      if (settings.getBoolean(key, false)) {
+        mImage.addProbeFunc(mProbeFuncs.get(key));
+      }
     }
   }
 
@@ -384,8 +392,6 @@ public class ProximityDroidActivity
 
   public void onRegionSelected(Region region) { 
     mRegions.add(region);
-    // add the region to the perceptual system
-    mSystem.addRegion(region.getPixels(mImage));
     onRegionCanceled();
   }
 
@@ -459,10 +465,10 @@ public class ProximityDroidActivity
       // add or remove the probe func from the perceptual system
       ProbeFunc<Pixel> func = mProbeFuncs.get(preference.getKey());
       if ((Boolean)newValue) {
-        mSystem.addProbeFunc(func);
+        mImage.addProbeFunc(func);
       }
       else {
-        mSystem.removeProbeFunc(func);
+        mImage.removeProbeFunc(func);
       }
     }
     return true;

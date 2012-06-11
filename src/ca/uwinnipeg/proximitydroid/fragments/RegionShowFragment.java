@@ -16,9 +16,9 @@ import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
-import ca.uwinnipeg.proximitydroid.RegionView;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionShowView;
+import ca.uwinnipeg.proximitydroid.views.RegionView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
@@ -42,7 +42,6 @@ public class RegionShowFragment extends SherlockFragment {
     public List<Region> getRegions();
     public RotatedBitmap getBitmap();
     public Image getImage();
-    public PerceptualSystem<Pixel> getSystem();
   }
   
   protected OnAddRegionSelecetedListener mListener;  
@@ -104,21 +103,18 @@ public class RegionShowFragment extends SherlockFragment {
         rv.setShape(r.getShape());
         mShowView.add(rv);
       }
-      
+
       mShowView.setRelevantPixels(
-          getRelevantPixels(mProvider.getRegions(), mProvider.getImage(), mProvider.getSystem()));
+          getRelevantPixels(mProvider.getRegions(), mProvider.getImage()));
     }    
-    
+
   }
-  
+
   /**
    * Subclasses must implement this to higlight pixels.
    * @return
    */
-  protected List<Pixel> getRelevantPixels(
-      List<Region> regions, 
-      Image image, 
-      PerceptualSystem<Pixel> perceptualSystem) {
+  protected List<Pixel> getRelevantPixels(List<Region> regions, Image image) {
     return new ArrayList<Pixel>(); // just return an empty list
   }
 

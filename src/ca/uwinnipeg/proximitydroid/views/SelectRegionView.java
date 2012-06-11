@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.uwinnipeg.proximitydroid;
+package ca.uwinnipeg.proximitydroid.views;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -12,13 +12,19 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.MotionEvent;
-import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
+import ca.uwinnipeg.proximitydroid.Polygon;
+import ca.uwinnipeg.proximitydroid.R;
+import ca.uwinnipeg.proximitydroid.Region;
+import ca.uwinnipeg.proximitydroid.R.color;
+import ca.uwinnipeg.proximitydroid.R.dimen;
+import ca.uwinnipeg.proximitydroid.Region.Edge;
+import ca.uwinnipeg.proximitydroid.Region.Shape;
 
 /**
  * @author Garrett Smith
  *
  */
-public class SelectRegion extends RegionView {  
+public class SelectRegionView extends RegionView {  
 
   // Paint shared by all select regions
   private static final Paint FOCUSED_PAINT = new Paint();
@@ -57,7 +63,7 @@ public class SelectRegion extends RegionView {
   
   protected RegionSelectView mSelectView;
 
-  public SelectRegion(RegionSelectView v) {
+  public SelectRegionView(RegionSelectView v) {
     super(v);
     
     if (!SETUP) {

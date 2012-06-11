@@ -1,6 +1,6 @@
 package ca.uwinnipeg.proximitydroid;
 
-import java.util.Set;
+import java.util.List;
 
 import android.graphics.Rect;
 import ca.uwinnipeg.proximity.image.Image;
@@ -69,9 +69,7 @@ public class Region {
    * @param img
    * @return
    */
-  public Set<Pixel> getPixels(Image img) {
-    // FIXME: This needs to know the real dimensions of the image, for now this will do
-    Set<Pixel> pxls = img.getPixels(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+  public List<Pixel> getPixels(Image img) {
     // TODO: trim non rectangle shapes
     switch(mShape) {
       case OVAL:
@@ -79,7 +77,11 @@ public class Region {
       case POLYGON:
         break;
     }
-    return pxls;
+    return img.getPixels(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+  }
+  
+  public int[] getIndices(Image img) {
+    return img.getIndices(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
   }
   
   /**

@@ -14,7 +14,6 @@ import android.graphics.Path;
 import android.util.AttributeSet;
 import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximitydroid.R;
-import ca.uwinnipeg.proximitydroid.RegionView;
 
 /**
  * @author Garrett Smith
