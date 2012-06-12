@@ -14,11 +14,6 @@ import android.graphics.RectF;
 import android.view.MotionEvent;
 import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
-import ca.uwinnipeg.proximitydroid.Region;
-import ca.uwinnipeg.proximitydroid.R.color;
-import ca.uwinnipeg.proximitydroid.R.dimen;
-import ca.uwinnipeg.proximitydroid.Region.Edge;
-import ca.uwinnipeg.proximitydroid.Region.Shape;
 
 /**
  * @author Garrett Smith

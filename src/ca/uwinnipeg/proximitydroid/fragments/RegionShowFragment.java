@@ -3,7 +3,6 @@
  */
 package ca.uwinnipeg.proximitydroid.fragments;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
@@ -39,6 +38,7 @@ public class RegionShowFragment extends SherlockFragment {
   public interface RegionProvider {
     public List<Region> getRegions();
     public RotatedBitmap getBitmap();
+    public List<Integer> getIndices();
     public Image getImage();
   }
   
@@ -101,9 +101,25 @@ public class RegionShowFragment extends SherlockFragment {
         rv.setShape(r.getShape());
         mShowView.add(rv);
       }
+      
+      List<Integer> indices = mProvider.getIndices();
+      if (indices != null) {
+        setPoints(indices);
+      }
+    }    
 
+  }
+
+  public void setBitmap(RotatedBitmap bm) {
+    mShowView.setImageBitmap(bm);
+  } 
+
+  public void setPoints(List<Integer> indices) {
+    if (indices == null) {
+      mShowView.clearPoints();
+    }
+    else {
       Image image = mProvider.getImage();
-      List<Integer> indices = getRelevantPixels(mProvider.getRegions(), image);
       int[] points = new int[indices.size() * 2];
       for (int i = 0; i < indices.size(); i++) {
         int index = indices.get(i);
@@ -111,21 +127,8 @@ public class RegionShowFragment extends SherlockFragment {
         points[i*2 + 1] = image.getY(index);
       }
       mShowView.setRelevantPoints(points);
-    }    
-
+    }
   }
-
-  /**
-   * Subclasses must implement this to higlight pixels.
-   * @return
-   */
-  protected List<Integer> getRelevantPixels(List<Region> regions, Image image) {
-    return new ArrayList<Integer>();
-  }
-
-  public void setBitmap(RotatedBitmap bm) {
-    mShowView.setImageBitmap(bm);
-  } 
   
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

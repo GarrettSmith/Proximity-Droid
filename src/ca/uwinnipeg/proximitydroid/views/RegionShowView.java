@@ -70,6 +70,7 @@ public class RegionShowView extends ProximityImageView {
   
   public void clearPoints() {
     mPoints = null;
+    invalidate();
   }
 
   public void setRelevantPoints(int[] points) {
@@ -81,6 +82,7 @@ public class RegionShowView extends ProximityImageView {
       for (int i = 0; i < mPoints.length; i++) {
         mPoints[i] = points[i];
       }
+      invalidate();
     }
   }
 

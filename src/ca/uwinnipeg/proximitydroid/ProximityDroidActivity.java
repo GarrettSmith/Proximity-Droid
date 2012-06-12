@@ -13,10 +13,10 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
@@ -33,8 +33,6 @@ import ca.uwinnipeg.proximity.image.GreenFunc;
 import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximity.image.RedFunc;
 import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment;
-import ca.uwinnipeg.proximitydroid.fragments.IntersectFragment;
-import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
@@ -49,6 +47,7 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
 
 /**
  * @author Garrett Smith
@@ -57,8 +56,7 @@ import com.actionbarsherlock.view.MenuItem;
 // TODO: add enabled probe funcs
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
-  implements OnPreferenceAttachedListener, 
-    OnPreferenceClickListener, 
+  implements OnPreferenceAttachedListener,
     OnPreferenceChangeListener,
     OnRegionSelectedListener,
     RegionProvider,
@@ -67,42 +65,56 @@ public class ProximityDroidActivity
     ListNavigationProvider {
 
   public static final String TAG = "ProximityDroidActivity";
+  
+  private ContentResolver mContentResolver;
+  private FragmentManager mFragmentManager;
+  protected ActionBar mActionBar;
+  protected SpinnerAdapter mSpinnerAdapter;
 
   // The image we are working on
   protected RotatedBitmap mBitmap;
 
   // the uri of the image
   protected Uri mUri;
+  
+  // The image perceptual system used for the system logic
+  protected Image mImage = new Image();
 
   // Fragments
   private RegionShowFragment mShowFrag;
-  private FeatureSelectFragment mProbeFrag;
+  private FeatureSelectFragment mProbeFrag;  
   
-  protected ActionBar mActionBar;
-  protected SpinnerAdapter mSpinnerAdapter;
-  
+  // Used to read the positions of the view mode spinner
   public static final int LIST_SHOW_INDEX = 0;
-  public static final int LIST_NH_INDEX = 1;
-  public static final int LIST_INT_INDEX = 2;
+  public static final int LIST_NEIGHBOURHOOD_INDEX = 1;
+  public static final int LIST_INTERSECT_INDEX = 2;
 
-  public final String SHOW_TAG = "Show Region";
-  public final String SELECT_TAG = "Select Region";
-
-  private ContentResolver mContentResolver;
-  private FragmentManager mFragmentManager;
-
+  // gets set to true if we are on a small screen device like a phone
   protected boolean mSmallScreen;
 
   protected List<Region> mRegions = new ArrayList<Region>();
   
   protected Map<String, ProbeFunc<Integer>> mProbeFuncs = new HashMap<String, ProbeFunc<Integer>>();
   
-  protected Image mImage;
+  // Stores the points to be highlighted for different view (neighbourhoods, intersection)
+  protected Map<String, List<Integer>> mPoints = new HashMap<String, List<Integer>>();  
 
-  @Override
-  public Image getImage() {
-    return mImage;
-  }
+  // The current status of different operations
+  protected Map<String, Boolean> mLoading = new HashMap<String, Boolean>();
+
+  // calculates the new views
+  protected NeighbourhoodTask mNeighbourhoodTask;
+  protected IntersectTask mIntersectTask;
+  
+  // The current view mode
+  protected String mViewMode;
+  
+  // All the view modes
+  public static final String SHOW_KEY = "Show";
+  public static final String SELECT_KEY = "Select";
+  public static final String NEIGHBOURHOOD_KEY = "Neighbourhood";
+  public static final String INTERSECT_KEY = "Intersection";  
+  public static final String FEATURE_KEY = "Features";
 
   // Intents
   private static final int REQUEST_CODE_SELECT_IMAGE = 0;
@@ -118,6 +130,16 @@ public class ProximityDroidActivity
   }
 
   @Override
+  public Image getImage() {
+    return mImage;
+  }
+
+  @Override
+  public List<Integer> getIndices() {
+    return mPoints.get(mViewMode);
+  }
+
+  @Override
   public RotatedBitmap getBitmap() {
     return mBitmap;
   }
@@ -125,6 +147,10 @@ public class ProximityDroidActivity
   @Override
   protected void onCreate(Bundle state) {
     super.onCreate(state);
+    
+    // to display progress
+    requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+    
     setContentView(R.layout.main);
 
     mContentResolver = getContentResolver();
@@ -147,6 +173,8 @@ public class ProximityDroidActivity
       // restore fragments
       mProbeFrag = 
           (FeatureSelectFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_PROBE_FRAG);
+      mShowFrag = 
+          (RegionShowFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_SHOW_FRAG);
 
       // hide probe frag on small screens
       if (mSmallScreen) {
@@ -161,22 +189,28 @@ public class ProximityDroidActivity
       if (mUri != null) setupImage();
 
     }
-    // load fragments if we are not using the large tablet display
-    // Don't create fragments if we are restoring state
-    else if (mSmallScreen) {
-      mProbeFrag = new FeatureSelectFragment();
+    // else we are starting for the first time
+    else {
+
+      // create the image fragment
+      mShowFrag = new RegionShowFragment();
 
       // add the fragments to the view
-//      mFragmentManager.beginTransaction()
-//      .add(R.id.fragment_container, mProbeFrag)
-//      .hide(mProbeFrag)
-//      .commit();
+      mFragmentManager.beginTransaction()
+      .add(R.id.fragment_container, mShowFrag)
+      //.hide(mProbeFrag)
+      .commit();
+      
+      // create for find the feature fragment based on screen size
+      if (mSmallScreen) {
+        mProbeFrag = new FeatureSelectFragment();
+      }
+      // Get fragments by their id
+      else {
+        mProbeFrag = 
+            (FeatureSelectFragment) mFragmentManager.findFragmentById(R.id.probe_func_fragment);
+      }    
     }
-    // Get fragments by their id
-    else {
-      mProbeFrag = 
-          (FeatureSelectFragment) mFragmentManager.findFragmentById(R.id.probe_func_fragment);
-    }    
 
     // request an image
     if (mUri == null) {
@@ -189,8 +223,13 @@ public class ProximityDroidActivity
   protected void onStart() {
     super.onStart();    
     // add enabled probe funcs
-    SharedPreferences settings = getPreferences(0);
+    SharedPreferences settings = null;
     for (String key : mProbeFuncs.keySet()) {
+      // get the settings object the first time through
+      if (settings == null) {
+        settings = mProbeFrag.findPreference(key).getSharedPreferences();
+      }
+      // add enabled funcs
       if (settings.getBoolean(key, false)) {
         mImage.addProbeFunc(mProbeFuncs.get(key));
       }
@@ -201,6 +240,7 @@ public class ProximityDroidActivity
   protected void onSaveInstanceState(Bundle state) {
     // save the fragments  
     if (mProbeFrag.isAdded()) mFragmentManager.putFragment(state, BUNDLE_KEY_PROBE_FRAG, mProbeFrag);
+    if (mShowFrag.isAdded()) mFragmentManager.putFragment(state, BUNDLE_KEY_SHOW_FRAG, mShowFrag);
     // Save the bitmap
     if (mUri != null) {
       state.putParcelable(BUNDLE_KEY_URI, mUri);
@@ -230,10 +270,10 @@ public class ProximityDroidActivity
    */
   private void setupImage() {    
     mBitmap = Util.loadImage(mUri, mContentResolver, getWindowManager());
-    
+
     // make sure the image was loaded properly
     if (mBitmap != null) {
-      mImage = Util.bitmapToImage(mBitmap.getBitmap());
+      Util.setImage(mImage, mBitmap.getBitmap());
     }
   }
 
@@ -254,37 +294,36 @@ public class ProximityDroidActivity
   public boolean onNavigationItemSelected(int itemPosition, long itemId) {
     switch(itemPosition) {
       case LIST_SHOW_INDEX:
-        showShowFragment();
+        setViewMode(SHOW_KEY);
         break;
         
-      case LIST_NH_INDEX:
-        showNeighbourhoodFragment();
+      case LIST_NEIGHBOURHOOD_INDEX:
+        setViewMode(NEIGHBOURHOOD_KEY);
         break;
 
-      case LIST_INT_INDEX:
-        showIntersectFragment();
+      case LIST_INTERSECT_INDEX:
+        setViewMode(INTERSECT_KEY);
         break;
     }
     return true;
   }
   
-  public void showShowFragment() {
-    switchShowFragment(new RegionShowFragment());    
-  }
-  
-  public void showNeighbourhoodFragment() {
-    switchShowFragment(new NeighbourhoodFragment());  
-  }
-  
-  public void showIntersectFragment() {
-    switchShowFragment(new IntersectFragment());  
-  }
-  
-  protected void switchShowFragment(RegionShowFragment frag) {
-    mShowFrag = frag;
-    mFragmentManager.beginTransaction()
-      .replace(R.id.fragment_container, frag, SHOW_TAG)
-      .commit();
+  protected void setViewMode(String newMode) {
+    boolean changed = mViewMode != newMode;
+    mViewMode = newMode;
+    
+    // update the points if the mode changed
+    if (changed) {
+      mShowFrag.setPoints(getIndices());
+    }    
+    
+    // update loading spinner
+    Boolean loading = mLoading.get(mViewMode);
+    if (loading == null) {
+      mLoading.put(mViewMode, false);
+      loading = false;
+    }
+    setProgressBarIndeterminateVisibility(loading);
   }
 
   @Override
@@ -292,7 +331,7 @@ public class ProximityDroidActivity
     MenuInflater inflater = getSupportMenuInflater();
     inflater.inflate(R.menu.main, menu);
     inflater.inflate(R.menu.features_select, menu);
-    updateToggleText(menu.findItem(R.id.menu_features), mProbeFrag.isVisible());
+    //updateToggleText(menu.findItem(R.id.menu_features), mProbeFrag.isVisible());
     return true;
   }
 
@@ -347,7 +386,7 @@ public class ProximityDroidActivity
   /**
    * Displays the about dialog.
    */
-  private void showAbout() {
+  public void showAbout() {
     Intent i = new Intent(this, AboutActivity.class);
     startActivity(i);
   }
@@ -382,13 +421,14 @@ public class ProximityDroidActivity
     }
 
     transaction
-    .replace(R.id.fragment_container, new RegionSelectFragment(mBitmap), SELECT_TAG)
+    .replace(R.id.fragment_container, new RegionSelectFragment(mBitmap), SELECT_KEY)
     .addToBackStack(null)
     .commit();
   }
 
   public void onRegionSelected(Region region) { 
     mRegions.add(region);
+    runUpdate();
     onRegionCanceled();
   }
 
@@ -424,7 +464,6 @@ public class ProximityDroidActivity
           pref.setTitle(func.toString());
           pref.setKey(key);
 
-          pref.setOnPreferenceClickListener(this);
           pref.setOnPreferenceChangeListener(this);
           category.addPreference(pref);
           
@@ -450,13 +489,6 @@ public class ProximityDroidActivity
   }
 
   @Override
-  public boolean onPreferenceClick(Preference preference) {
-    String key = preference.getKey();
-    Log.i(TAG, key + " was pressed.");
-    return true;
-  }
-
-  @Override
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     if (newValue instanceof Boolean) {
       // add or remove the probe func from the perceptual system
@@ -467,8 +499,126 @@ public class ProximityDroidActivity
       else {
         mImage.removeProbeFunc(func);
       }
+      runUpdate();
     }
     return true;
+  }
+  
+  protected void runUpdate() {
+    if (mNeighbourhoodTask != null && mNeighbourhoodTask.isRunning()) {
+      mNeighbourhoodTask.cancel(true);
+    }
+
+    if (mIntersectTask != null && mIntersectTask.isRunning()) {
+      mIntersectTask.cancel(true);
+    }
+    
+    mNeighbourhoodTask = new NeighbourhoodTask();
+    mIntersectTask = new IntersectTask();
+    
+    mNeighbourhoodTask.execute();
+    mIntersectTask.execute();
+    
+  }
+  
+  protected void setLoading(String key, boolean loading) {
+    mLoading.put(key, loading);
+    if (key == mViewMode) {
+      setProgressBarIndeterminateVisibility(loading);
+    }
+  }
+  
+  private abstract class PointsTask extends AsyncTask<Void, Void, List<Integer>> {
+    
+    public boolean isRunning() {
+      return getStatus() == Status.RUNNING;
+    }
+    
+    protected abstract String key();
+
+    protected void updatePoints(List<Integer> points) {
+      mPoints.put(key(), points);
+      if (mViewMode == key()) {
+        RegionShowFragment frag = (RegionShowFragment) mFragmentManager.findFragmentByTag(SHOW_KEY);
+        if (frag != null) {
+          frag.setPoints(points);
+        }
+      }
+    }
+
+    @Override
+    protected void onPreExecute() {
+      super.onPreExecute();
+      setLoading(key(), true);
+    }
+
+    @Override
+    protected void onPostExecute(List<Integer> result) {
+      setLoading(key(), false);
+      updatePoints(result);
+    }
+
+  }
+
+  private class NeighbourhoodTask extends PointsTask {
+
+    @Override
+    protected String key() {
+      return NEIGHBOURHOOD_KEY;
+    }
+
+    @Override
+    protected List<Integer> doInBackground(Void... params) {
+      List<Integer> pixels = new ArrayList<Integer>();
+      for (Region r : mRegions) {
+        // check if we should stop because the task was cancelled
+        if (isCancelled()) {
+          return null;
+        }
+        else {
+          updatePoints(pixels);
+        }
+          
+        int center = r.getCenterIndex(mImage);
+        int[] regionPixels = r.getIndices(mImage);
+        pixels.addAll(mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1));
+      }
+      return pixels;
+    }
+    
+  }
+  
+  private class IntersectTask extends PointsTask {
+
+    @Override
+    protected String key() {
+      return INTERSECT_KEY;
+    }
+
+    @Override
+    protected List<Integer> doInBackground(Void... params) {
+      List<Integer> pixels = new ArrayList<Integer>();
+      
+      // only bother unless we have at least two regions to use
+      if (mRegions.size() >= 2) {
+        List<int[]> regionsIndices = new ArrayList<int[]>();
+
+        for (Region r : mRegions) {
+          regionsIndices.add(r.getIndices(mImage));
+        }
+        
+        // check if we should stop because the task was cancelled
+        if (isCancelled()) return null;
+
+        //pixels.addAll(system.getHybridIntersectObjects(pixelSets, 0.1));
+        long startTime = System.currentTimeMillis();
+        pixels = (mImage.getDescriptionBasedIntersectIndices(regionsIndices.get(0), regionsIndices.get(1)));
+        Log.i("IntersectionFragment", "Intersection took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds");
+      }
+
+      return pixels;
+    }
+    
   }
 
 }

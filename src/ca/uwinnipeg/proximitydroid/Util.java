@@ -173,12 +173,12 @@ public class Util {
   }
   
   // TODO: Move off of UI thread
-  public static Image bitmapToImage(Bitmap bm) {
+  public static void setImage(Image img, Bitmap bm) {
     int width = bm.getWidth();
     int height = bm.getHeight();
     IntBuffer intBuff = IntBuffer.allocate(width * height);
     bm.copyPixelsToBuffer(intBuff);
-    return new Image(intBuff.array(), width, height);
+    img.set(intBuff.array(), width, height);
   }
 
 }

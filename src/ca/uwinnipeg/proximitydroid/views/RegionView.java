@@ -12,9 +12,6 @@ import ca.uwinnipeg.proximitydroid.MathUtil;
 import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
-import ca.uwinnipeg.proximitydroid.R.color;
-import ca.uwinnipeg.proximitydroid.Region.Edge;
-import ca.uwinnipeg.proximitydroid.Region.Shape;
 
 /**
  * @author Garrett Smith
@@ -22,8 +19,6 @@ import ca.uwinnipeg.proximitydroid.Region.Shape;
  */
 // TODO: Add drawing center point
 // TODO: Look into making rotate not affect input
-// TODO: Use spinner for title
-// TODO: Add hiding bars
 // TODO: Look into old shape being drawn after changing shape
 // TODO: Split out more select only parts
 public class RegionView extends Region{

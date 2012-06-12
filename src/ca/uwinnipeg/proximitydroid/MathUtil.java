@@ -35,31 +35,6 @@ public class MathUtil {
   }
   
   /**
-   * Finds the intersect of two lines.
-   * From http://thirdpartyninjas.com/blog/2008/10/07/line-segment-intersection/
-   * @param a
-   * @param b
-   * @param c
-   * @param d
-   * @return
-   */
-  public static Point intersect(Point a, Point b, Point c, Point d) {
-    double denom = (d.y - c.y) * (b.x - a.x) - (d.x - c.x) * (b.y - a.y);
-    
-    //if (denom == 0) return null; // lines are parallel
-    
-    double ua = ((d.x - c.x) * (a.y - c.y) - (d.y - c.y) * (a.x - c.x)) / denom;
-    double ub = ((b.x - a.x) * (a.y - c.y) - (b.y - a.y) * (a.x - c.x)) / denom;
-    
-    if ( 0 > ua || ua > 1 || 0 > ub || ub > 1) return null; // lines intersect but segments do not
-    
-    int x = (int) Math.round(a.x + ua * (b.x - a.x));
-    int y = (int) Math.round(a.y + ua * (b.y - a.y));
-    
-    return new Point(x, y); // returns the intersect
-  }
-  
-  /**
    * Finds the distance between point c and a line segment from a to b.
    * @param a
    * @param b

@@ -282,29 +282,6 @@ public class Polygon {
     }
     return inside;
   }
-  
-  /**
-   * 
-   * @param p1
-   * @param p2
-   * @return
-   */
-  public Point intersect(Point p1, Point p2) {
-    
-    int size = mPoints.size();
-    
-    for (int i = 0; i < size; i++) {
-      int j = (i + 1) % size; // get the next point to make a segment
-      Point p3 = mPoints.get(i);
-      Point p4 = mPoints.get(j);
-      Point intersect = MathUtil.intersect(p1, p2, p3, p4);
-      if(intersect != null) {
-        return intersect;
-      }
-    }
-
-   return null;
-  }
 
   /**
    * Returns the path representing this polygon transformed by the given matrix.
