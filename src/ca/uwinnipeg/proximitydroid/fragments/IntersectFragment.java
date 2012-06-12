@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.util.Log;
-import ca.uwinnipeg.proximity.PerceptualSystem;
 import ca.uwinnipeg.proximity.image.Image;
-import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
@@ -20,21 +18,21 @@ import ca.uwinnipeg.proximitydroid.Region;
 public class IntersectFragment extends RegionShowFragment {
 
   @Override
-  protected List<Pixel> getRelevantPixels(List<Region> regions, Image image) {
+  protected List<Integer> getRelevantPixels(List<Region> regions, Image image) {
 
-    List<Pixel> pixels = new ArrayList<Pixel>();
+    List<Integer> pixels = new ArrayList<Integer>();
     
     // only bother unless we have at least two regions to use
     if (regions.size() >= 2) {
-      List<int[]> pixelSets = new ArrayList<int[]>();
+      List<int[]> regionsIndices = new ArrayList<int[]>();
 
       for (Region r : regions) {
-        pixelSets.add(r.getIndices(image));
+        regionsIndices.add(r.getIndices(image));
       }
 
       //pixels.addAll(system.getHybridIntersectObjects(pixelSets, 0.1));
       long startTime = System.currentTimeMillis();
-      pixels.addAll(image.getDescriptionBasedIntersectObjects(pixelSets.get(0), pixelSets.get(1)));
+      pixels = (image.getDescriptionBasedIntersectIndices(regionsIndices.get(0), regionsIndices.get(1)));
       Log.i("IntersectionFragment", "Intersection took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds");
     }
 

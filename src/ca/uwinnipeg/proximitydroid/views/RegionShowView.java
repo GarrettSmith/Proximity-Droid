@@ -4,7 +4,6 @@
 package ca.uwinnipeg.proximitydroid.views;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import android.content.Context;
@@ -12,7 +11,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
-import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximitydroid.R;
 
 /**
@@ -30,8 +28,8 @@ public class RegionShowView extends ProximityImageView {
   // The regions of interest in this image
   protected List<RegionView> mRegions = new ArrayList<RegionView>();
   
-  // The list of relevant pixels to draw
-  protected List<Pixel> mPixels = new ArrayList<Pixel>();
+  // The list of relevant Points to draw
+  protected float[] mPoints;
 
   public RegionShowView(Context context) {
     super(context);
@@ -70,15 +68,22 @@ public class RegionShowView extends ProximityImageView {
     }
   }
   
-  public void clearPixels() {
-    mPixels.clear();
+  public void clearPoints() {
+    mPoints = null;
   }
-  
-  public void setRelevantPixels(Collection<Pixel> pixels) {
-    mPixels.clear();
-    mPixels.addAll(pixels);
+
+  public void setRelevantPoints(int[] points) {
+    if (points == null) {
+      clearPoints();
+    }
+    else {
+      mPoints = new float[points.length];
+      for (int i = 0; i < mPoints.length; i++) {
+        mPoints[i] = points[i];
+      }
+    }
   }
-  
+
   @Override
   public void draw(Canvas canvas) {
     super.draw(canvas);
@@ -97,13 +102,13 @@ public class RegionShowView extends ProximityImageView {
       reg.draw(canvas);
     }    
     
-    // draw all relevant pixels
-    float[] pxl = new float[2];
-    for (Pixel p : mPixels) {
-      pxl[0] = p.x;
-      pxl[1] = p.y;
-      mFinalMatrix.mapPoints(pxl);
-      canvas.drawPoint(pxl[0], pxl[1], RegionView.REGION_PAINT);
+    // draw all relevant Points
+    if (mPoints != null) {
+      float[] mappedPoints = new float[mPoints.length];
+      mFinalMatrix.mapPoints(mappedPoints, mPoints);
+      for (int i = 0; i < mappedPoints.length; i += 2) {        
+        canvas.drawPoint(mappedPoints[i], mappedPoints[i+1], RegionView.REGION_PAINT);
+      }
     }
   }
 

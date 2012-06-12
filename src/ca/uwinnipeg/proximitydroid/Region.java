@@ -1,10 +1,7 @@
 package ca.uwinnipeg.proximitydroid;
 
-import java.util.List;
-
 import android.graphics.Rect;
 import ca.uwinnipeg.proximity.image.Image;
-import ca.uwinnipeg.proximity.image.Pixel;
 
 /**
  * @author Garrett Smith
@@ -65,21 +62,10 @@ public class Region {
   }
   
   /**
-   * Gets all the pixels contained by this region.
+   * Gets all the indices contained by this region.
    * @param img
    * @return
-   */
-  public List<Pixel> getPixels(Image img) {
-    // TODO: trim non rectangle shapes
-    switch(mShape) {
-      case OVAL:
-        break;
-      case POLYGON:
-        break;
-    }
-    return img.getPixels(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
-  }
-  
+   */  
   public int[] getIndices(Image img) {
     return img.getIndices(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
   }
@@ -88,9 +74,9 @@ public class Region {
    * Returns the center pixel of this region.
    * @param img
    * @return
-   */
-  public Pixel getCenterPixel(Image img) {
-    return img.getPixel(mBounds.centerX(), mBounds.centerY());
+   */  
+  public int getCenterIndex(Image img) {
+    return img.getIndex(mBounds.centerX(), mBounds.centerY());
   }
 
 }

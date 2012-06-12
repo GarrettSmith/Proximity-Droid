@@ -5,11 +5,8 @@ package ca.uwinnipeg.proximitydroid.fragments;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import ca.uwinnipeg.proximity.PerceptualSystem;
 import ca.uwinnipeg.proximity.image.Image;
-import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
@@ -20,12 +17,12 @@ import ca.uwinnipeg.proximitydroid.Region;
 public class NeighbourhoodFragment extends RegionShowFragment {
   
   @Override
-  protected List<Pixel> getRelevantPixels(List<Region> regions, Image image) {
-    List<Pixel> pixels = new ArrayList<Pixel>();
+  protected List<Integer> getRelevantPixels(List<Region> regions, Image image) {
+    List<Integer> pixels = new ArrayList<Integer>();
     for (Region r : regions) {
-      Pixel center = r.getCenterPixel(image);
+      int center = r.getCenterIndex(image);
       int[] regionPixels = r.getIndices(image);
-      List<Pixel> nhPixels = image.getHybridNeighbourhood(center, regionPixels, 0.1);
+      List<Integer> nhPixels = image.getHybridNeighbourhoodIndices(center, regionPixels, 0.1);
       pixels.addAll(nhPixels);
     }
     return pixels;

@@ -26,13 +26,11 @@ import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
-import ca.uwinnipeg.proximity.PerceptualSystem;
 import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximity.image.AlphaFunc;
 import ca.uwinnipeg.proximity.image.BlueFunc;
 import ca.uwinnipeg.proximity.image.GreenFunc;
 import ca.uwinnipeg.proximity.image.Image;
-import ca.uwinnipeg.proximity.image.Pixel;
 import ca.uwinnipeg.proximity.image.RedFunc;
 import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.IntersectFragment;
@@ -97,7 +95,7 @@ public class ProximityDroidActivity
 
   protected List<Region> mRegions = new ArrayList<Region>();
   
-  protected Map<String, ProbeFunc<Pixel>> mProbeFuncs = new HashMap<String, ProbeFunc<Pixel>>();
+  protected Map<String, ProbeFunc<Integer>> mProbeFuncs = new HashMap<String, ProbeFunc<Integer>>();
   
   protected Image mImage;
 
@@ -271,21 +269,20 @@ public class ProximityDroidActivity
   }
   
   public void showShowFragment() {
-    switchImageFragment(new RegionShowFragment());    
+    switchShowFragment(new RegionShowFragment());    
   }
   
   public void showNeighbourhoodFragment() {
-    switchImageFragment(new NeighbourhoodFragment());  
+    switchShowFragment(new NeighbourhoodFragment());  
   }
   
   public void showIntersectFragment() {
-    switchImageFragment(new IntersectFragment());  
+    switchShowFragment(new IntersectFragment());  
   }
   
-  protected void switchImageFragment(RegionShowFragment frag) {
+  protected void switchShowFragment(RegionShowFragment frag) {
     mShowFrag = frag;
     mFragmentManager.beginTransaction()
-      .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
       .replace(R.id.fragment_container, frag, SHOW_TAG)
       .commit();
   }
@@ -404,12 +401,12 @@ public class ProximityDroidActivity
     if(root == null) return; //for whatever reason in very rare cases this is null   
 
     // Load features
-    Map<String, List<ProbeFunc<Pixel>>> features = loadProbeFuncs();
+    Map<String, List<ProbeFunc<Integer>>> features = loadProbeFuncs();
 
     // Generate preference items from features    
     // generate a category for each given category    
     for (String catStr : features.keySet()) {
-      List<ProbeFunc<Pixel>> funcs = features.get(catStr);
+      List<ProbeFunc<Integer>> funcs = features.get(catStr);
 
       // only add the category if it is non empty
       if (funcs != null && !funcs.isEmpty()) {
@@ -419,7 +416,7 @@ public class ProximityDroidActivity
         root.addPreference(category);
 
         // generate a preference for each probe func
-        for (ProbeFunc<Pixel> func : funcs) {
+        for (ProbeFunc<Integer> func : funcs) {
           SwitchPreference pref = new SwitchPreference(this);
 
           // Set name and key
@@ -438,11 +435,11 @@ public class ProximityDroidActivity
     }
   }
 
-  private Map<String, List<ProbeFunc<Pixel>>> loadProbeFuncs() {
-    Map<String, List<ProbeFunc<Pixel>>> features = new HashMap<String, List<ProbeFunc<Pixel>>>();
+  private Map<String, List<ProbeFunc<Integer>>> loadProbeFuncs() {
+    Map<String, List<ProbeFunc<Integer>>> features = new HashMap<String, List<ProbeFunc<Integer>>>();
     // load all the standard probe funcs
-    features.put("Colour", new ArrayList<ProbeFunc<Pixel>>());
-    List<ProbeFunc<Pixel>> colourFuncs = features.get("Colour");
+    features.put("Colour", new ArrayList<ProbeFunc<Integer>>());
+    List<ProbeFunc<Integer>> colourFuncs = features.get("Colour");
     colourFuncs.add(new AlphaFunc());
     colourFuncs.add(new RedFunc());
     colourFuncs.add(new GreenFunc());
@@ -463,7 +460,7 @@ public class ProximityDroidActivity
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     if (newValue instanceof Boolean) {
       // add or remove the probe func from the perceptual system
-      ProbeFunc<Pixel> func = mProbeFuncs.get(preference.getKey());
+      ProbeFunc<Integer> func = mProbeFuncs.get(preference.getKey());
       if ((Boolean)newValue) {
         mImage.addProbeFunc(func);
       }
