@@ -15,6 +15,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceCategory;
@@ -78,7 +79,7 @@ public class ProximityDroidActivity
   protected Uri mUri;
   
   // The image perceptual system used for the system logic
-  protected Image mImage = new Image();
+  
 
   // Fragments
   private RegionShowFragment mShowFrag;
@@ -103,7 +104,9 @@ public class ProximityDroidActivity
   protected Map<String, Boolean> mLoading = new HashMap<String, Boolean>();
 
   // calculates the new views
-  protected NeighbourhoodTask mNeighbourhoodTask;
+  protected Map<Region, NeighbourhoodTask> mNeighbourhoodTasks = 
+      new HashMap<Region, NeighbourhoodTask>();
+  
   protected IntersectTask mIntersectTask;
   
   // The current view mode
@@ -457,7 +460,16 @@ public class ProximityDroidActivity
 
         // generate a preference for each probe func
         for (ProbeFunc<Integer> func : funcs) {
-          SwitchPreference pref = new SwitchPreference(this);
+          
+          Preference pref;
+          
+          // Use switches when supported
+          if (android.os.Build.VERSION.SDK_INT >= 14) {
+            pref = new SwitchPreference(this);
+          }
+          else {
+            pref = new CheckBoxPreference(this);
+          }
 
           // Set name and key
           String key = catStr + "_" + func.toString();
@@ -505,18 +517,21 @@ public class ProximityDroidActivity
   }
   
   protected void runUpdate() {
-    if (mNeighbourhoodTask != null && mNeighbourhoodTask.isRunning()) {
-      mNeighbourhoodTask.cancel(true);
+    
+    for (Region r : mRegions) {
+      NeighbourhoodTask task = mNeighbourhoodTasks.get(r);
+      if (task == null) {
+        task = new NeighbourhoodTask();
+        mNeighbourhoodTasks.put(r, task);
+        task.execute(r);
+      }
     }
 
     if (mIntersectTask != null && mIntersectTask.isRunning()) {
       mIntersectTask.cancel(true);
     }
     
-    mNeighbourhoodTask = new NeighbourhoodTask();
     mIntersectTask = new IntersectTask();
-    
-    mNeighbourhoodTask.execute();
     mIntersectTask.execute();
     
   }
@@ -528,23 +543,13 @@ public class ProximityDroidActivity
     }
   }
   
-  private abstract class PointsTask extends AsyncTask<Void, Void, List<Integer>> {
+  private abstract class PointsTask<T> extends AsyncTask<T, Void, List<Integer>> {
     
     public boolean isRunning() {
       return getStatus() == Status.RUNNING;
     }
     
     protected abstract String key();
-
-    protected void updatePoints(List<Integer> points) {
-      mPoints.put(key(), points);
-      if (mViewMode == key()) {
-        RegionShowFragment frag = (RegionShowFragment) mFragmentManager.findFragmentByTag(SHOW_KEY);
-        if (frag != null) {
-          frag.setPoints(points);
-        }
-      }
-    }
 
     @Override
     protected void onPreExecute() {
@@ -555,12 +560,17 @@ public class ProximityDroidActivity
     @Override
     protected void onPostExecute(List<Integer> result) {
       setLoading(key(), false);
-      updatePoints(result);
+      mPoints.put(key(), result);
+      if (mViewMode == key() && mShowFrag != null) {
+        mShowFrag.setPoints(getIndices());
+      }
     }
 
   }
 
-  private class NeighbourhoodTask extends PointsTask {
+  private class NeighbourhoodTask extends PointsTask<Region> {
+    
+    protected Region mRegion;
 
     @Override
     protected String key() {
@@ -568,27 +578,33 @@ public class ProximityDroidActivity
     }
 
     @Override
-    protected List<Integer> doInBackground(Void... params) {
-      List<Integer> pixels = new ArrayList<Integer>();
-      for (Region r : mRegions) {
-        // check if we should stop because the task was cancelled
-        if (isCancelled()) {
-          return null;
-        }
-        else {
-          updatePoints(pixels);
-        }
-          
-        int center = r.getCenterIndex(mImage);
-        int[] regionPixels = r.getIndices(mImage);
-        pixels.addAll(mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1));
+    protected List<Integer> doInBackground(Region... params) {
+      mRegion = params[0];
+      
+      // check if we should stop because the task was cancelled
+      if (isCancelled()) {
+        return null;
       }
-      return pixels;
+
+      int center = mRegion.getCenterIndex(mImage);
+      int[] regionPixels = mRegion.getIndices(mImage);
+      
+      return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1);
+    }
+    
+    @Override
+    protected void onPostExecute(List<Integer> result) {
+      setLoading(key(), false);
+      List<Integer> points = mPoints.get(key());
+      points.addAll(result);
+      if (mViewMode == key() && mShowFrag != null) {
+        mShowFrag.setPoints(getIndices());
+      }
     }
     
   }
   
-  private class IntersectTask extends PointsTask {
+  private class IntersectTask extends PointsTask<Void> {
 
     @Override
     protected String key() {

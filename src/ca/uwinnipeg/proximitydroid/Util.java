@@ -35,21 +35,15 @@ public class Util {
    * @param wm
    * @return
    */
-  //TODO: Shift loading image off the main UI thread
-  public static RotatedBitmap loadImage(Uri data, ContentResolver context, WindowManager wm) {
+  public static RotatedBitmap loadImage(Uri data, ContentResolver context) {
     String path = Util.getRealPathFromURI(context, data);
 
     // Load the orientation
     int orientation = Util.readOrientation(path);
-
-    // Get screen size
-    Point displaySize = Util.getDisplaySize(wm);
-    int width = displaySize.x;
-    int height = displaySize.y;
     
     // TODO: figure out this size
-    width = 500;
-    height = 500;
+    int width = 500;
+    int height = 500;
 
     // Read the bitmap's size
     BitmapFactory.Options options = new BitmapFactory.Options();
@@ -172,7 +166,6 @@ public class Util {
     return p;
   }
   
-  // TODO: Move off of UI thread
   public static void setImage(Image img, Bitmap bm) {
     int width = bm.getWidth();
     int height = bm.getHeight();
