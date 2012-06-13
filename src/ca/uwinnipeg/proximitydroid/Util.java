@@ -8,6 +8,8 @@ import java.nio.IntBuffer;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -172,6 +174,10 @@ public class Util {
     IntBuffer intBuff = IntBuffer.allocate(width * height);
     bm.copyPixelsToBuffer(intBuff);
     img.set(intBuff.array(), width, height);
+  }  
+  
+  public static SharedPreferences getSupportDefaultSharedPrefences(Context context) {
+    return context.getSharedPreferences(context.getPackageName() + "_preferences", 0);
   }
 
 }
