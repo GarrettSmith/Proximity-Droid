@@ -5,13 +5,15 @@ import java.util.ArrayList;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * A polygon used by neighbourhoods.
  * @author garrett
  *
  */
-public class Polygon {
+public class Polygon implements Parcelable {
 
   private final ArrayList<Point> mPoints = new ArrayList<Point>();
 
@@ -312,4 +314,43 @@ public class Polygon {
 
     return path;
   }
+
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    dest.writeInt(mPoints.size());
+    for (Point p : mPoints) {
+      dest.writeParcelable(p, flags);
+    }
+  }
+  
+  private void readFromParcel(Parcel source) {
+    int size = source.readInt();
+    for (int i = 0; i < size; i++) {
+      mPoints.add((Point) source.readParcelable(Point.class.getClassLoader()));
+    }
+  }
+  
+  public static final Parcelable.Creator<Polygon> CREATOR =
+      new Parcelable.Creator<Polygon>() {
+
+    @Override
+    public Polygon createFromParcel(Parcel source) {
+      return new Polygon(source);
+    }
+
+    @Override
+    public Polygon[] newArray(int size) {
+      return new Polygon[size];
+    }
+  };    
+
+  private Polygon(Parcel in) {
+    readFromParcel(in);
+  }
+  
 }

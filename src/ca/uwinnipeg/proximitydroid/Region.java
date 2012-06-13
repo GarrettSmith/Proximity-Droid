@@ -1,13 +1,15 @@
 package ca.uwinnipeg.proximitydroid;
 
 import android.graphics.Rect;
+import android.os.Parcel;
+import android.os.Parcelable;
 import ca.uwinnipeg.proximity.image.Image;
 
 /**
  * @author Garrett Smith
  *
  */
-public class Region {
+public class Region implements Parcelable {
 
   public static final String TAG = "Region";
 
@@ -77,6 +79,44 @@ public class Region {
    */  
   public int getCenterIndex(Image img) {
     return img.getIndex(mBounds.centerX(), mBounds.centerY());
+  }
+
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    dest.writeParcelable(mBounds, flags);
+    dest.writeParcelable(mPoly, flags);
+    dest.writeString(mShape.name());
+    
+  }
+  
+  private void readFromParcel(Parcel source) {
+    mBounds = source.readParcelable(Rect.class.getClassLoader());
+    mPoly = source.readParcelable(Polygon.class.getClassLoader());
+    String name = source.readString();
+    mShape = Shape.valueOf(name);
+  }
+  
+  public static final Parcelable.Creator<Region> CREATOR =
+      new Parcelable.Creator<Region>() {
+
+    @Override
+    public Region createFromParcel(Parcel source) {
+      return new Region(source);
+    }
+
+    @Override
+    public Region[] newArray(int size) {
+      return new Region[size];
+    }
+  };    
+
+  private Region(Parcel in) {
+    readFromParcel(in);
   }
 
 }
