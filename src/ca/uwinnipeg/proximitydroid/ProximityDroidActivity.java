@@ -285,12 +285,33 @@ public class ProximityDroidActivity
    * @param data
    */
   private void setupImage() {    
-    mBitmap = Util.loadImage(mUri, mContentResolver);
+    // a task that loads the bitmap from disk
+    new AsyncTask<Uri, Void, RotatedBitmap>() {
 
-    // make sure the image was loaded properly
-    if (mBitmap != null) {
-      Util.setImage(mImage, mBitmap.getBitmap());
-    }
+      @Override
+      protected RotatedBitmap doInBackground(Uri... params) {
+        return Util.loadImage(params[0], mContentResolver);
+      }
+      
+      protected void onPostExecute(RotatedBitmap result) {
+        mBitmap = result;
+        mShowFrag.setBitmap(mBitmap);
+        // a task that loads the pixels into the perceptual system
+        new AsyncTask<RotatedBitmap, Void, Void>() {
+
+          @Override
+          protected Void doInBackground(RotatedBitmap... params) {
+            RotatedBitmap rbm = params[0];
+            if (rbm != null) {
+              Util.setImage(mImage, rbm.getBitmap());
+            }
+            return null;
+          }
+          
+        }.execute(result);
+      }
+      
+    }.execute(mUri);
   }
 
   @Override
@@ -682,7 +703,7 @@ public class ProximityDroidActivity
         }
         // else take the intersection of the region and the current intersection
         else {
-          indices = mImage.getDescriptionBasedIntersectIndices(mIntersection, region.getIndicesList(mImage));
+          indices = mImage.getDescriptionBasedIntersectIndices(mIntersection, region.getIndicesList(mImage), this);
         }
       } 
       catch(RuntimeException ex) {
