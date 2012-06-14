@@ -26,6 +26,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
+import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximity.image.AlphaFunc;
 import ca.uwinnipeg.proximity.image.BlueFunc;
@@ -251,19 +252,6 @@ public class ProximityDroidActivity
   }
   
   @Override
-  protected void onStart() {
-    super.onStart();    
-    // add enabled probe funcs
-    SharedPreferences settings = Util.getSupportDefaultSharedPrefences(this);
-    for (String key : mProbeFuncs.keySet()) {
-      // add enabled funcs
-      if (settings.getBoolean(key, false)) {
-        mImage.addProbeFunc(mProbeFuncs.get(key));
-      }
-    }
-  }
-
-  @Override
   protected void onSaveInstanceState(Bundle state) {
     // save the fragments  
     if (mProbeFrag.isAdded()) mFragmentManager.putFragment(state, BUNDLE_KEY_PROBE_FRAG, mProbeFrag);
@@ -272,6 +260,7 @@ public class ProximityDroidActivity
     if (mUri != null) {
       state.putParcelable(BUNDLE_KEY_URI, mUri);
     }
+    state.putString(BUNDLE_KEY_VIEW_MODE, mViewMode);
     super.onSaveInstanceState(state);
   }
 
@@ -504,6 +493,15 @@ public class ProximityDroidActivity
         }
       }
     }
+
+    // add enabled probe funcs
+    SharedPreferences settings = Util.getSupportDefaultSharedPrefences(this);
+    for (String key : mProbeFuncs.keySet()) {
+      // add enabled funcs
+      if (settings.getBoolean(key, false)) {
+        mImage.addProbeFunc(mProbeFuncs.get(key));
+      }
+    }
   }
 
   private Map<String, List<ProbeFunc<Integer>>> loadProbeFuncs() {
@@ -543,16 +541,23 @@ public class ProximityDroidActivity
 
     // clear old points
     mNeighbourhoods.put(region, new ArrayList<Integer>());
+    
+    // Cancel running task
+    NeighbourhoodTask task = mNeighbourhoodTasks.get(region);
+    if (task != null && task.isRunning()) {
+      task.cancel(true);
+    }
 
     // run the task
-    NeighbourhoodTask task = new NeighbourhoodTask();
+    task = new NeighbourhoodTask();
     mNeighbourhoodTasks.put(region, task);
     task.execute(region);
 
-    // Calculate Intersection
+    // TODO: Calculate Intersection
     
-    //set loading
+    //clear view and set loading
     setProgressBarIndeterminateVisibility(isLoading());
+    mShowFrag.setPoints(getIndices());
   }
   
   protected void updateAll() {
@@ -579,7 +584,9 @@ public class ProximityDroidActivity
     return loading;
   }
   
-  private abstract class PointsTask extends AsyncTask<Region, Void, List<Integer>> {
+  private abstract class PointsTask 
+    extends AsyncTask<Region, Float, List<Integer>>
+    implements PerceptualSystemSubscriber {
     
     protected final String KEY;
     protected boolean mRunning = true;
@@ -601,6 +608,11 @@ public class ProximityDroidActivity
         mShowFrag.setPoints(getIndices());
         setProgressBarIndeterminateVisibility(isLoading());
       }
+    }
+    
+    @Override
+    public void setProgress(float progress) {
+      onProgressUpdate(progress);
     }
 
   }
@@ -626,7 +638,7 @@ public class ProximityDroidActivity
 
       // this is wrapped in a try catch so if we get an async runtime exception the task will stop
       try {
-        return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1);
+        return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1, this);
       } 
       catch(RuntimeException ex) {
         return null;
