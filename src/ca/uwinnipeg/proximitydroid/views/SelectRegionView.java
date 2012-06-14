@@ -246,6 +246,7 @@ public class SelectRegionView extends RegionView {
    * handles motion to move the neighbourhood.
    */
   // TODO: Break down handleMove
+  // TODO: Handle input history
   // TODO: Why are we recording the last point like 7 times
   public void handleMove(MotionEvent event) {
     float[] p = convertToImageSpace(event.getX(), event.getY());

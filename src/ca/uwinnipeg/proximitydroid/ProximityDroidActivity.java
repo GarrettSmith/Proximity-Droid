@@ -183,7 +183,6 @@ public class ProximityDroidActivity
     super.onCreate(state);
     
     // to display progress
-    requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
     requestWindowFeature(Window.FEATURE_PROGRESS);
     
     setContentView(R.layout.main);
@@ -358,7 +357,7 @@ public class ProximityDroidActivity
     }    
     
     // update loading spinner
-    setProgressBarIndeterminateVisibility(isLoading());
+    setProgressBarVisibility(isLoading());
   }
 
   @Override
@@ -466,6 +465,9 @@ public class ProximityDroidActivity
     // run the update on the added region
     updateNeighbourhood(region);
     addIntersectionTask(region);
+    //clear view and set loading
+    setProgressBarVisibility(isLoading());
+    mShowFrag.setPoints(getIndices());
     onRegionCanceled();
   }
 
@@ -577,10 +579,6 @@ public class ProximityDroidActivity
     task = new NeighbourhoodTask();
     mNeighbourhoodTasks.put(region, task);
     task.execute(region);
-    
-    //clear view and set loading
-    setProgressBarIndeterminateVisibility(isLoading());
-    mShowFrag.setPoints(getIndices());
   }
   
   protected void addIntersectionTask(Region region) {
@@ -665,20 +663,24 @@ public class ProximityDroidActivity
       // update loading and point
       if (mViewMode == KEY && mShowFrag != null) {
         mShowFrag.setPoints(getIndices());
-        setProgressBarIndeterminateVisibility(isLoading());
+        setProgressBarVisibility(isLoading());
+      }
+    }
+    
+    protected float mLastProgress = 0;
+    protected final float PROGRESS_THERSHOLD = 0.01f;
+    
+    @Override
+    public void updateProgress(float progress) {
+      if (mViewMode == KEY && (progress - mLastProgress > PROGRESS_THERSHOLD)) {
+        mLastProgress = progress;
+        publishProgress(Integer.valueOf((int) (progress * 10000)));
       }
     }
     
     @Override
-    public void setProgress(float progress) {
-      publishProgress(Integer.valueOf((int) progress * 10000));
-    }
-    
-    @Override
     protected void onProgressUpdate(Integer... values) {
-      super.onProgressUpdate(values);
-      setProgressBarVisibility(true);
-      setProgress(values[0]);
+      setProgress(values[0].intValue());
     }
 
   }
