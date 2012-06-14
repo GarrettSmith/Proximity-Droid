@@ -73,17 +73,9 @@ public class RegionShowView extends ProximityImageView {
     invalidate();
   }
 
-  public void setRelevantPoints(int[] points) {
-    if (points == null) {
-      clearPoints();
-    }
-    else {
-      mPoints = new float[points.length];
-      for (int i = 0; i < mPoints.length; i++) {
-        mPoints[i] = points[i];
-      }
-      invalidate();
-    }
+  public void setRelevantPoints(float[] points) {
+    mPoints = points;
+    invalidate();
   }
 
   @Override

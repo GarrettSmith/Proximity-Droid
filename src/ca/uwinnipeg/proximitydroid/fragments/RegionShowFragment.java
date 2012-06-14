@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
@@ -38,8 +37,7 @@ public class RegionShowFragment extends SherlockFragment {
   public interface RegionProvider {
     public List<Region> getRegions();
     public RotatedBitmap getBitmap();
-    public List<Integer> getIndices();
-    public Image getImage();
+    public float[] getIndices();
   }
   
   protected OnAddRegionSelecetedListener mListener;  
@@ -101,11 +99,8 @@ public class RegionShowFragment extends SherlockFragment {
         rv.setShape(r.getShape());
         mShowView.add(rv);
       }
-      
-      List<Integer> indices = mProvider.getIndices();
-      if (indices != null) {
-        setPoints(indices);
-      }
+
+      setPoints(mProvider.getIndices());
     }    
 
   }
@@ -114,19 +109,12 @@ public class RegionShowFragment extends SherlockFragment {
     mShowView.setImageBitmap(bm);
   } 
 
-  public void setPoints(List<Integer> indices) {
+  public void setPoints(float[] indices) {
     if (indices == null) {
       mShowView.clearPoints();
     }
     else {
-      Image image = mProvider.getImage();
-      int[] points = new int[indices.size() * 2];
-      for (int i = 0; i < indices.size(); i++) {
-        int index = indices.get(i);
-        points[i*2] = image.getX(index);
-        points[i*2 + 1] = image.getY(index);
-      }
-      mShowView.setRelevantPoints(points);
+      mShowView.setRelevantPoints(indices);
     }
   }
   

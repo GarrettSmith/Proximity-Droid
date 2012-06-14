@@ -1,5 +1,8 @@
 package ca.uwinnipeg.proximitydroid;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -25,6 +28,8 @@ public class Region implements Parcelable {
 
   // The list of points that make up the polygon
   protected Polygon mPoly = new Polygon();
+  
+  public Region() {}
 
   public Rect getBounds() {
     Rect bounds;
@@ -70,6 +75,15 @@ public class Region implements Parcelable {
    */  
   public int[] getIndices(Image img) {
     return img.getIndices(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+  }
+  
+  public List<Integer> getIndicesList(Image img) {
+    int[] indices = getIndices(img);
+    List<Integer> list = new ArrayList<Integer>();
+    for (int i = 0; i < indices.length; i++) {
+      list.add(indices[i]);
+    }
+    return list;
   }
   
   /**

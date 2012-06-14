@@ -19,7 +19,7 @@
             android:label="@string/app_about"
             android:theme="@style/Theme.Sherlock.Dialog" >
         </activity>
-        <activity android:name="ProximityDroidActivity" android:uiOptions="splitActionBarWhenNarrow" android:theme="@style/Overlay">
+        <activity android:name="ProximityDroidActivity" android:uiOptions="splitActionBarWhenNarrow" android:theme="@style/base">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

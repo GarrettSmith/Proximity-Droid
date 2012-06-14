@@ -24,7 +24,6 @@ import android.preference.SwitchPreference;
 import android.provider.MediaStore.Images;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximity.ProbeFunc;
@@ -67,11 +66,24 @@ public class ProximityDroidActivity
 
   public static final String TAG = "ProximityDroidActivity";
   
+  // UI
   private ContentResolver mContentResolver;
   private FragmentManager mFragmentManager;
   protected ActionBar mActionBar;
   protected SpinnerAdapter mSpinnerAdapter;
 
+  // Fragments
+  private RegionShowFragment mShowFrag;
+  private FeatureSelectFragment mProbeFrag;  
+  
+  // The current view mode
+  protected String mViewMode;
+  
+  // System
+
+  // gets set to true if we are on a small screen device like a phone
+  protected boolean mSmallScreen;  
+  
   // The image we are working on
   protected RotatedBitmap mBitmap;
 
@@ -79,38 +91,33 @@ public class ProximityDroidActivity
   protected Uri mUri;
   
   // The image perceptual system used for the system logic
+  protected Image mImage = new Image();
   
+  // The regions of interest
+  protected List<Region> mRegions = new ArrayList<Region>();  
+  
+  // The probe functions
+  protected Map<String, ProbeFunc<Integer>> mProbeFuncs = new HashMap<String, ProbeFunc<Integer>>();
+  
+  // The map of regions to the indices of the points in their neighbourhoods
+  protected Map<Region, List<Integer>> mNeighbourhoods = new HashMap<Region, List<Integer>>();
+  
+  // The indices of the points in the intersection
+  protected List<Integer> mIntersection = null;
 
-  // Fragments
-  private RegionShowFragment mShowFrag;
-  private FeatureSelectFragment mProbeFrag;  
+  // Map each region to the task generating it's neighbourhood
+  protected Map<Region, NeighbourhoodTask> mNeighbourhoodTasks = 
+      new HashMap<Region, NeighbourhoodTask>();
+  
+  // The list of intersection operations that will bring us to our desired result  
+  protected List<IntersectTask> mIntersectTasks = new ArrayList<IntersectTask>();
+  
+  // Constants
   
   // Used to read the positions of the view mode spinner
   public static final int LIST_SHOW_INDEX = 0;
   public static final int LIST_NEIGHBOURHOOD_INDEX = 1;
   public static final int LIST_INTERSECT_INDEX = 2;
-
-  // gets set to true if we are on a small screen device like a phone
-  protected boolean mSmallScreen;
-
-  protected List<Region> mRegions = new ArrayList<Region>();
-  
-  protected Map<String, ProbeFunc<Integer>> mProbeFuncs = new HashMap<String, ProbeFunc<Integer>>();
-  
-  // Stores the points to be highlighted for different view (neighbourhoods, intersection)
-  protected Map<String, List<Integer>> mPoints = new HashMap<String, List<Integer>>();  
-
-  // The current status of different operations
-  protected Map<String, Boolean> mLoading = new HashMap<String, Boolean>();
-
-  // calculates the new views
-  protected Map<Region, NeighbourhoodTask> mNeighbourhoodTasks = 
-      new HashMap<Region, NeighbourhoodTask>();
-  
-  protected IntersectTask mIntersectTask;
-  
-  // The current view mode
-  protected String mViewMode;
   
   // All the view modes
   public static final String SHOW_KEY = "Show";
@@ -126,6 +133,8 @@ public class ProximityDroidActivity
   protected static final String BUNDLE_KEY_URI = "Uri";
   protected static final String BUNDLE_KEY_SHOW_FRAG = "Show Fragment";
   protected static final String BUNDLE_KEY_PROBE_FRAG = "Probe Fragment";
+  protected static final String BUNDLE_KEY_REGIONS = "Regions";
+  protected static final String BUNDLE_KEY_VIEW_MODE = "View Mode";
 
   @Override
   public List<Region> getRegions() {
@@ -133,13 +142,32 @@ public class ProximityDroidActivity
   }
 
   @Override
-  public Image getImage() {
-    return mImage;
-  }
-
-  @Override
-  public List<Integer> getIndices() {
-    return mPoints.get(mViewMode);
+  // TODO: return the proper indices
+  public float[] getIndices() {
+    
+    // get the indices we are currently interseted in
+    List<Integer> indices;
+    if (mViewMode == NEIGHBOURHOOD_KEY) {
+      indices = new ArrayList<Integer>();
+      for (Region r : mRegions) {
+        indices.addAll(mNeighbourhoods.get(r));
+      }
+    }
+    else if (mViewMode == INTERSECT_KEY && mIntersection != null) {
+      indices = mIntersection;
+    }
+    else {
+      return null;
+    }
+    
+    // convert indices to positions
+    float[] points = new float[indices.size() * 2];
+    for (int i = 0; i < indices.size(); i++) {
+      int index = indices.get(i);
+      points[i*2] = mImage.getX(index);
+      points[i*2+1] = mImage.getY(index);
+    }
+    return points;
   }
 
   @Override
@@ -226,12 +254,8 @@ public class ProximityDroidActivity
   protected void onStart() {
     super.onStart();    
     // add enabled probe funcs
-    SharedPreferences settings = null;
+    SharedPreferences settings = Util.getSupportDefaultSharedPrefences(this);
     for (String key : mProbeFuncs.keySet()) {
-      // get the settings object the first time through
-      if (settings == null) {
-        settings = mProbeFrag.findPreference(key).getSharedPreferences();
-      }
       // add enabled funcs
       if (settings.getBoolean(key, false)) {
         mImage.addProbeFunc(mProbeFuncs.get(key));
@@ -272,7 +296,7 @@ public class ProximityDroidActivity
    * @param data
    */
   private void setupImage() {    
-    mBitmap = Util.loadImage(mUri, mContentResolver, getWindowManager());
+    mBitmap = Util.loadImage(mUri, mContentResolver);
 
     // make sure the image was loaded properly
     if (mBitmap != null) {
@@ -321,12 +345,7 @@ public class ProximityDroidActivity
     }    
     
     // update loading spinner
-    Boolean loading = mLoading.get(mViewMode);
-    if (loading == null) {
-      mLoading.put(mViewMode, false);
-      loading = false;
-    }
-    setProgressBarIndeterminateVisibility(loading);
+    setProgressBarIndeterminateVisibility(isLoading());
   }
 
   @Override
@@ -431,7 +450,8 @@ public class ProximityDroidActivity
 
   public void onRegionSelected(Region region) { 
     mRegions.add(region);
-    runUpdate();
+    // run the update on the added region
+    updateRegion(region);
     onRegionCanceled();
   }
 
@@ -511,128 +531,164 @@ public class ProximityDroidActivity
       else {
         mImage.removeProbeFunc(func);
       }
-      runUpdate();
+      // recalculate all neighbourhoods and intersection
+      updateAll();
     }
     return true;
   }
   
-  protected void runUpdate() {
+  protected void updateRegion(Region region) {
+
+    // Calculate Neighbourhood
+
+    // clear old points
+    mNeighbourhoods.put(region, new ArrayList<Integer>());
+
+    // run the task
+    NeighbourhoodTask task = new NeighbourhoodTask();
+    mNeighbourhoodTasks.put(region, task);
+    task.execute(region);
+
+    // Calculate Intersection
     
+    //set loading
+    setProgressBarIndeterminateVisibility(isLoading());
+  }
+  
+  protected void updateAll() {
     for (Region r : mRegions) {
-      NeighbourhoodTask task = mNeighbourhoodTasks.get(r);
-      if (task == null) {
-        task = new NeighbourhoodTask();
-        mNeighbourhoodTasks.put(r, task);
-        task.execute(r);
+      updateRegion(r);
+    }
+  }
+  
+  protected boolean isLoading() {
+    boolean loading = false;
+    
+    if (mViewMode == NEIGHBOURHOOD_KEY) {
+      for (PointsTask t : mNeighbourhoodTasks.values()) {
+        if (t.isRunning()) {
+          loading = true;
+          break;
+        }
       }
     }
-
-    if (mIntersectTask != null && mIntersectTask.isRunning()) {
-      mIntersectTask.cancel(true);
+    else if (mViewMode == INTERSECT_KEY) {
+      loading = !mIntersectTasks.isEmpty();
     }
     
-    mIntersectTask = new IntersectTask();
-    mIntersectTask.execute();
+    return loading;
+  }
+  
+  private abstract class PointsTask extends AsyncTask<Region, Void, List<Integer>> {
     
-  }
-  
-  protected void setLoading(String key, boolean loading) {
-    mLoading.put(key, loading);
-    if (key == mViewMode) {
-      setProgressBarIndeterminateVisibility(loading);
+    protected final String KEY;
+    protected boolean mRunning = true;
+    
+    protected PointsTask(String key) {
+      super();
+      KEY = key;
     }
-  }
-  
-  private abstract class PointsTask<T> extends AsyncTask<T, Void, List<Integer>> {
     
     public boolean isRunning() {
-      return getStatus() == Status.RUNNING;
-    }
-    
-    protected abstract String key();
-
-    @Override
-    protected void onPreExecute() {
-      super.onPreExecute();
-      setLoading(key(), true);
+      return mRunning;
     }
 
     @Override
     protected void onPostExecute(List<Integer> result) {
-      setLoading(key(), false);
-      mPoints.put(key(), result);
-      if (mViewMode == key() && mShowFrag != null) {
+      mRunning = false;
+      // update loading and point
+      if (mViewMode == KEY && mShowFrag != null) {
         mShowFrag.setPoints(getIndices());
+        setProgressBarIndeterminateVisibility(isLoading());
       }
     }
 
   }
 
-  private class NeighbourhoodTask extends PointsTask<Region> {
+  private class NeighbourhoodTask extends PointsTask {
     
     protected Region mRegion;
-
-    @Override
-    protected String key() {
-      return NEIGHBOURHOOD_KEY;
+    
+    public NeighbourhoodTask() {
+      super(NEIGHBOURHOOD_KEY);
     }
 
     @Override
     protected List<Integer> doInBackground(Region... params) {
-      mRegion = params[0];
-      
+
       // check if we should stop because the task was cancelled
-      if (isCancelled()) {
-        return null;
-      }
+      if (isCancelled()) return null;
+
+      mRegion = params[0];
 
       int center = mRegion.getCenterIndex(mImage);
       int[] regionPixels = mRegion.getIndices(mImage);
-      
-      return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1);
+
+      // this is wrapped in a try catch so if we get an async runtime exception the task will stop
+      try {
+        return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1);
+      } 
+      catch(RuntimeException ex) {
+        return null;
+      }
     }
-    
+
     @Override
     protected void onPostExecute(List<Integer> result) {
-      setLoading(key(), false);
-      List<Integer> points = mPoints.get(key());
-      points.addAll(result);
-      if (mViewMode == key() && mShowFrag != null) {
-        mShowFrag.setPoints(getIndices());
+      // save the result
+      if (result != null) {
+      mNeighbourhoods.put(mRegion, result);
       }
+      else {
+        mNeighbourhoods.get(mRegion).clear();
+      }
+      super.onPostExecute(result);
     }
     
   }
   
-  private class IntersectTask extends PointsTask<Void> {
+  private class IntersectTask extends PointsTask {
 
-    @Override
-    protected String key() {
-      return INTERSECT_KEY;
+    public IntersectTask() {
+      super(INTERSECT_KEY);
     }
 
     @Override
-    protected List<Integer> doInBackground(Void... params) {
-      List<Integer> pixels = new ArrayList<Integer>();
+    protected List<Integer> doInBackground(Region... params) {      
+
+      // check if we should stop because the task was cancelled
+      if (isCancelled()) return null;
       
-      // only bother unless we have at least two regions to use
-      if (mRegions.size() >= 2) {
-        List<int[]> regionsIndices = new ArrayList<int[]>();
+      Region region = params[0];
+      List<Integer> indices = new ArrayList<Integer>();
 
-        for (Region r : mRegions) {
-          regionsIndices.add(r.getIndices(mImage));
+      // this is wrapped in a try catch so if we get an async runtime exception the task will stop
+      try {
+        // check if this is the only region
+        if (mIntersection == null) {
+          region.getIndices(mImage);
         }
-        
-        // check if we should stop because the task was cancelled
-        if (isCancelled()) return null;
-
-        //pixels.addAll(system.getHybridIntersectObjects(pixelSets, 0.1));
-        long startTime = System.currentTimeMillis();
-        pixels = (mImage.getDescriptionBasedIntersectIndices(regionsIndices.get(0), regionsIndices.get(1)));
-        Log.i("IntersectionFragment", "Intersection took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds");
+        // else take the intersection of the region and the current intersection
+        else {
+          indices = mImage.getDescriptionBasedIntersectIndices(mIntersection, region.getIndicesList(mImage));
+        }
+      } 
+      catch(RuntimeException ex) {
+        return null;
       }
 
-      return pixels;
+      return indices;
+      
+    }
+    
+    @Override
+    protected void onPostExecute(List<Integer> result) {
+      // store result as the new intersection
+      if (result != null) {
+        mIntersection = result;
+      }
+      // TODO: run the next intersection task
+      super.onPostExecute(result);
     }
     
   }
