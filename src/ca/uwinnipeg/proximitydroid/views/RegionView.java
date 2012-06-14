@@ -19,7 +19,6 @@ import ca.uwinnipeg.proximitydroid.Region;
  */
 // TODO: Add drawing center point
 // TODO: Look into making rotate not affect input
-// TODO: Look into old shape being drawn after changing shape
 // TODO: Split out more select only parts
 public class RegionView extends Region{
 

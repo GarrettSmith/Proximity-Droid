@@ -127,7 +127,6 @@ public class ProximityImageView extends ImageView {
     if (viewW == 0) {
       mOnLayoutRunnable = new Runnable() {
         public void run() {
-          // TODO: Smooth on resize
           updateBaseMatrix(); // run updateBaseMatrix() at a later time
         }
       };

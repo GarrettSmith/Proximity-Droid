@@ -43,7 +43,6 @@ public class Util {
     // Load the orientation
     int orientation = Util.readOrientation(path);
     
-    // TODO: figure out this size
     int width = 500;
     int height = 500;
 

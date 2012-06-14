@@ -12,8 +12,8 @@
         <item >Polygon</item>
     </string-array>
     <string-array name="operations_list">
-        <item >Regions</item><item >Pivot Neighbourhoods</item>
-        <item >Region Intersection</item>
+        <item >Regions</item><item >Neighbourhoods</item>
+        <item >Intersection</item>
         
     </string-array>
     
