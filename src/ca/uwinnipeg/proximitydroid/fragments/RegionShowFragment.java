@@ -37,7 +37,7 @@ public class RegionShowFragment extends SherlockFragment {
   public interface RegionProvider {
     public List<Region> getRegions();
     public RotatedBitmap getBitmap();
-    public float[] getIndices();
+    public int[] getHighlightIndices();
   }
   
   protected OnAddRegionSelecetedListener mListener;  
@@ -100,7 +100,7 @@ public class RegionShowFragment extends SherlockFragment {
         mShowView.add(rv);
       }
 
-      setPoints(mProvider.getIndices());
+      setHighlight(mProvider.getHighlightIndices());
     }    
 
   }
@@ -109,12 +109,12 @@ public class RegionShowFragment extends SherlockFragment {
     mShowView.setImageBitmap(bm);
   } 
 
-  public void setPoints(float[] indices) {
+  public void setHighlight(int[] indices) {
     if (indices == null) {
-      mShowView.clearPoints();
+      mShowView.clearHighlight();
     }
     else {
-      mShowView.setRelevantPoints(indices);
+      mShowView.setHighlight(indices);
     }
   }
   

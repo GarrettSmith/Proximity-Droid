@@ -33,9 +33,7 @@ public class RegionShowView extends ProximityImageView {
   // The regions of interest in this image
   protected List<RegionView> mRegions = new ArrayList<RegionView>();
   
-  // The list of relevant Points to draw
-  protected float[] mPoints;
-  
+  // The highlight to draw over the image, this shows the neighbourhoods and intersetion
   protected int[] mHighlight = new int[0];
 
   public RegionShowView(Context context) {
@@ -94,20 +92,18 @@ public class RegionShowView extends ProximityImageView {
     }
   }
   
-  public void clearPoints() {
-    mPoints = null;
+  public void clearHighlight() {
     // fill the highlight with transparent pixels
     Arrays.fill(mHighlight, 0x00000000);
     invalidate();
   }
 
-  public void setRelevantPoints(float[] points) {
-    clearPoints();
-    mPoints = points;
+  public void setHighlight(int[] points) {
+    clearHighlight();
     int width = mBitmap.getWidth();
     for (int i = 0; i < points.length; i += 2) {
-      int x = (int)points[i];
-      int y = (int)points[i+1];
+      int x = points[i];
+      int y = points[i+1];
       mHighlight[y * width + x] = mBitmap.getPixel(x, y);
     }
     invalidate();

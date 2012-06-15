@@ -113,8 +113,7 @@ public class ProximityDroidActivity
   protected Map<Region, NeighbourhoodTask> mNeighbourhoodTasks = 
       new HashMap<Region, NeighbourhoodTask>();
   
-  // The list of intersection operations that will bring us to our desired result  
-  // TODO: only keep a reference to the current task
+  // The list of intersection operations that will bring us to our desired result 
   protected IntersectTask mIntersectTask = null;
   
   // The list of regions to be used by intersect tasks
@@ -150,7 +149,7 @@ public class ProximityDroidActivity
   }
 
   @Override
-  public float[] getIndices() {
+  public int[] getHighlightIndices() {
     
     // get the indices we are currently interseted in
     List<Integer> indices;
@@ -168,7 +167,7 @@ public class ProximityDroidActivity
     }
     
     // convert indices to positions
-    float[] points = new float[indices.size() * 2];
+    int[] points = new int[indices.size() * 2];
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.get(i);
       points[i*2] = mImage.getX(index);
@@ -357,7 +356,7 @@ public class ProximityDroidActivity
     
     // update the points if the mode changed
     if (changed) {
-      mShowFrag.setPoints(getIndices());
+      mShowFrag.setHighlight(getHighlightIndices());
     }    
     
     // update loading spinner
@@ -471,7 +470,7 @@ public class ProximityDroidActivity
     addIntersectionTask(region);
     //clear view and set loading
     setProgressBarVisibility(isLoading());
-    mShowFrag.setPoints(getIndices());
+    mShowFrag.setHighlight(getHighlightIndices());
     onRegionCanceled();
   }
 
@@ -666,7 +665,7 @@ public class ProximityDroidActivity
       mRunning = false;
       // update loading and point
       if (mViewMode == KEY && mShowFrag != null) {
-        mShowFrag.setPoints(getIndices());
+        mShowFrag.setHighlight(getHighlightIndices());
         setProgressBarVisibility(isLoading());
       }
     }
