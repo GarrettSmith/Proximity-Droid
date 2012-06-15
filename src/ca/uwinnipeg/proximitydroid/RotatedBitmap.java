@@ -67,6 +67,27 @@ public class RotatedBitmap implements Parcelable {
     if (isOrientationChanged()) return mBitmap.getWidth();
     else return mBitmap.getHeight();
   }
+  
+  public int getPixel(int x, int y) {
+    int width = mBitmap.getWidth();
+    int height = mBitmap.getHeight();
+    
+    // the axis accordingly
+    switch (mOrientation) {
+      case CW:
+        x = width - x;
+        break;
+      case UPSIDEDOWN:
+        x = width -x;
+        y = height - y;
+        break;
+      case CCW:
+        y = height - y;
+        break;
+    }
+    
+    return mBitmap.getPixel(x, y);
+  }
 
   public Matrix getMatrix() {
     Matrix m = new Matrix(); // Identity

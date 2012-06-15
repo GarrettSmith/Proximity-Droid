@@ -54,6 +54,10 @@ import com.actionbarsherlock.view.Window;
  * @author Garrett Smith
  *
  */
+
+//TODO: find more efficient way to draw points
+//TODO: make progress output scale with multiple tasks
+//TODO: clear progress bar when switching views
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,
@@ -606,7 +610,7 @@ public class ProximityDroidActivity
   }
   
   protected void stopIntersectionTasks() {
-    mIntersectTask.cancel(true);
+    if (mIntersectTask != null) mIntersectTask.cancel(true);
     mIntersectRegions.clear();
   }
   
@@ -668,7 +672,7 @@ public class ProximityDroidActivity
     }
     
     protected float mLastProgress = 0;
-    protected final float PROGRESS_THERSHOLD = 0.01f;
+    protected final float PROGRESS_THERSHOLD = 0.001f;
     
     @Override
     public void updateProgress(float progress) {
