@@ -187,7 +187,7 @@ public class SelectRegionView extends RegionView {
     if      (Math.abs(x - left  + shift) <= padding) rtn = Edge.L;
     else if (Math.abs(x - right - shift) <= padding) rtn = Edge.R;
 
-    // TODO: UGLY UGLY UGLY
+    // TODO: Use a bit mask
     if (Math.abs(y - top + shift) <= padding) {
       rtn = (rtn == Edge.L) ? Edge.TL : (rtn == Edge.R ? Edge.TR : Edge.T); 
     }
