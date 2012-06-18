@@ -47,9 +47,11 @@ public class RegionView extends Region{
 
   // The image bounds in image space
   protected Rect mImageBounds;
-
-  public RegionView(ProximityImageView v){
-    mView = v;
+  
+  public RegionView(ProximityImageView view, Region source) {
+    super(source);
+    
+    mView = view;
 
     // Grab the matrix
     mScreenMatrix = mView.getFinalMatrix();
@@ -59,12 +61,16 @@ public class RegionView extends Region{
       SETUP = true;
 
       // Borrow the view's resources
-      Resources rs = v.getResources();
+      Resources rs = view.getResources();
 
       REGION_PAINT.setStyle(Paint.Style.STROKE);
       REGION_PAINT.setColor(rs.getColor(R.color.region_unfocused_color));
       REGION_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
     }
+  }
+
+  public RegionView(ProximityImageView view) {
+    this(view, null);
   }
 
   /**

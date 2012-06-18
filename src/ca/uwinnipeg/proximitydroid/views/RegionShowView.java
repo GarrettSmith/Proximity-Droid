@@ -3,9 +3,9 @@
  */
 package ca.uwinnipeg.proximitydroid.views;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -16,6 +16,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
 import ca.uwinnipeg.proximitydroid.R;
+import ca.uwinnipeg.proximitydroid.Region;
 
 /**
  * @author Garrett Smith
@@ -31,7 +32,7 @@ public class RegionShowView extends ProximityImageView {
   protected final static Paint POINT_PAINT = new Paint();
   
   // The regions of interest in this image
-  protected List<RegionView> mRegions = new ArrayList<RegionView>();
+  protected Map<Region, RegionView> mRegions = new HashMap<Region, RegionView>();
   
   // The highlight to draw over the image, this shows the neighbourhoods and intersetion
   protected int[] mHighlight = new int[0];
@@ -74,20 +75,25 @@ public class RegionShowView extends ProximityImageView {
     mHighlight = new int[bm.getWidth() * bm.getHeight()];
   }
   
-  public void add(RegionView reg) {
-    mRegions.add(reg);
-    invalidate(reg.getPaddedScreenSpaceBounds());
+  public void add(Region reg) {
+    mRegions.put(reg, new RegionView(this, reg));
+    invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
   }
   
-  public void remove(RegionView reg) {
+  public void remove(Region reg) {
     mRegions.remove(reg);
-    invalidate(reg.getPaddedScreenSpaceBounds());
+    invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
+  }
+  
+  public void clear() {
+    mRegions.clear();
+    invalidate();
   }
   
   @Override
   protected void updateFinalMatrix() {
     super.updateFinalMatrix();
-    for (RegionView reg : mRegions) {
+    for (RegionView reg : mRegions.values()) {
       reg.setScreenMatrix(getFinalMatrix());
     }
   }
@@ -114,7 +120,7 @@ public class RegionShowView extends ProximityImageView {
     super.draw(canvas);
     // dim the unselected area
     Path unselected = new Path();
-    for (RegionView reg : mRegions) {
+    for (RegionView reg : mRegions.values()) {
       unselected.addPath(reg.getShapePath());
     }
     canvas.save();
@@ -123,7 +129,7 @@ public class RegionShowView extends ProximityImageView {
     canvas.restore();
     
     // draw all the regions
-    for (RegionView reg : mRegions) {
+    for (RegionView reg : mRegions.values()) {
       reg.draw(canvas);
     }   
     

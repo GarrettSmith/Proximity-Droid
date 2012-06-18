@@ -30,6 +30,14 @@ public class Region implements Parcelable {
   protected Polygon mPoly = new Polygon();
   
   public Region() {}
+  
+  public Region(Region source) {
+    if (source != null) {
+      mShape = source.mShape;
+      mBounds = source.mBounds;
+      mPoly = source.mPoly;
+    }
+  }
 
   public Rect getBounds() {
     Rect bounds;

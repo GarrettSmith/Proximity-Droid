@@ -45,9 +45,12 @@ public class ProximityService
   // status changes
   public static final String ACTION_BITMAP_SET = "action.BITMAP_SET";
   public static final String ACTION_REGION_ADDED = "action.REGION_ADDED";
+  public static final String ACTION_REGIONS_CLEARED = "action.REGIONS_CLEARED";
+  
     
   // actions
   public static final String ACTION_ADD_REGION = "action.ADD_REGION";
+  public static final String ACTION_CLEAR_REGIONS = "action.CLEAR_REGIONS";
   
   // Parcel keys
   public static final String BITMAP = "Bitmap";
@@ -77,6 +80,7 @@ public class ProximityService
     
     // register to receive region update messages
     IntentFilter filter = new IntentFilter(ACTION_ADD_REGION);
+    filter.addAction(ACTION_CLEAR_REGIONS);
     mBroadcastManager.registerReceiver(mRegionUpdateReceiver, filter);
     
     // TODO: get image
@@ -341,6 +345,13 @@ public class ProximityService
     // TODO: update neighbourhood and intersect after removing region
   }
   
+  public void clearRegions() {
+    mRegions.clear();
+    // TODO: update neighbourhood and intersect after clearing region
+    Intent intent = new Intent(ACTION_REGIONS_CLEARED);
+    mBroadcastManager.sendBroadcast(intent);
+  }
+  
   public boolean hasBitmap() {
     return mHasBitmap;
   }
@@ -471,6 +482,9 @@ public class ProximityService
       if (action.equals(ACTION_ADD_REGION)) {
         Region r = intent.getParcelableExtra(REGION);
         addRegion(r);
+      }
+      else if (action.equals(ACTION_CLEAR_REGIONS)) {
+        clearRegions();
       }
     }
     
