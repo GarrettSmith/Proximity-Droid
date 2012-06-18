@@ -203,18 +203,21 @@ public class ProximityDroidActivity
     String modeName = savedInstanceState.getString(BUNDLE_KEY_MODE);
     setViewMode(ViewMode.valueOf(modeName));
   }
+  
+  // the previous position in the navigation list, used to restore view after adding a region
+  protected int mPreviousPosition = LIST_SHOW_INDEX;
 
   @Override
   public void setListNavigationCallbacks(
       SpinnerAdapter adapter,
       OnNavigationListener listener) {
     mActionBar.setListNavigationCallbacks(adapter, listener);
-    
   }
 
   @Override
   public void resetListNavigationCallbacks() {
     mActionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
+    mActionBar.setSelectedNavigationItem(mPreviousPosition);
   }
 
   @Override
@@ -335,7 +338,10 @@ public class ProximityDroidActivity
   public void onAddRegionSelected() {
 
     // we will need the options menu redrawn
-    invalidateOptionsMenu();
+    invalidateOptionsMenu();    
+
+    // to restore to the proper view later
+    mPreviousPosition = mActionBar.getSelectedNavigationIndex();
 
     // swap the select fragment in
     mFragmentManager.beginTransaction()
@@ -361,7 +367,5 @@ public class ProximityDroidActivity
     // store the preference screen so we can add to it when the service is bound
     mPreferenceScreen = root;
   }
-  
-  // Broadcasts
 
 }
