@@ -3,6 +3,7 @@
  */
 package ca.uwinnipeg.proximitydroid.fragments;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
@@ -17,9 +18,7 @@ import android.view.ViewGroup;
 import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
-import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionShowView;
-import ca.uwinnipeg.proximitydroid.views.RegionView;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -41,12 +40,12 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
     public void onAddRegionSelected();
   }
   
-  protected List<Region> mRegions;
+  protected List<Region> mRegions = new ArrayList<Region>();
   
-  public RegionShowFragment(List<Region> regions, RotatedBitmap bitmap) {
-    super(bitmap);
-    mRegions = regions;
-  }
+//  public RegionShowFragment(List<Region> regions, RotatedBitmap bitmap) {
+//    super(bitmap);
+//    mRegions = regions;
+//  }
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -98,7 +97,7 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
     super.setupView();
 
     mView.clear();
-    for (Region reg : mRegions) {
+    for (Region reg : getService().getRegions()) {
       mView.add(reg);
     }
 
@@ -126,8 +125,7 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
         mListener.onAddRegionSelected();
         return true;
       case R.id.menu_clear: 
-        Intent intent = new Intent(ProximityService.ACTION_CLEAR_REGIONS);
-        mBroadcastManager.sendBroadcast(intent);
+        getService().clearRegions();
         return true;
       default:
         return super.onOptionsItemSelected(item);
@@ -145,11 +143,9 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
       String action = intent.getAction();
       if (action.equals(ProximityService.ACTION_REGION_ADDED)) {
         Region r = intent.getParcelableExtra(ProximityService.REGION);
-        mRegions.add(r);
         mView.add(r);
       }
       else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
-        mRegions.clear();
         mView.clear();
       }
     }

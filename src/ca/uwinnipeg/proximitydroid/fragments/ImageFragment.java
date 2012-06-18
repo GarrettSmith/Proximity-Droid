@@ -28,11 +28,22 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   protected V mView;
 
   protected LocalBroadcastManager mBroadcastManager;
+  
   protected BitmapChangedReceiver mBitmapchangedReceiver = new BitmapChangedReceiver();
-
-  public ImageFragment(RotatedBitmap bitmap) {
-    mBitmap = bitmap; 
+  
+  protected ProximityServiceProvider mProvider;
+  
+  public interface ProximityServiceProvider {
+    public ProximityService getService();
   }
+  
+  public ProximityService getService() {
+    return mProvider.getService();
+  }
+
+//  public ImageFragment(RotatedBitmap bitmap) {
+//    mBitmap = bitmap; 
+//  }
 
   @Override
   public void onStart() {
@@ -59,6 +70,15 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);    
+    // setup access to the service
+    try {
+      mProvider = (ProximityServiceProvider) activity;
+    } catch (ClassCastException e) {
+      throw new ClassCastException(activity.toString() + 
+          " must implement ProximityServiceProvider");
+    }  
+    // first time bitmap setup
+    mBitmap = getService().getBitmap();
     // get the application's broadcast manager
     mBroadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
     // register to receive bitmap broadcasts

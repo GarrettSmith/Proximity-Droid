@@ -1,7 +1,6 @@
 package ca.uwinnipeg.proximitydroid.fragments;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,9 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
-import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
-import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 import ca.uwinnipeg.proximitydroid.views.RegionView;
 
@@ -63,10 +60,6 @@ public class RegionSelectFragment
         SpinnerAdapter adapter, 
         OnNavigationListener listener);
     public void resetListNavigationCallbacks();
-  }
-
-  public RegionSelectFragment(RotatedBitmap rbm) {
-    super(rbm);
   }
 
   @Override
@@ -145,10 +138,7 @@ public class RegionSelectFragment
         return true;
 
       case R.id.menu_accept:
-        // TODO: broadcast new region
-        Intent intent = new Intent(ProximityService.ACTION_ADD_REGION);
-        intent.putExtra(ProximityService.REGION, mRegionView);
-        mBroadcastManager.sendBroadcast(intent);
+        getService().addRegion(mRegionView);
 
       case R.id.menu_cancel:
         mListener.onClosed();

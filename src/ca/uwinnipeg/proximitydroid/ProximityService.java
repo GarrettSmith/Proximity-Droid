@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -48,19 +45,23 @@ public class ProximityService
   
   // status changes
   public static final String ACTION_BITMAP_SET = "action.BITMAP_SET";
+  
   public static final String ACTION_REGION_ADDED = "action.REGION_ADDED";
   public static final String ACTION_REGIONS_CLEARED = "action.REGIONS_CLEARED";
   
-    
-  // actions
-  public static final String ACTION_ADD_REGION = "action.ADD_REGION";
-  public static final String ACTION_CLEAR_REGIONS = "action.CLEAR_REGIONS";
+  public static final String ACTION_NEIGHBOURHOOD_PROGRESS = "action.NEIGHBOURHOOD_PROGRESS";
+  public static final String ACTION_INTERSECTION_PROGRESS = "action.INTERSECTION_PROGRESS";
+
+  public static final String ACTION_NEIGHBOURHOOD_SET = "action.NEIGHBOURHOOD_SET";
+  public static final String ACTION_INTERSECTION_SET = "action.INTERSECTION_SET";
   
   // Parcel keys
   public static final String BITMAP = "Bitmap";
   public static final String REGION = "Region";
+  public static final String PROGRESS = "Progress";
+  public static final String POINTS = "points";
   
-  // The broadcast manager used to send and recieve messages
+  // The broadcast manager used to send and receive messages
   protected LocalBroadcastManager mBroadcastManager;
   
   // Binding
@@ -81,11 +82,6 @@ public class ProximityService
     
     // Get the application broadcast manager
     mBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
-    
-    // register to receive region update messages
-    IntentFilter filter = new IntentFilter(ACTION_ADD_REGION);
-    filter.addAction(ACTION_CLEAR_REGIONS);
-    mBroadcastManager.registerReceiver(mRegionUpdateReceiver, filter);
     
     // Load probe funcs
     Map<String, List<ProbeFunc<Integer>>> features = loadProbeFuncs();
@@ -189,81 +185,79 @@ public class ProximityService
   private abstract class ProcessingTask 
       extends AsyncTask<Region, Integer, List<Integer>>
       implements PerceptualSystemSubscriber {
-      
-      protected Region mRegion;
-      protected boolean mRunning = true;
-      
-      public boolean isRunning() {
-        return mRunning;
-      }
-    
-      @Override
-      protected void onPostExecute(List<Integer> result) {
-        mRunning = false;
-        // update loading and point
-        // TODO: set task progress complete
-  //      if (mViewMode == KEY && mShowFrag != null) {
-  //        mShowFrag.setHighlight(getHighlightIndices());
-  //        setProgressBarVisibility(isLoading());
-  //      }
-      }
-      
-      protected float mLastProgress = 0;
-      protected final float PROGRESS_THERSHOLD = 0.001f;
-      
-      @Override
-      public void updateProgress(float progress) {
-        // TODO: record progress
-  //      if (mViewMode == KEY && (progress - mLastProgress > PROGRESS_THERSHOLD)) {
-  //        mLastProgress = progress;
-  //        publishProgress(Integer.valueOf((int) (progress * 10000)));
-  //      }
-      }
-      
-      @Override
-      protected void onProgressUpdate(Integer... values) {
-  //      setProgress(values[0].intValue());
-      }
-    
+
+    protected Region mRegion;
+    protected boolean mRunning = true;
+
+    public boolean isRunning() {
+      return mRunning;
     }
 
-  private class NeighbourhoodTask extends ProcessingTask {
-      
-      protected Region mRegion;
-    
-      @Override
-      protected List<Integer> doInBackground(Region... params) {
-        
-        mRegion = params[0];
-    
-        // check if we should stop because the task was cancelled
-        if (isCancelled()) return null;
-    
-        int center = mRegion.getCenterIndex(mImage);
-        int[] regionPixels = mRegion.getIndices(mImage);
-    
-        // this is wrapped in a try catch so if we get an async runtime exception the task will stop
-        try {
-          return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1, this);
-        } 
-        catch(RuntimeException ex) {
-          return null;
-        }
-      }
-    
-      @Override
-      protected void onPostExecute(List<Integer> result) {
-        // save the result
-  //      if (result != null) {
-  //      mNeighbourhoods.put(mRegion, result);
-  //      }
-  //      else {
-  //        mNeighbourhoods.get(mRegion).clear();
-  //      }
-        super.onPostExecute(result);
-      }
-      
+    @Override
+    protected void onPostExecute(List<Integer> result) {
+      mRunning = false;
+      publishProgress(10000);
     }
+    
+    public abstract String ProgressKey();
+
+    protected float mLastProgress = 0;
+    protected final float PROGRESS_THERSHOLD = 0.001f;
+
+    @Override
+    public void updateProgress(float progress) {
+      // TODO: record progress
+      if (progress - mLastProgress > PROGRESS_THERSHOLD) {
+        mLastProgress = progress;
+        publishProgress(Integer.valueOf((int) (progress * 10000)));
+      }
+    }
+
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+      int value = values[0].intValue();
+      Intent intent = new Intent(ProgressKey());
+      intent.putExtra(PROGRESS, value);
+      mBroadcastManager.sendBroadcast(intent);
+    }
+
+  }
+
+  private class NeighbourhoodTask extends ProcessingTask {
+
+    @Override
+    protected List<Integer> doInBackground(Region... params) {
+      mRegion = params[0];
+
+      // check if we should stop because the task was cancelled
+      if (isCancelled()) return null;
+
+      int center = mRegion.getCenterIndex(mImage);
+      int[] regionPixels = mRegion.getIndices(mImage);
+
+      // this is wrapped in a try catch so if we get an async runtime exception the task will stop
+      try {
+        // TODO: set epsilon
+        return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1, this);
+      } 
+      catch(RuntimeException ex) {
+        return null;
+      }
+    }
+
+    @Override
+    protected void onPostExecute(List<Integer> result) {      
+      super.onPostExecute(result);
+      // save the result
+      setNeighbourhood(mRegion, result);
+    }
+
+    @Override
+    public String ProgressKey() {
+      return ACTION_NEIGHBOURHOOD_PROGRESS;
+    }
+
+  }
 
   private class IntersectTask extends ProcessingTask {
     
@@ -309,6 +303,12 @@ public class ProximityService
   //      // run the next intersection task if there is one
   //      runNextIntersectionTask();
         super.onPostExecute(result);
+      }
+
+      @Override
+      public String ProgressKey() {
+        // TODO Auto-generated method stub
+        return null;
       }
       
     }
@@ -360,6 +360,45 @@ public class ProximityService
     // TODO: update neighbourhood and intersect after clearing region
     Intent intent = new Intent(ACTION_REGIONS_CLEARED);
     mBroadcastManager.sendBroadcast(intent);
+  }
+  
+  protected void setNeighbourhood(Region region, List<Integer> indices) {
+    // save the change
+    if (indices != null) {
+      mNeighbourhoods.put(region, indices);
+    }
+    else {
+      mNeighbourhoods.get(region).clear();
+    }
+    
+    // convert the indices to points
+    indices = mNeighbourhoods.get(region);
+    int[] points = indicesToPoints(indices);
+    
+    // broadcast the change
+    Intent intent = new Intent(ACTION_NEIGHBOURHOOD_SET);
+    intent.putExtra(REGION, region);
+    intent.putExtra(POINTS, points);
+    mBroadcastManager.sendBroadcast(intent);
+  }
+
+  public Map<Region, int[]> getNeighbourhoods() {
+    Map<Region, int[]> nhs = new HashMap<Region, int[]>();
+    for (Region reg : mNeighbourhoods.keySet()) {
+      List<Integer> indices = mNeighbourhoods.get(reg);
+      nhs.put(reg, indicesToPoints(indices));
+    }
+    return nhs;
+  }
+  
+  protected int[] indicesToPoints(List<Integer> indices) {
+    int[] points = new int[indices.size() * 2];
+    for (int i = 0; i < indices.size(); i++) {
+      int index = indices.get(i);
+      points[i*2] = mImage.getX(index);
+      points[i*2 + 1] = mImage.getY(index);
+    }
+    return points;
   }
   
   public boolean hasBitmap() {
@@ -415,8 +454,7 @@ public class ProximityService
     }.execute(mBitmap);
   }
   
-
-//  public int[] getHighlightIndices() {
+  //  public int[] getHighlightIndices() {
 //    
 //    // get the indices we are currently interseted in
 //    List<Integer> indices;
@@ -518,23 +556,4 @@ public class ProximityService
     return true;
   }
   
-  // Broadcasts
-  
-  protected RegionUpdateReceiver mRegionUpdateReceiver = new RegionUpdateReceiver();
-  
-  public class RegionUpdateReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      String action = intent.getAction();
-      if (action.equals(ACTION_ADD_REGION)) {
-        Region r = intent.getParcelableExtra(REGION);
-        addRegion(r);
-      }
-      else if (action.equals(ACTION_CLEAR_REGIONS)) {
-        clearRegions();
-      }
-    }
-    
-  }
 }

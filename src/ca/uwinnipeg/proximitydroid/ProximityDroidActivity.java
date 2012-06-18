@@ -18,6 +18,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
+import ca.uwinnipeg.proximitydroid.fragments.ImageFragment.ProximityServiceProvider;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
@@ -47,7 +48,8 @@ public class ProximityDroidActivity
              OnAddRegionSelectedListener, 
              OnNavigationListener,
              ListNavigationProvider,
-             OnClosedListener {
+             OnClosedListener,
+             ProximityServiceProvider {
 
   public static final String TAG = "ProximityDroidActivity";
   
@@ -86,6 +88,11 @@ public class ProximityDroidActivity
   // The service we are bound to
   private ProximityService mService;
   
+  @Override
+  public ProximityService getService() {
+    return mService;
+  }
+
   // Whether we are currently bound
   protected boolean mBound = false;
   
@@ -167,7 +174,6 @@ public class ProximityDroidActivity
 
     // bind to service
     Intent intent = new Intent(this, ProximityService.class);
-    // TODO: figure out proper flag to use
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
   }
   
@@ -184,7 +190,9 @@ public class ProximityDroidActivity
   @Override
   protected void onSaveInstanceState(Bundle state) {
     // save the current view mode
-    state.putString(BUNDLE_KEY_MODE, mMode.name());
+    if (mMode != null) {
+      state.putString(BUNDLE_KEY_MODE, mMode.name());
+    }
     super.onSaveInstanceState(state);
   }
   
@@ -235,14 +243,15 @@ public class ProximityDroidActivity
       
       FragmentTransaction trans = mFragmentManager.beginTransaction();
 
-      Fragment frag = new RegionShowFragment(mService.getRegions(), mService.getBitmap());
+      Fragment frag = new RegionShowFragment();
       switch(mMode) {
         case VIEW_REGIONS:
-          frag = new RegionShowFragment(mService.getRegions(), mService.getBitmap());
+          frag = new RegionShowFragment();
           break;
         case VIEW_INTERSECTION:
           break;
         case VIEW_NEIGHBOURHOODS:
+          frag = new NeighbourhoodFragment();
           break;
       }
 
@@ -321,7 +330,7 @@ public class ProximityDroidActivity
   }
 
   /**
-   * Creates a new region and adds it to the image
+   * Change to the select region fragment
    */
   public void onAddRegionSelected() {
 
@@ -330,7 +339,7 @@ public class ProximityDroidActivity
 
     // swap the select fragment in
     mFragmentManager.beginTransaction()
-    .replace(R.id.image_fragment_container, new RegionSelectFragment(mService.getBitmap()))
+    .replace(R.id.image_fragment_container, new RegionSelectFragment())
     .addToBackStack(null)
     .commit();
   }
@@ -352,5 +361,7 @@ public class ProximityDroidActivity
     // store the preference screen so we can add to it when the service is bound
     mPreferenceScreen = root;
   }
+  
+  // Broadcasts
 
 }

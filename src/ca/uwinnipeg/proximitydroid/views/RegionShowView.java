@@ -51,7 +51,7 @@ public class RegionShowView extends ProximityImageView {
     if (!SETUP) {
       SETUP = true;
       UNSELECTED_PAINT.setStyle(Paint.Style.FILL);
-      //UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
       UNSELECTED_PAINT.setColor(getResources().getColor(R.color.region_unselected_color));
       
       float invert[] =
@@ -106,6 +106,10 @@ public class RegionShowView extends ProximityImageView {
 
   public void setHighlight(int[] points) {
     clearHighlight();
+    addHighlight(points);
+  }
+  
+  public void addHighlight(int[] points) {
     int width = mBitmap.getWidth();
     for (int i = 0; i < points.length; i += 2) {
       int x = points[i];
