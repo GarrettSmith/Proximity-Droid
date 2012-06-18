@@ -7,19 +7,16 @@
 
     <FrameLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/fragment_container"
+        android:id="@+id/image_fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="0.7" />
+        android:layout_weight="0.7" /> 
 
     <fragment
-        android:id="@+id/probe_func_fragment"
-        android:name="ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment"
+        android:id="@+id/feature_fragment"
+        android:name="ca.uwinnipeg.proximitydroid.fragments.FeatureFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="0.3" >
-
-        <!-- Preview: layout=@layout/probe_func_select -->
-    </fragment>
+        android:layout_weight="0.3" />
 
 </LinearLayout>

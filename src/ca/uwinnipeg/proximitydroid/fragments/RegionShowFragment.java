@@ -16,7 +16,6 @@ import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionShowView;
 import ca.uwinnipeg.proximitydroid.views.RegionView;
 
-import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
@@ -27,22 +26,23 @@ import com.actionbarsherlock.view.MenuItem;
  */
 // TODO: Add selecting regions
 // TODO: Add pan and zooming
-public class RegionShowFragment extends SherlockFragment {
+public class RegionShowFragment extends ImageFragment<RegionShowView> {
 
   public static final String TAG = "RegionShowFragment";
   
   protected RegionShowView mShowView; 
   
-  protected RegionProvider mProvider;  
-  public interface RegionProvider {
-    public List<Region> getRegions();
-    public RotatedBitmap getBitmap();
-    public int[] getHighlightIndices();
+  protected OnAddRegionSelectedListener mListener;  
+  
+  public interface OnAddRegionSelectedListener {
+    public void onAddRegionSelected();
   }
   
-  protected OnAddRegionSelecetedListener mListener;  
-  public interface OnAddRegionSelecetedListener {
-    public void onAddRegionSelected();
+  protected List<Region> mRegions;
+  
+  public RegionShowFragment(List<Region> regions, RotatedBitmap bitmap) {
+    super(bitmap);
+    mRegions = regions;
   }
   
   @Override
@@ -58,56 +58,44 @@ public class RegionShowFragment extends SherlockFragment {
       ViewGroup container,
       Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-    mShowView =  (RegionShowView) inflater.inflate(R.layout.region_show, container, false);    
+    mShowView =  (RegionShowView) inflater.inflate(R.layout.region_show, container, false);
+    mView = mShowView;
     return mShowView;
   }
   
   @Override
   public void onStart() {
     super.onStart();
-    if (mProvider != null) setupView();
+    //if (mProvider != null) setupView();
+    
   }
   
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);    
     try {
-      mProvider = (RegionProvider) activity;
-    } catch (ClassCastException e) {
-      throw new ClassCastException(activity.toString() + 
-          " must implement RegionProvider");
-    }
-    super.onAttach(activity);    
-    try {
-      mListener = (OnAddRegionSelecetedListener) activity;
+      mListener = (OnAddRegionSelectedListener) activity;
     } catch (ClassCastException e) {
       throw new ClassCastException(activity.toString() + 
           " must implement OnAddRegionSelecetedListener");
     }  
   }
-  
+
+  @Override
   protected void setupView() {
-    RotatedBitmap bm = mProvider.getBitmap();
-    if (bm != null) {
-      setBitmap(bm);
+    super.setupView();
 
-      for (Region r : mProvider.getRegions()) {        
-        // add the region to be drawn
-        RegionView rv = new RegionView(mShowView);
-        rv.setBounds(r.getBounds());
-        rv.setPolygon(r.getPolygon());
-        rv.setShape(r.getShape());
-        mShowView.add(rv);
-      }
+    for (Region r : mRegions) {        
+      // add the region to be drawn
+      RegionView rv = new RegionView(mShowView);
+      rv.setBounds(r.getBounds());
+      rv.setPolygon(r.getPolygon());
+      rv.setShape(r.getShape());
+      mShowView.add(rv);
+    }
 
-      setHighlight(mProvider.getHighlightIndices());
-    }    
-
+    // TODO: setHighlight(mProvider.getHighlightIndices());
   }
-
-  public void setBitmap(RotatedBitmap bm) {
-    mShowView.setImageBitmap(bm);
-  } 
 
   public void setHighlight(int[] indices) {
     if (indices == null) {

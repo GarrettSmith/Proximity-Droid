@@ -3,27 +3,25 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
-import java.util.List;
-import java.util.Map;
-
-import android.content.ContentResolver;
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
-import android.preference.PreferenceCategory;
+import android.os.IBinder;
 import android.preference.PreferenceScreen;
-import android.preference.SwitchPreference;
+import android.provider.MediaStore.Images;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
-import ca.uwinnipeg.proximity.ProbeFunc;
-import ca.uwinnipeg.proximitydroid.fragments.FeatureSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
 import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment;
-import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.OnAddRegionSelecetedListener;
+import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.OnAddRegionSelectedListener;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
@@ -44,7 +42,7 @@ import com.actionbarsherlock.view.Window;
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,
-             OnAddRegionSelecetedListener, 
+             OnAddRegionSelectedListener, 
              OnNavigationListener,
              ListNavigationProvider {
 
@@ -53,25 +51,10 @@ public class ProximityDroidActivity
   // UI
   private FragmentManager mFragmentManager;
   protected ActionBar mActionBar;
-  protected SpinnerAdapter mSpinnerAdapter;
+  protected SpinnerAdapter mSpinnerAdapter;  
 
-  // Fragments
-  private FeatureSelectFragment mProbeFrag;  
-  
-  // The current view mode
-  protected String mViewMode;
-  
-  // System
-
-  // gets set to true if we are on a small screen device like a phone
-  protected boolean mSmallScreen;  
-  
-  // Constants
-  
-  // Used to read the positions of the view mode spinner
-  public static final int LIST_SHOW_INDEX = 0;
-  public static final int LIST_NEIGHBOURHOOD_INDEX = 1;
-  public static final int LIST_INTERSECT_INDEX = 2;
+  // true if we are on a small screen devices
+  protected boolean mSmallScreen;
   
   // All the view modes
   public enum ViewMode { 
@@ -81,15 +64,65 @@ public class ProximityDroidActivity
     SELECT_REGION, 
     EDIT_REGION };
     
-  public static final String SHOW_KEY = "Show";
-  public static final String SELECT_KEY = "Select";
-  public static final String NEIGHBOURHOOD_KEY = "Neighbourhood";
-  public static final String INTERSECT_KEY = "Intersection";  
-  public static final String FEATURE_KEY = "Features";
+  // The current mode
+  protected ViewMode mMode;
+  
+  // Constants
+  
+  // Used to read the positions of the view mode spinner
+  public static final int LIST_SHOW_INDEX = 0;
+  public static final int LIST_NEIGHBOURHOOD_INDEX = 1;
+  public static final int LIST_INTERSECTION_INDEX = 2;
 
   // bundle keys
-  protected static final String BUNDLE_KEY_PROBE_FRAG = "Probe Fragment";
   protected static final String BUNDLE_KEY_MODE = "Mode";
+  
+  // Service connection
+  
+  // The service we are bound to
+  private ProximityService mService;
+  
+  // Whether we are currently bound
+  protected boolean mBound = false;
+  
+  /**
+   * Callbacks for binding the service.
+   */
+  private ServiceConnection mConnection = new ServiceConnection() {
+    
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      LocalBinder<ProximityService> binder = (LocalBinder<ProximityService>) service;
+      mService = binder.getService();
+      mBound = true;
+      
+      Log.i(TAG, "Binding service");
+      
+      // check if we need to start an activity to load a bitmap
+      if (!mService.hasBitmap()) {
+        Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
+        startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
+      }
+    }
+    
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+      mBound = false;
+    }
+  };
+  
+  // Intents
+  private static final int REQUEST_CODE_SELECT_IMAGE = 0;
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    switch(requestCode) {
+      case REQUEST_CODE_SELECT_IMAGE:
+        if (resultCode == Activity.RESULT_OK) {
+          mService.setBitmap(data.getData());
+        }
+    }
+  }
 
   @Override
   protected void onCreate(Bundle state) {
@@ -109,55 +142,48 @@ public class ProximityDroidActivity
     mSpinnerAdapter = ArrayAdapter.createFromResource(
         this, 
         R.array.operations_list, 
-        android.R.layout.simple_spinner_dropdown_item);
+        R.layout.sherlock_spinner_dropdown_item);
 
     mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
     resetListNavigationCallbacks();
-
-    // restore previous state
-    if (state != null) {
-      // restore fragments
-      mProbeFrag = 
-          (FeatureSelectFragment) mFragmentManager.getFragment(state, BUNDLE_KEY_PROBE_FRAG);
-
-      // hide probe frag on small screens
-//      if (mSmallScreen) {
-//        mFragmentManager.beginTransaction()
-//        .add(R.id.fragment_container, mProbeFrag)
-//        .hide(mProbeFrag)
-//        .commit();
-//      }
-
-    }
-    // else we are starting for the first time
-    else {
-
-      // create the image fragment
-
-      // add the fragments to the view
+    
+    // hide features if we are on a small screen
+    if (mSmallScreen) {
+      Fragment frag = mFragmentManager.findFragmentById(R.id.feature_fragment);
       mFragmentManager.beginTransaction()
-      //.add(R.id.fragment_container, new RegionShowFragment())
-      //.hide(mProbeFrag)
+      .hide(frag)
       .commit();
-      
-      // create for find the feature fragment based on screen size
-      if (mSmallScreen) {
-        mProbeFrag = new FeatureSelectFragment();
-      }
-      // Get fragments by their id
-      else {
-        mProbeFrag = 
-            (FeatureSelectFragment) mFragmentManager.findFragmentById(R.id.probe_func_fragment);
-      }    
+    }    
+
+    // bind to service
+    Intent intent = new Intent(this, ProximityService.class);
+    // TODO: figure out proper flag to use
+    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+  }
+  
+  @Override
+  protected void onDestroy() {
+    // release the service
+    if (mBound) {
+      unbindService(mConnection);
+      mBound = false;
     }
+    super.onDestroy();
   }
   
   @Override
   protected void onSaveInstanceState(Bundle state) {
-    // save the fragments  
-    if (mProbeFrag.isAdded()) mFragmentManager.putFragment(state, BUNDLE_KEY_PROBE_FRAG, mProbeFrag);
-    state.putString(BUNDLE_KEY_MODE, mViewMode);
+    // save the current view mode
+    state.putString(BUNDLE_KEY_MODE, mMode.name());
     super.onSaveInstanceState(state);
+  }
+  
+  @Override
+  protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    super.onRestoreInstanceState(savedInstanceState);
+    //restore the view mode
+    String modeName = savedInstanceState.getString(BUNDLE_KEY_MODE);
+    setViewMode(ViewMode.valueOf(modeName));
   }
 
   @Override
@@ -177,23 +203,42 @@ public class ProximityDroidActivity
   public boolean onNavigationItemSelected(int itemPosition, long itemId) {
     switch(itemPosition) {
       case LIST_SHOW_INDEX:
-        setViewMode(SHOW_KEY);
+        setViewMode(ViewMode.VIEW_REGIONS);
         break;
         
       case LIST_NEIGHBOURHOOD_INDEX:
-        setViewMode(NEIGHBOURHOOD_KEY);
+        setViewMode(ViewMode.VIEW_NEIGHBOURHOODS);
         break;
 
-      case LIST_INTERSECT_INDEX:
-        setViewMode(INTERSECT_KEY);
+      case LIST_INTERSECTION_INDEX:
+        setViewMode(ViewMode.VIEW_INTERSECTION);
         break;
     }
     return true;
   }
   
-  protected void setViewMode(String newMode) {
-    boolean changed = mViewMode != newMode;
-    mViewMode = newMode;
+  protected void setViewMode(ViewMode newMode) {
+    boolean changed = mMode != newMode;
+    mMode = newMode;
+    
+    if (changed) {
+      
+      FragmentTransaction trans = mFragmentManager.beginTransaction();
+
+      Fragment frag = new RegionShowFragment(mService.getRegions(), mService.getBitmap());
+      switch(mMode) {
+        case VIEW_REGIONS:
+          frag = new RegionShowFragment(mService.getRegions(), mService.getBitmap());
+          break;
+        case VIEW_INTERSECTION:
+          break;
+        case VIEW_NEIGHBOURHOODS:
+          break;
+      }
+
+      trans.replace(R.id.image_fragment_container, frag);
+      trans.commit();
+    }
     
     // TODO: update loading spinner
     //setProgressBarVisibility(isLoading());
@@ -215,14 +260,21 @@ public class ProximityDroidActivity
         showAbout();
         return true;
       case R.id.menu_features:
-        toggleFeatures(item, (mProbeFrag.isHidden() || !mProbeFrag.isAdded()));
+        toggleFeatures(item);
         return true;
       default:
         return super.onOptionsItemSelected(item);
     }
   }
   
-  public void toggleFeatures(MenuItem item, boolean show) {
+  private void toggleFeatures(MenuItem item) {
+    
+    // TODO: disable buttons on small screen
+    
+    Fragment fragment = mFragmentManager.findFragmentById(R.id.feature_fragment);
+    
+    boolean show = fragment.isHidden();
+    
     FragmentTransaction transaction = mFragmentManager.beginTransaction();
     transaction.setCustomAnimations(
         R.anim.slide_in, 
@@ -231,21 +283,15 @@ public class ProximityDroidActivity
         R.anim.slide_out);
     // toggle hiding probe frag
     if (show) {
-
       if (mSmallScreen) {
-        transaction.add(R.id.fragment_container, mProbeFrag);
         transaction.addToBackStack(null);
       }
-      transaction.show(mProbeFrag);
-
+      transaction.show(fragment);
     }
-    else {
-      
+    else {      
       if (mSmallScreen) {
-        transaction.remove(mProbeFrag);
-      }
-      transaction.hide(mProbeFrag);
-      
+      }      
+      transaction.hide(fragment);      
     }
     transaction.commit();
     updateToggleText(item, show);
@@ -269,31 +315,11 @@ public class ProximityDroidActivity
    */
   public void onAddRegionSelected() {
 
+    // we will need the options menu redrawn
     invalidateOptionsMenu();
 
     // swap the select fragment in
-    FragmentTransaction transaction = mFragmentManager.beginTransaction();
-
-    // slide if we are showing the features list with a small screen
-    if (mSmallScreen) {
-      transaction.remove(mProbeFrag);
-      if (mProbeFrag.isVisible()) {
-        transaction.setCustomAnimations(
-            0, 
-            R.anim.slide_out, 
-            R.anim.slide_in, 
-            android.R.anim.fade_out);
-      }
-      else {
-        transaction.setCustomAnimations(
-            android.R.anim.fade_in, 
-            android.R.anim.fade_out, 
-            android.R.anim.fade_in, 
-            android.R.anim.fade_out);
-      }
-    }
-
-    transaction
+    mFragmentManager.beginTransaction()
     // TODO: .replace(R.id.fragment_container, new RegionSelectFragment(), SELECT_KEY)
     .addToBackStack(null)
     .commit();
@@ -311,12 +337,12 @@ public class ProximityDroidActivity
   @Override
   public void onPreferenceAttached(PreferenceScreen root, int xmlId) {
     if(root == null) return; //for whatever reason in very rare cases this is null   
-
-    // Load features
-    Map<String, List<ProbeFunc<Integer>>> features;//TODO: = loadProbeFuncs();
-
-    // Generate preference items from features    
-    // generate a category for each given category    
+//
+//    // Load features
+//    Map<String, List<ProbeFunc<Integer>>> features = mService.getFeatures();//TODO: = loadProbeFuncs();
+//
+//    // Generate preference items from features    
+//    // generate a category for each given category    
 //    for (String catStr : features.keySet()) {
 //      List<ProbeFunc<Integer>> funcs = features.get(catStr);
 //
@@ -344,9 +370,10 @@ public class ProximityDroidActivity
 //          String key = catStr + "_" + func.toString();
 //          pref.setTitle(func.toString());
 //          pref.setKey(key);
-//
-//          // TODO: pref.setOnPreferenceChangeListener(this);
 //          category.addPreference(pref);
+//          
+//          // register the service as a preference listener
+//          pref.setOnPreferenceChangeListener(mService);
 //          
 //          // add the ProbeFunc to our map to use later
 //          // TODO: mProbeFuncs.put(key, func);

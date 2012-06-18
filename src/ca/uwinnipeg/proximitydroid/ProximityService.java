@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,14 +15,9 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
-import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager.OnActivityResultListener;
-import android.preference.PreferenceScreen;
-import android.preference.SwitchPreference;
-import android.provider.MediaStore.Images;
+import android.support.v4.content.LocalBroadcastManager;
 import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximity.image.AlphaFunc;
@@ -31,7 +25,6 @@ import ca.uwinnipeg.proximity.image.BlueFunc;
 import ca.uwinnipeg.proximity.image.GreenFunc;
 import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximity.image.RedFunc;
-import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 
 /**
  * This service does the heavy lifting of generating neighbourhoods, intersections, maintaining the
@@ -41,31 +34,23 @@ import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreference
  */
 public class ProximityService 
   extends Service
-  implements 
-             OnPreferenceChangeListener,
-             OnActivityResultListener {
+  implements OnPreferenceChangeListener {
   
-  public static final String TAG = "ProximityService";
+  public static final String TAG = "ProximityService"; 
+  
+  // intent actions
+  public static final String ACTION_SET_BITMAP = "action.SET_BITMAP";
+  
+  // Parcel keys
+  public static final String BITMAP = "Bitmap";
+  
+  // The broadcast manager used to send and recieve messages
+  protected LocalBroadcastManager mBroadcastManager;
   
   // Binding
   
   // Binder given to the client 
-  private final IBinder mBinder = new ProximityBinder();
-  
-  /**
-   * Class used to give clients access to the bound service. 
-   * This will only work for clients in the same process.
-   */
-  public class ProximityBinder extends Binder {
-    /**
-     * Returns the instance of the {@link ProximityService} so the client can call its public 
-     * methods.
-     * @return the bound service.
-     */
-    ProximityService getService() {
-      return ProximityService.this;
-    }
-  }
+  private final IBinder mBinder = new LocalBinder<ProximityService>(this);
 
   @Override
   public IBinder onBind(Intent intent) {
@@ -77,9 +62,11 @@ public class ProximityService
   @Override
   public void onCreate() {
     super.onCreate();
+    
+    // Get the application broadcast manager
+    mBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
+    
     // TODO: get image
-//    Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
-//    startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
     
 
     // add enabled probe funcs
@@ -313,6 +300,9 @@ public class ProximityService
   // The bitmap we are working on
   protected RotatedBitmap mBitmap;  
   
+  // whether a bitmap has been set yet
+  protected boolean mHasBitmap = false;
+  
   // the uri of the image
   protected Uri mUri;
 
@@ -320,7 +310,7 @@ public class ProximityService
     return new ArrayList<Region>(mRegions);
   }
 
-  public void onRegionSelected(Region region) { 
+  public void addRegion(Region region) { 
     mRegions.add(region);
     // run the update on the added region
     updateNeighbourhood(region);
@@ -328,31 +318,26 @@ public class ProximityService
     // TODO: update after adding region
   }
   
+  public void removeRegion(Region region) {
+    mRegions.remove(region);
+    // TODO: update neighbourhood and intersect after removing region
+  }
+  
+  public boolean hasBitmap() {
+    return mHasBitmap;
+  }
+  
   public RotatedBitmap getBitmap() {
     return mBitmap;
   }   
   
-  // Intents
-  private static final int REQUEST_CODE_SELECT_IMAGE = 0;
-
-  @Override
-  public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-    switch(requestCode) {
-      case REQUEST_CODE_SELECT_IMAGE:
-        if (resultCode == Activity.RESULT_OK) {
-          mUri = data.getData();
-          setupImage();
-          return true;
-        }
-    }
-    return false;
-  }
-
-  /**
-   * Sets the image to be the selected image
-   * @param data
-   */
-  private void setupImage() {    
+  public void setBitmap(Uri data) {
+    // record that we now have a bitmap
+    mHasBitmap = true;
+    
+    // Load the bitmap and update the perceptual system
+    mUri = data;
+    
     // a task that loads the bitmap from disk
     new AsyncTask<Uri, Void, RotatedBitmap>() {
 
@@ -362,25 +347,33 @@ public class ProximityService
       }
       
       protected void onPostExecute(RotatedBitmap result) {
-        mBitmap = result;
-        // TODO: broadcast bitmap
-        
-        // a task that loads the pixels into the perceptual system
-        new AsyncTask<RotatedBitmap, Void, Void>() {
-
-          @Override
-          protected Void doInBackground(RotatedBitmap... params) {
-            RotatedBitmap rbm = params[0];
-            if (rbm != null) {
-              Util.setImage(mImage, rbm.getBitmap());
-            }
-            return null;
-          }
-          
-        }.execute(result);
+        setBitmap(result);        
       }
       
     }.execute(mUri);
+  }
+  
+  public void setBitmap(RotatedBitmap bitmap) {
+    mBitmap = bitmap;
+    
+    // Broadcast the change
+    Intent intent = new Intent(ACTION_SET_BITMAP);
+    intent.putExtra(BITMAP, mBitmap);
+    mBroadcastManager.sendBroadcast(intent);
+    
+    // a task that loads the pixels into the perceptual system
+    new AsyncTask<RotatedBitmap, Void, Void>() {
+
+      @Override
+      protected Void doInBackground(RotatedBitmap... params) {
+        RotatedBitmap rbm = params[0];
+        if (rbm != null) {
+          Util.setImage(mImage, rbm.getBitmap());
+        }
+        return null;
+      }
+      
+    }.execute(mBitmap);
   }
   
 
@@ -412,6 +405,10 @@ public class ProximityService
 //  }  
 
   // Feature Preferences
+
+  public Map<String, List<ProbeFunc<Integer>>> getFeatures() {
+    return loadProbeFuncs();
+  }
 
   private Map<String, List<ProbeFunc<Integer>>> loadProbeFuncs() {
     Map<String, List<ProbeFunc<Integer>>> features = new HashMap<String, List<ProbeFunc<Integer>>>();
