@@ -19,7 +19,9 @@ import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
+import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
+import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnClosedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.OnAddRegionSelectedListener;
 
@@ -44,7 +46,8 @@ public class ProximityDroidActivity
   implements OnPreferenceAttachedListener,
              OnAddRegionSelectedListener, 
              OnNavigationListener,
-             ListNavigationProvider {
+             ListNavigationProvider,
+             OnClosedListener {
 
   public static final String TAG = "ProximityDroidActivity";
   
@@ -92,6 +95,7 @@ public class ProximityDroidActivity
     
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
+      @SuppressWarnings("unchecked")
       LocalBinder<ProximityService> binder = (LocalBinder<ProximityService>) service;
       mService = binder.getService();
       mBound = true;
@@ -320,12 +324,13 @@ public class ProximityDroidActivity
 
     // swap the select fragment in
     mFragmentManager.beginTransaction()
-    // TODO: .replace(R.id.fragment_container, new RegionSelectFragment(), SELECT_KEY)
+    .replace(R.id.image_fragment_container, new RegionSelectFragment(mService.getBitmap()))
     .addToBackStack(null)
     .commit();
   }
 
-  public void onRegionCanceled() {
+  @Override
+  public void onClosed() {
     mFragmentManager.popBackStack();
   }
   

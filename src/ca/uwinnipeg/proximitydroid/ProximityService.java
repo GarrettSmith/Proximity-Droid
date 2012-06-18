@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Binder;
 import android.os.IBinder;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
@@ -38,11 +40,18 @@ public class ProximityService
   
   public static final String TAG = "ProximityService"; 
   
-  // intent actions
-  public static final String ACTION_SET_BITMAP = "action.SET_BITMAP";
+  // broadcast actions
+  
+  // status changes
+  public static final String ACTION_BITMAP_SET = "action.BITMAP_SET";
+  public static final String ACTION_REGION_ADDED = "action.REGION_ADDED";
+    
+  // actions
+  public static final String ACTION_ADD_REGION = "action.ADD_REGION";
   
   // Parcel keys
   public static final String BITMAP = "Bitmap";
+  public static final String REGION = "Region";
   
   // The broadcast manager used to send and recieve messages
   protected LocalBroadcastManager mBroadcastManager;
@@ -65,6 +74,10 @@ public class ProximityService
     
     // Get the application broadcast manager
     mBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
+    
+    // register to receive region update messages
+    IntentFilter filter = new IntentFilter(ACTION_ADD_REGION);
+    mBroadcastManager.registerReceiver(mRegionUpdateReceiver, filter);
     
     // TODO: get image
     
@@ -316,6 +329,11 @@ public class ProximityService
     updateNeighbourhood(region);
     addIntersectionTask(region);
     // TODO: update after adding region
+    
+    // broadcast that a region has been added
+    Intent intent = new Intent(ACTION_REGION_ADDED);
+    intent.putExtra(REGION, region);
+    mBroadcastManager.sendBroadcast(intent);
   }
   
   public void removeRegion(Region region) {
@@ -357,7 +375,7 @@ public class ProximityService
     mBitmap = bitmap;
     
     // Broadcast the change
-    Intent intent = new Intent(ACTION_SET_BITMAP);
+    Intent intent = new Intent(ACTION_BITMAP_SET);
     intent.putExtra(BITMAP, mBitmap);
     mBroadcastManager.sendBroadcast(intent);
     
@@ -439,5 +457,22 @@ public class ProximityService
       updateAll();
     }
     return true;
+  }
+  
+  // Broadcasts
+  
+  protected RegionUpdateReceiver mRegionUpdateReceiver = new RegionUpdateReceiver();
+  
+  public class RegionUpdateReceiver extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      String action = intent.getAction();
+      if (action.equals(ACTION_ADD_REGION)) {
+        Region r = intent.getParcelableExtra(REGION);
+        addRegion(r);
+      }
+    }
+    
   }
 }

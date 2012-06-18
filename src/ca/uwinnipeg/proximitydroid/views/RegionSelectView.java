@@ -36,7 +36,7 @@ public class RegionSelectView extends ProximityImageView {
     mRegion.setFocused(true);
   }
 
-  public RegionView getNeighbourhood() {
+  public RegionView getRegion() {
     return mRegion;
   }
   

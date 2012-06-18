@@ -1,6 +1,7 @@
 package ca.uwinnipeg.proximitydroid.fragments;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,28 +9,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
+import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
-import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 import ca.uwinnipeg.proximitydroid.views.RegionView;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
-import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
-// TODO: Fix spinner on 2.1
 /**
  * The activity can select neighbourhoods from an image. 
  * @author Garrett Smith
  *
  */
+// TODO: cleanup select fragment
 public class RegionSelectFragment 
-extends SherlockFragment 
-implements ActionBar.OnNavigationListener {
+  extends ImageFragment<RegionSelectView>
+  implements ActionBar.OnNavigationListener {
 
   public static final String TAG = "RegionSelectFragment";
 
@@ -39,11 +39,8 @@ implements ActionBar.OnNavigationListener {
   // Used by onNavigationItemSelected.
   public static final int BUTTON_RECTANGLE_INDEX = 0;
   public static final int BUTTON_OVAL_INDEX = 1;
-  public static final int BUTTON_POLYGON_INDEX   = 2;
+  public static final int BUTTON_POLYGON_INDEX = 2;
 
-  private RotatedBitmap mBitmap;
-
-  private RegionSelectView mSelectView;
   private RegionView mRegionView;
 
   // UI
@@ -55,10 +52,9 @@ implements ActionBar.OnNavigationListener {
   public static final String RESULT_KEY_POLY = "Poly";
 
   // Containers must implement this interface so we can add regions to them
-  OnRegionSelectedListener mListener;
-  public interface OnRegionSelectedListener {
-    public void onRegionSelected(Region region);
-    public void onRegionCanceled();
+  OnClosedListener mListener;
+  public interface OnClosedListener {
+    public void onClosed();
   }
   
   ListNavigationProvider mProvider;
@@ -70,7 +66,7 @@ implements ActionBar.OnNavigationListener {
   }
 
   public RegionSelectFragment(RotatedBitmap rbm) {
-    mBitmap = rbm;
+    super(rbm);
   }
 
   @Override
@@ -88,10 +84,14 @@ implements ActionBar.OnNavigationListener {
       ViewGroup container,
       Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-    mSelectView =  (RegionSelectView) inflater.inflate(R.layout.region_select, container, false);    
-    mRegionView = mSelectView.getNeighbourhood();
-    // set bitmap
-    mSelectView.setImageBitmap(mBitmap);
+    mView =  (RegionSelectView) inflater.inflate(R.layout.region_select, container, false);    
+    mRegionView = mView.getRegion();
+    return mView;
+  }
+  
+  @Override
+  protected void setupView() {
+    super.setupView();
 
     int width = mBitmap.getWidth();
     int height = mBitmap.getHeight();
@@ -100,17 +100,16 @@ implements ActionBar.OnNavigationListener {
     mRegionView.setImageRect(imageRect);
 
     mRegionView.resetBounds();
-    return mSelectView;
   }
 
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     try {
-      mListener = (OnRegionSelectedListener) activity;
+      mListener = (OnClosedListener) activity;
     } catch (ClassCastException e) {
       throw new ClassCastException(activity.toString() + 
-          " must implement OnRegionSelectedListener");
+          " must implement OnClosedListener");
     }
     try {
       mProvider = (ListNavigationProvider) activity;
@@ -146,11 +145,13 @@ implements ActionBar.OnNavigationListener {
         return true;
 
       case R.id.menu_accept:
-        mListener.onRegionSelected(mRegionView);
-        return true;
+        // TODO: broadcast new region
+        Intent intent = new Intent(ProximityService.ACTION_ADD_REGION);
+        intent.putExtra(ProximityService.REGION, mRegionView);
+        mBroadcastManager.sendBroadcast(intent);
 
       case R.id.menu_cancel:
-        mListener.onRegionCanceled();
+        mListener.onClosed();
         return true;
 
       default:

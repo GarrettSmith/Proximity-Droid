@@ -37,7 +37,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   @Override
   public void onStart() {
     super.onStart();
-    if (mBitmap != null) setupView();
+    invalidate();
   }
   
   protected void setupView() {
@@ -46,8 +46,12 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
 
   public void setBitmap(RotatedBitmap bm) {
     mBitmap = bm;
-    if (mBitmap != null) setupView();
+    invalidate();
   } 
+  
+  public void invalidate() {
+    if (mBitmap != null) setupView();
+  }
   
   /**
    * Register to broadcasts.
@@ -58,7 +62,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     // get the application's broadcast manager
     mBroadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
     // register to receive bitmap broadcasts
-    IntentFilter filter = new IntentFilter(ProximityService.ACTION_SET_BITMAP);
+    IntentFilter filter = new IntentFilter(ProximityService.ACTION_BITMAP_SET);
     mBroadcastManager.registerReceiver(mBitmapchangedReceiver, filter);
   }
   
@@ -80,7 +84,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     @Override
     public void onReceive(Context context, Intent intent) {
       String action = intent.getAction();
-      if (action.equals(ProximityService.ACTION_SET_BITMAP)) {
+      if (action.equals(ProximityService.ACTION_BITMAP_SET)) {
         RotatedBitmap bm = intent.getParcelableExtra(ProximityService.BITMAP);
         if (bm != null) {
           setBitmap(bm);

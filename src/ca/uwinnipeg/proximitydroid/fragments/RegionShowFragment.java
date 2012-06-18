@@ -6,10 +6,15 @@ package ca.uwinnipeg.proximitydroid.fragments;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
@@ -29,9 +34,7 @@ import com.actionbarsherlock.view.MenuItem;
 public class RegionShowFragment extends ImageFragment<RegionShowView> {
 
   public static final String TAG = "RegionShowFragment";
-  
-  protected RegionShowView mShowView; 
-  
+    
   protected OnAddRegionSelectedListener mListener;  
   
   public interface OnAddRegionSelectedListener {
@@ -58,9 +61,8 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
       ViewGroup container,
       Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-    mShowView =  (RegionShowView) inflater.inflate(R.layout.region_show, container, false);
-    mView = mShowView;
-    return mShowView;
+    mView = (RegionShowView) inflater.inflate(R.layout.region_show, container, false);
+    return mView;
   }
   
   @Override
@@ -79,6 +81,15 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
       throw new ClassCastException(activity.toString() + 
           " must implement OnAddRegionSelecetedListener");
     }  
+    // register reciever
+    IntentFilter filter = new IntentFilter(ProximityService.ACTION_REGION_ADDED);
+    mBroadcastManager.registerReceiver(mRegionsChangedReceiver, filter);
+  }
+  
+  @Override
+  public void onDestroy() {
+    mBroadcastManager.unregisterReceiver(mRegionsChangedReceiver);
+    super.onDestroy();
   }
 
   @Override
@@ -87,11 +98,11 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
 
     for (Region r : mRegions) {        
       // add the region to be drawn
-      RegionView rv = new RegionView(mShowView);
+      RegionView rv = new RegionView(mView);
       rv.setBounds(r.getBounds());
       rv.setPolygon(r.getPolygon());
       rv.setShape(r.getShape());
-      mShowView.add(rv);
+      mView.add(rv);
     }
 
     // TODO: setHighlight(mProvider.getHighlightIndices());
@@ -99,10 +110,10 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
 
   public void setHighlight(int[] indices) {
     if (indices == null) {
-      mShowView.clearHighlight();
+      mView.clearHighlight();
     }
     else {
-      mShowView.setHighlight(indices);
+      mView.setHighlight(indices);
     }
   }
   
@@ -120,5 +131,23 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
       default:
         return super.onOptionsItemSelected(item);
     }
+  }
+  
+  // broadcasts
+  
+  protected RegionsChangedReciever mRegionsChangedReceiver = new RegionsChangedReciever();
+  
+  public class RegionsChangedReciever extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      String action = intent.getAction();
+      if (action.equals(ProximityService.ACTION_REGION_ADDED)) {
+        Region r = intent.getParcelableExtra(ProximityService.REGION);
+        mRegions.add(r);
+        invalidate();
+      }
+    }
+    
   }
 }
