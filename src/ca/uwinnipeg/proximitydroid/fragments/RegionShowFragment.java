@@ -126,7 +126,6 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
         mListener.onAddRegionSelected();
         return true;
       case R.id.menu_clear: 
-        // TODO: broadcast regions cleared
         Intent intent = new Intent(ProximityService.ACTION_CLEAR_REGIONS);
         mBroadcastManager.sendBroadcast(intent);
         return true;

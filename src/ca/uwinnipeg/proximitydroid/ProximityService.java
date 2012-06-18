@@ -17,8 +17,12 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.PreferenceCategory;
+import android.preference.PreferenceScreen;
+import android.preference.SwitchPreference;
 import android.support.v4.content.LocalBroadcastManager;
 import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximity.ProbeFunc;
@@ -83,8 +87,14 @@ public class ProximityService
     filter.addAction(ACTION_CLEAR_REGIONS);
     mBroadcastManager.registerReceiver(mRegionUpdateReceiver, filter);
     
-    // TODO: get image
-    
+    // Load probe funcs
+    Map<String, List<ProbeFunc<Integer>>> features = loadProbeFuncs();
+    for (String catStr : features.keySet()) {
+      for (ProbeFunc<Integer> func : features.get(catStr)) {
+        String key = catStr + "_" + func.toString();
+        mProbeFuncs.put(key, func);
+      }
+    }
 
     // add enabled probe funcs
     SharedPreferences settings = Util.getSupportDefaultSharedPrefences(this);
@@ -435,8 +445,46 @@ public class ProximityService
 
   // Feature Preferences
 
-  public Map<String, List<ProbeFunc<Integer>>> getFeatures() {
-    return loadProbeFuncs();
+  public void populatePreferences(PreferenceScreen root) {
+    // Load features
+    Map<String, List<ProbeFunc<Integer>>> features = loadProbeFuncs();
+
+    // Generate preference items from features    
+    // generate a category for each given category    
+    for (String catStr : features.keySet()) {
+      List<ProbeFunc<Integer>> funcs = features.get(catStr);
+
+      // only add the category if it is non empty
+      if (funcs != null && !funcs.isEmpty()) {
+        PreferenceCategory category = new PreferenceCategory(this);
+        category.setTitle(catStr);
+        category.setKey(catStr);
+        root.addPreference(category);
+
+        // generate a preference for each probe func
+        for (ProbeFunc<Integer> func : funcs) {
+          
+          Preference pref;
+          
+          // Use switches when supported
+          if (android.os.Build.VERSION.SDK_INT >= 14) {
+            pref = new SwitchPreference(this);
+          }
+          else {
+            pref = new CheckBoxPreference(this);
+          }
+
+          // Set name and key
+          String key = catStr + "_" + func.toString();
+          pref.setTitle(func.toString());
+          pref.setKey(key);
+          category.addPreference(pref);
+          
+          // register the service as a preference listener
+          pref.setOnPreferenceChangeListener(this);
+        }
+      }
+    }
   }
 
   private Map<String, List<ProbeFunc<Integer>>> loadProbeFuncs() {

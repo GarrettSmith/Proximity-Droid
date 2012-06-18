@@ -55,6 +55,7 @@ public class ProximityDroidActivity
   private FragmentManager mFragmentManager;
   protected ActionBar mActionBar;
   protected SpinnerAdapter mSpinnerAdapter;  
+  protected PreferenceScreen mPreferenceScreen;
 
   // true if we are on a small screen devices
   protected boolean mSmallScreen;
@@ -106,6 +107,11 @@ public class ProximityDroidActivity
       if (!mService.hasBitmap()) {
         Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
         startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
+      }
+      
+      // Check if we need to populate the preference screen
+      if (mPreferenceScreen != null) {
+        mService.populatePreferences(mPreferenceScreen);
       }
     }
     
@@ -342,49 +348,9 @@ public class ProximityDroidActivity
   @Override
   public void onPreferenceAttached(PreferenceScreen root, int xmlId) {
     if(root == null) return; //for whatever reason in very rare cases this is null   
-//
-//    // Load features
-//    Map<String, List<ProbeFunc<Integer>>> features = mService.getFeatures();//TODO: = loadProbeFuncs();
-//
-//    // Generate preference items from features    
-//    // generate a category for each given category    
-//    for (String catStr : features.keySet()) {
-//      List<ProbeFunc<Integer>> funcs = features.get(catStr);
-//
-//      // only add the category if it is non empty
-//      if (funcs != null && !funcs.isEmpty()) {
-//        PreferenceCategory category = new PreferenceCategory(this);
-//        category.setTitle(catStr);
-//        category.setKey(catStr);
-//        root.addPreference(category);
-//
-//        // generate a preference for each probe func
-//        for (ProbeFunc<Integer> func : funcs) {
-//          
-//          Preference pref;
-//          
-//          // Use switches when supported
-//          if (android.os.Build.VERSION.SDK_INT >= 14) {
-//            pref = new SwitchPreference(this);
-//          }
-//          else {
-//            pref = new CheckBoxPreference(this);
-//          }
-//
-//          // Set name and key
-//          String key = catStr + "_" + func.toString();
-//          pref.setTitle(func.toString());
-//          pref.setKey(key);
-//          category.addPreference(pref);
-//          
-//          // register the service as a preference listener
-//          pref.setOnPreferenceChangeListener(mService);
-//          
-//          // add the ProbeFunc to our map to use later
-//          // TODO: mProbeFuncs.put(key, func);
-//        }
-//      }
-//    }
+    
+    // store the preference screen so we can add to it when the service is bound
+    mPreferenceScreen = root;
   }
 
 }
