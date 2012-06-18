@@ -19,7 +19,9 @@ import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximitydroid.fragments.ImageFragment.ProximityServiceProvider;
+import ca.uwinnipeg.proximitydroid.fragments.IntersectionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
+import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnClosedListener;
@@ -246,15 +248,16 @@ public class ProximityDroidActivity
       
       FragmentTransaction trans = mFragmentManager.beginTransaction();
 
-      Fragment frag = new RegionShowFragment();
+      Fragment frag;
       switch(mMode) {
-        case VIEW_REGIONS:
-          frag = new RegionShowFragment();
-          break;
         case VIEW_INTERSECTION:
+          frag = new IntersectionFragment();
           break;
         case VIEW_NEIGHBOURHOODS:
           frag = new NeighbourhoodFragment();
+          break;
+        default:
+          frag = new RegionShowFragment();
           break;
       }
 

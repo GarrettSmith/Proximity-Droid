@@ -134,6 +134,13 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
   
   // broadcasts
   
+  protected void setProgress(int progress) {
+    Activity activity = getActivity();
+    if (activity != null) {
+      activity.setProgress(progress);
+    }
+  }
+
   protected RegionsChangedReciever mRegionsChangedReceiver = new RegionsChangedReciever();
   
   public class RegionsChangedReciever extends BroadcastReceiver {

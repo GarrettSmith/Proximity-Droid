@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.uwinnipeg.proximitydroid;
+package ca.uwinnipeg.proximitydroid.fragments;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment;
+import ca.uwinnipeg.proximitydroid.ProximityService;
+import ca.uwinnipeg.proximitydroid.Region;
 
 /**
  * @author Garrett Smith
@@ -48,19 +49,11 @@ public class NeighbourhoodFragment extends RegionShowFragment {
         mView.addHighlight(points);
       }
     }
-  }
-  
-  protected void setProgress(int progress) {
-    Activity activity = getActivity();
-    if (activity != null) {
-      activity.setProgress(progress);
-    }
-  }
+  } 
 
   // broadcasts
   
-  protected NeighbourhoodReceiver  mNeighbourhoodReceiver 
-    = new NeighbourhoodReceiver ();
+  protected NeighbourhoodReceiver  mNeighbourhoodReceiver = new NeighbourhoodReceiver ();
   
   public class NeighbourhoodReceiver extends BroadcastReceiver {
 

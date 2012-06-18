@@ -109,7 +109,7 @@ public class ProximityService
   protected Map<Region, List<Integer>> mNeighbourhoods = new HashMap<Region, List<Integer>>();
   
   // The indices of the points in the intersection
-  protected List<Integer> mIntersection = null;
+  protected List<Integer> mIntersection = new ArrayList<Integer>();
 
   // Map each region to the task generating it's neighbourhood
   protected Map<Region, NeighbourhoodTask> mNeighbourhoodTasks = 
@@ -262,53 +262,50 @@ public class ProximityService
   private class IntersectTask extends ProcessingTask {
     
       @Override
-      protected List<Integer> doInBackground(Region... params) {    
-  //      
-  //      mRegion = params[0];
-  //  
-  //      // check if we should stop because the task was cancelled
-  //      if (isCancelled()) return null;
-  //      
-  //      List<Integer> indices = new ArrayList<Integer>();
-  //  
-  //      // this is wrapped in a try catch so if we get an async runtime exception the task will stop
-  //      try {
-  //        // check if this is the only region
-  //        if (mIntersection == null) {
-  //          indices = mRegion.getIndicesList(mImage);
-  //        }
-  //        // else take the intersection of the region and the current intersection
-  //        else {
-  //          indices = mImage.getDescriptionBasedIntersectIndices(mIntersection, mRegion.getIndicesList(mImage), this);
-  //        }
-  //      } 
-  //      catch(RuntimeException ex) {
-  //        return null;
-  //      }
-  //  
-  //      return indices;
-        return null;
+      protected List<Integer> doInBackground(Region... params) {
+        mRegion = params[0];
+    
+        // check if we should stop because the task was cancelled
+        if (isCancelled()) return null;
+        
+        List<Integer> indices = new ArrayList<Integer>();
+    
+        // this is wrapped in a try catch so if we get an async runtime exception the task will stop
+        try {
+          // check if this is the only region
+          if (mIntersection.isEmpty()) {
+            indices = mRegion.getIndicesList(mImage);
+          }
+          // else take the intersection of the region and the current intersection
+          else {
+            indices = mImage.getDescriptionBasedIntersectIndices(mIntersection, mRegion.getIndicesList(mImage), this);
+          }
+        } 
+        catch(RuntimeException ex) {
+          return null;
+        }
+    
+        return indices;
         
       }
       
       @Override
       protected void onPostExecute(List<Integer> result) {
-        // store result as the new intersection
-  //      if (result != null) {
-  //        mIntersection = result;
-  //      }
-  //      else {
-  //        mIntersection.clear();
-  //      }
-  //      // run the next intersection task if there is one
-  //      runNextIntersectionTask();
         super.onPostExecute(result);
+        // store result as the new intersection
+        if (result != null) {
+          mIntersection = result;
+        }
+        else {
+          mIntersection.clear();
+        }
+        // run the next intersection task if there is one
+        runNextIntersectionTask();
       }
 
       @Override
       public String ProgressKey() {
-        // TODO Auto-generated method stub
-        return null;
+        return ACTION_INTERSECTION_PROGRESS;
       }
       
     }
@@ -389,6 +386,24 @@ public class ProximityService
       nhs.put(reg, indicesToPoints(indices));
     }
     return nhs;
+  }
+  
+  protected void setIntersection(List<Integer> indices) {
+    // save the new intersection
+    mIntersection.clear();
+    mIntersection.addAll(indices);
+    
+    // convert to points
+    int[] points = indicesToPoints(indices);
+    
+    // broadcast the change
+    Intent intent = new Intent(ACTION_INTERSECTION_SET);
+    intent.putExtra(POINTS, points);
+    mBroadcastManager.sendBroadcast(intent);
+  }
+  
+  public int[] getIntersection() {
+    return indicesToPoints(mIntersection);
   }
   
   protected int[] indicesToPoints(List<Integer> indices) {
