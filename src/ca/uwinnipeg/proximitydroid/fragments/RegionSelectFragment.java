@@ -121,7 +121,7 @@ public class RegionSelectFragment
     mSpinnerAdapter = ArrayAdapter.createFromResource(
         getActivity(), 
         R.array.shape_list, 
-        android.R.layout.simple_spinner_dropdown_item);
+        R.layout.sherlock_spinner_dropdown_item);
     mProvider.setListNavigationCallbacks(mSpinnerAdapter, this);
   }
 
