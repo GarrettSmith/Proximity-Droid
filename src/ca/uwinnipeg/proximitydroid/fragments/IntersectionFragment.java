@@ -22,6 +22,7 @@ public class IntersectionFragment extends RegionShowFragment {
     super.onAttach(activity);
     IntentFilter filter = new IntentFilter(ProximityService.ACTION_INTERSECTION_SET);
     filter.addAction(ProximityService.ACTION_INTERSECTION_PROGRESS);
+    filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);
     mBroadcastManager.registerReceiver(mIntersectionReceiver, filter);
   }
   
@@ -58,6 +59,10 @@ public class IntersectionFragment extends RegionShowFragment {
       else if (action.equals(ProximityService.ACTION_INTERSECTION_PROGRESS)) {
         int progress = intent.getIntExtra(ProximityService.PROGRESS, 0);
         setProgress(progress);
+      }
+      else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
+        mView.clearHighlight();
+        invalidate();
       }
     }
     

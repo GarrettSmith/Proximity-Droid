@@ -35,7 +35,6 @@ import ca.uwinnipeg.proximity.image.RedFunc;
  * @author Garrett Smith
  *
  */
-// TODO: save progress to be accessed later
 // TODO: change neighbourhood calculation to be linear?
 public class ProximityService 
   extends Service
@@ -173,7 +172,9 @@ public class ProximityService
     // clear upcoming tasks
     mIntersectQueue.clear();
     // clear calculated intersection
-    mIntersection.clear();
+    mIntersection.clear();    
+    //clear all neighbourhoods
+    mNeighbourhoods.clear();
     
     // recalculate all neighbourhoods and intersections
     for (Region r : mRegions) {
@@ -345,7 +346,6 @@ public class ProximityService
     // run the update on the added region
     updateNeighbourhood(region);
     addIntersectionTask(region);
-    // TODO: update after adding region
     
     // broadcast that a region has been added
     Intent intent = new Intent(ACTION_REGION_ADDED);
@@ -359,8 +359,13 @@ public class ProximityService
   }
   
   public void clearRegions() {
+    // clear all regions
     mRegions.clear();
-    // TODO: update neighbourhood and intersect after clearing region
+    
+    // remove all tasks
+    updateAll();
+    
+    // broadcast clear
     Intent intent = new Intent(ACTION_REGIONS_CLEARED);
     mBroadcastManager.sendBroadcast(intent);
   }

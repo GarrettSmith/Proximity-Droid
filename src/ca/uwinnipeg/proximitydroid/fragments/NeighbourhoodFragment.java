@@ -27,6 +27,7 @@ public class NeighbourhoodFragment extends RegionShowFragment {
     super.onAttach(activity);
     IntentFilter filter = new IntentFilter(ProximityService.ACTION_NEIGHBOURHOOD_SET);
     filter.addAction(ProximityService.ACTION_NEIGHBOURHOOD_PROGRESS);
+    filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);
     mBroadcastManager.registerReceiver(mNeighbourhoodReceiver, filter);
   }
   
@@ -69,6 +70,10 @@ public class NeighbourhoodFragment extends RegionShowFragment {
       else if (action.equals(ProximityService.ACTION_NEIGHBOURHOOD_PROGRESS)) {
         int progress = intent.getIntExtra(ProximityService.PROGRESS, 0);
         setProgress(progress);
+      }
+      else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
+        mNeighbourhoods.clear();
+        invalidate();
       }
     }
     

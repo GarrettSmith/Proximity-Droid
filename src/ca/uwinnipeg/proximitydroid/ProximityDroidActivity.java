@@ -41,8 +41,6 @@ import com.actionbarsherlock.view.Window;
  *
  */
 //TODO: Allow screen rotation
-//TODO: Clear highlight with regions
-//TODO: save images
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,
