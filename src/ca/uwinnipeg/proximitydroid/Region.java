@@ -83,16 +83,17 @@ public class Region implements Parcelable {
    * @return
    */  
   // TODO: handle non-rectangular shapes
+  // TODO: set progress to indefinate while calculating idices
   public int[] getIndices(Image img) {
     
     int[] indices;
     
     switch (mShape) {
-      case OVAL:
+      case POLYGON:
 
+        // find all the points within the poly
         int[] tmp = new int[mBounds.width() * mBounds.height()];
         int i = -1;
-        // find all the points within the poly
         for (int y = mBounds.top; y < mBounds.bottom; y++) {
           for (int x = mBounds.left; x < mBounds.right; x++) {
             if (mPoly.contains(x, y)) {
@@ -104,13 +105,30 @@ public class Region implements Parcelable {
         indices = Arrays.copyOf(tmp, i);
         break;
         
-      case POLYGON:
+      case OVAL:
+        // find all the points within the oval
         int[] tmp2 = new int[mBounds.width() * mBounds.height()];
         int j = -1;
-        // find all the points within the poly
+
+        int cx = mBounds.centerX();
+        int cy = mBounds.centerY();
+        int rx2 = mBounds.right - cx;
+        rx2 *= rx2; // square
+        int ry2 = mBounds.bottom - cy;
+        ry2 *= ry2; // square
+        
         for (int y = mBounds.top; y < mBounds.bottom; y++) {
           for (int x = mBounds.left; x < mBounds.right; x++) {
-            if (mPoly.contains(x, y)) {
+            
+            float dx = (float)(x - cx);
+            dx *= dx;
+            dx /= rx2;
+            float dy = (float)(y - cy);
+            dy *= dy;
+            dy /= ry2;
+            
+            // if the point is within the oval
+            if ( dx + dy <= 1) {
               tmp2[++j] = img.getIndex(x, y);
             }
           }
