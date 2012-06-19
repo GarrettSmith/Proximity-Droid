@@ -41,6 +41,7 @@ import com.actionbarsherlock.view.Window;
  *
  */
 //TODO: Allow screen rotation
+//TODO: Add editing created regions
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,

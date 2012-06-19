@@ -1,6 +1,7 @@
 package ca.uwinnipeg.proximitydroid;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import android.graphics.Rect;
@@ -81,8 +82,48 @@ public class Region implements Parcelable {
    * @param img
    * @return
    */  
+  // TODO: handle non-rectangular shapes
   public int[] getIndices(Image img) {
-    return img.getIndices(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+    
+    int[] indices;
+    
+    switch (mShape) {
+      case OVAL:
+
+        int[] tmp = new int[mBounds.width() * mBounds.height()];
+        int i = -1;
+        // find all the points within the poly
+        for (int y = mBounds.top; y < mBounds.bottom; y++) {
+          for (int x = mBounds.left; x < mBounds.right; x++) {
+            if (mPoly.contains(x, y)) {
+              tmp[++i] = img.getIndex(x, y);
+            }
+          }
+        }
+        // trim out the empty spots
+        indices = Arrays.copyOf(tmp, i);
+        break;
+        
+      case POLYGON:
+        int[] tmp2 = new int[mBounds.width() * mBounds.height()];
+        int j = -1;
+        // find all the points within the poly
+        for (int y = mBounds.top; y < mBounds.bottom; y++) {
+          for (int x = mBounds.left; x < mBounds.right; x++) {
+            if (mPoly.contains(x, y)) {
+              tmp2[++j] = img.getIndex(x, y);
+            }
+          }
+        }
+        // trim out the empty spots
+        indices = Arrays.copyOf(tmp2, j);
+        break;
+        
+      default:
+        indices = img.getIndices(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+        break;
+    }
+    return indices;
   }
   
   public List<Integer> getIndicesList(Image img) {

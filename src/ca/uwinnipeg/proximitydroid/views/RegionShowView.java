@@ -133,11 +133,6 @@ public class RegionShowView extends ProximityImageView {
     canvas.drawPaint(UNSELECTED_PAINT);
     canvas.restore();
     
-    // draw all the regions
-    for (RegionView reg : mRegions.values()) {
-      reg.draw(canvas);
-    }   
-    
     // draw the highlight    
     if (mBitmap != null && mHighlight.length > 0) {
       canvas.save();
@@ -147,6 +142,11 @@ public class RegionShowView extends ProximityImageView {
       canvas.drawBitmap(mHighlight, 0, width, 0, 0, width, height, true, POINT_PAINT);
       canvas.restore();
     }
+    
+    // draw all the regions
+    for (RegionView reg : mRegions.values()) {
+      reg.draw(canvas);
+    }   
   }
 
 }

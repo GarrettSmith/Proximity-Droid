@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+// TODO: make about display properly on older apis
 public class AboutActivity extends Activity {
   
   /**
