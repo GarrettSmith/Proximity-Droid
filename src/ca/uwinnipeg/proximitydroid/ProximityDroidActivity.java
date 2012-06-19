@@ -40,10 +40,11 @@ import com.actionbarsherlock.view.Window;
  * @author Garrett Smith
  *
  */
-
-//TODO: find more efficient way to draw points
 //TODO: make progress output scale with multiple tasks
 //TODO: clear progress bar when switching views
+//TODO: Allow screen rotation
+//TODO: Clear highlight with regions
+//TODO: save images
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,
@@ -244,29 +245,39 @@ public class ProximityDroidActivity
     boolean changed = mMode != newMode;
     mMode = newMode;
     
-    if (changed) {
-      
+    if (changed) {      
       FragmentTransaction trans = mFragmentManager.beginTransaction();
 
       Fragment frag;
+      int progress = 10000;
       switch(mMode) {
         case VIEW_INTERSECTION:
           frag = new IntersectionFragment();
+          progress = mService.getIntersectionProgress();
           break;
         case VIEW_NEIGHBOURHOODS:
           frag = new NeighbourhoodFragment();
+          progress = mService.getNeighbourhoodProgress();
           break;
         default:
           frag = new RegionShowFragment();
           break;
       }
 
+      // switch the fragments
       trans.replace(R.id.image_fragment_container, frag);
       trans.commit();
+      
+      // change the progress bar
+      // if the progress was set or calculation was previously finished
+      if (progress != 10000) {
+        setProgressBarVisibility(true);
+        setProgress(progress);
+      }
+      else {
+        setProgressBarVisibility(false);
+      }
     }
-    
-    // TODO: update loading spinner
-    //setProgressBarVisibility(isLoading());
   }
 
   @Override

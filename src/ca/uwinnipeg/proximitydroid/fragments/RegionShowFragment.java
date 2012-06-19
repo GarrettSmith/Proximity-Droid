@@ -100,17 +100,6 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
     for (Region reg : getService().getRegions()) {
       mView.add(reg);
     }
-
-    // TODO: setHighlight(mProvider.getHighlightIndices());
-  }
-
-  public void setHighlight(int[] indices) {
-    if (indices == null) {
-      mView.clearHighlight();
-    }
-    else {
-      mView.setHighlight(indices);
-    }
   }
   
   @Override
@@ -137,6 +126,7 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
   protected void setProgress(int progress) {
     Activity activity = getActivity();
     if (activity != null) {
+      activity.setProgressBarVisibility(true);
       activity.setProgress(progress);
     }
   }

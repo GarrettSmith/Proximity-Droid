@@ -35,6 +35,8 @@ import ca.uwinnipeg.proximity.image.RedFunc;
  * @author Garrett Smith
  *
  */
+// TODO: save progress to be accessed later
+// TODO: change neighbourhood calculation to be linear?
 public class ProximityService 
   extends Service
   implements OnPreferenceChangeListener {
@@ -119,12 +121,12 @@ public class ProximityService
   protected IntersectTask mIntersectTask = null;
   
   // The list of regions to be used by intersect tasks
-  protected List<Region> mIntersectRegions = new ArrayList<Region>(); 
+  protected List<Region> mIntersectQueue = new ArrayList<Region>(); 
+  
+  // the current progress of calculations  
+  protected Map<String, Integer> mProgress = new HashMap<String, Integer>();
   
   protected void updateNeighbourhood(Region region) {
-
-    // Calculate Neighbourhood
-
     // clear old points
     mNeighbourhoods.put(region, new ArrayList<Integer>());
     
@@ -134,7 +136,7 @@ public class ProximityService
       task.cancel(true);
     }
 
-    // run the task
+    // run the new task
     task = new NeighbourhoodTask();
     mNeighbourhoodTasks.put(region, task);
     task.execute(region);
@@ -142,10 +144,10 @@ public class ProximityService
   
   protected void addIntersectionTask(Region region) {
     // add the region to the queue
-    mIntersectRegions.add(region);
+    mIntersectQueue.add(region);
     
     // run if this is the only region in the queue
-    if (mIntersectRegions.size() == 1) {
+    if (mIntersectQueue.size() == 1) {
       runNextIntersectionTask();
     }
       
@@ -153,31 +155,32 @@ public class ProximityService
   
   protected void runNextIntersectionTask() {
     // only run if there are regions in the queue
-    if (!mIntersectRegions.isEmpty()) {
+    if (!mIntersectQueue.isEmpty()) {
       
       // run the task on the next region
       mIntersectTask = new IntersectTask();
-      Region region = mIntersectRegions.remove(0);
+      Region region = mIntersectQueue.remove(0);
 
       // start the task
       mIntersectTask.execute(region);
     }
   }
   
-  protected void stopIntersectionTasks() {
-    if (mIntersectTask != null) mIntersectTask.cancel(true);
-    mIntersectRegions.clear();
-  }
-  
   protected void updateAll() {
     // stop all intersection tasks
-    stopIntersectionTasks();
+    // cancel running task
+    if (mIntersectTask != null) mIntersectTask.cancel(true);
+    // clear upcoming tasks
+    mIntersectQueue.clear();
+    // clear calculated intersection
+    mIntersection.clear();
     
+    // recalculate all neighbourhoods and intersections
     for (Region r : mRegions) {
       updateNeighbourhood(r);
       addIntersectionTask(r);
-    }
-    
+    }    
+    // start running intersection tasks
     runNextIntersectionTask();
   }
   
@@ -206,7 +209,6 @@ public class ProximityService
 
     @Override
     public void updateProgress(float progress) {
-      // TODO: record progress
       if (progress - mLastProgress > PROGRESS_THERSHOLD) {
         mLastProgress = progress;
         publishProgress(Integer.valueOf((int) (progress * 10000)));
@@ -216,6 +218,10 @@ public class ProximityService
     @Override
     protected void onProgressUpdate(Integer... values) {
       int value = values[0].intValue();
+      // store progress
+      mProgress.put(ProgressKey(), value);
+      
+      // broadcast progress
       Intent intent = new Intent(ProgressKey());
       intent.putExtra(PROGRESS, value);
       mBroadcastManager.sendBroadcast(intent);
@@ -388,6 +394,17 @@ public class ProximityService
     return nhs;
   }
   
+  public int getNeighbourhoodProgress() {
+    // count the number of tasks running
+    int runningTasks = 0;
+    for (NeighbourhoodTask task : mNeighbourhoodTasks.values()) {
+      if (task.isRunning()) {
+        runningTasks++;
+      }
+    }
+    return getProgress(ACTION_NEIGHBOURHOOD_PROGRESS, runningTasks);
+  }
+  
   protected void setIntersection(List<Integer> indices) {
     // save the new intersection
     mIntersection.clear();
@@ -404,6 +421,22 @@ public class ProximityService
   
   public int[] getIntersection() {
     return indicesToPoints(mIntersection);
+  }
+  
+  public int getIntersectionProgress() {
+    return getProgress(ACTION_NEIGHBOURHOOD_PROGRESS, mIntersectQueue.size());
+  }
+  
+  protected int getProgress(String key, int runningTasks) {
+    Integer prog =  mProgress.get(key);
+    // don't give us a null pointer if we haven't set progress yet
+    // don't try to divide by 0
+    if (prog != null && runningTasks != 0) {
+      return prog / runningTasks;
+    }
+    else {
+      return 10000;
+    }
   }
   
   protected int[] indicesToPoints(List<Integer> indices) {
