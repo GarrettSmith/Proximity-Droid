@@ -300,12 +300,7 @@ public class ProximityService
       protected void onPostExecute(List<Integer> result) {
         super.onPostExecute(result);
         // store result as the new intersection
-        if (result != null) {
-          mIntersection = result;
-        }
-        else {
-          mIntersection.clear();
-        }
+        setIntersection(result);
         // run the next intersection task if there is one
         runNextIntersectionTask();
       }
@@ -413,7 +408,7 @@ public class ProximityService
   protected void setIntersection(List<Integer> indices) {
     // save the new intersection
     mIntersection.clear();
-    mIntersection.addAll(indices);
+    if (indices != null) mIntersection.addAll(indices);
     
     // convert to points
     int[] points = indicesToPoints(indices);

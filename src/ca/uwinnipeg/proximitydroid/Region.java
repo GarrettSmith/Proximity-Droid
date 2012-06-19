@@ -82,8 +82,7 @@ public class Region implements Parcelable {
    * @param img
    * @return
    */  
-  // TODO: handle non-rectangular shapes
-  // TODO: set progress to indefinate while calculating idices
+  // TODO: set progress to indefinite while calculating indices
   public int[] getIndices(Image img) {
     
     int[] indices;

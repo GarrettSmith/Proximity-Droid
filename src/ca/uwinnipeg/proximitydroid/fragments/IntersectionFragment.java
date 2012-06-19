@@ -54,7 +54,6 @@ public class IntersectionFragment extends RegionShowFragment {
       if (action.equals(ProximityService.ACTION_INTERSECTION_SET)) {
         int[] points = intent.getIntArrayExtra(ProximityService.POINTS);
         mView.setHighlight(points);
-        invalidate();
       }
       else if (action.equals(ProximityService.ACTION_INTERSECTION_PROGRESS)) {
         int progress = intent.getIntExtra(ProximityService.PROGRESS, 0);
@@ -62,7 +61,6 @@ public class IntersectionFragment extends RegionShowFragment {
       }
       else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
         mView.clearHighlight();
-        invalidate();
       }
     }
     
