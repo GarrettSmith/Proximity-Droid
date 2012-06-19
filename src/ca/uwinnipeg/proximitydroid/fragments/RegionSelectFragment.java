@@ -114,6 +114,7 @@ public class RegionSelectFragment
 
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    super.onCreateOptionsMenu(menu, inflater);
     inflater.inflate(R.menu.region_select, menu);
     
     // Action bar navigation

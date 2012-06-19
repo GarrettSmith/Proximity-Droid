@@ -6,6 +6,7 @@ package ca.uwinnipeg.proximitydroid.fragments;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import android.app.Activity;
@@ -17,14 +18,19 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import ca.uwinnipeg.proximitydroid.ProximityService;
+import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.views.ProximityImageView;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 
 /**
  * @author Garrett Smith
@@ -77,7 +83,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     try {
       output = new FileOutputStream(file);
     } catch (FileNotFoundException e) {
-      Log.e(TAG, file + " not found.");
+      Log.e(TAG, e.toString());
       return false;
     }
     return saveImage(CompressFormat.JPEG, 95, output);
@@ -98,6 +104,8 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     // Make sure the directory exists
     path.mkdirs();
     
+    // TODO: check if the file already exists
+    
     // save the image
     if (saveImage(file)) {
       // tell the media scanner about the file so the user has immediate access
@@ -117,11 +125,36 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
       return false;
     }
   }
+  
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // set that this fragment has an options menu
+    setHasOptionsMenu(true);
+  }
 
   @Override
   public void onStart() {
     super.onStart();
     invalidate();
+  }
+  
+  @Override
+  public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    super.onCreateOptionsMenu(menu, inflater);
+    inflater.inflate(R.menu.image, menu);
+  }
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    if (item.getItemId() == R.id.menu_save_image) {
+      // TODO: set image name
+      saveImage("TEST.jpg");
+      return true;
+    }
+    else {
+      return super.onOptionsItemSelected(item);
+    }
   }
   
   protected void setupView() {
