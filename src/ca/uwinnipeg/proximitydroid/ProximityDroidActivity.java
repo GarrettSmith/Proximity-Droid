@@ -40,8 +40,6 @@ import com.actionbarsherlock.view.Window;
  * @author Garrett Smith
  *
  */
-//TODO: make progress output scale with multiple tasks
-//TODO: clear progress bar when switching views
 //TODO: Allow screen rotation
 //TODO: Clear highlight with regions
 //TODO: save images

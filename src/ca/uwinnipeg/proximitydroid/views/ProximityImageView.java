@@ -1,6 +1,7 @@
 package ca.uwinnipeg.proximitydroid.views;
 
-import ca.uwinnipeg.proximitydroid.RotatedBitmap;
+import java.io.OutputStream;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -8,6 +9,7 @@ import android.graphics.RectF;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.widget.ImageView;
+import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 
 /**
  * 
