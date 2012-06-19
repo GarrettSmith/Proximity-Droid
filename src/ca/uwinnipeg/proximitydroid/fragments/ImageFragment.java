@@ -6,7 +6,6 @@ package ca.uwinnipeg.proximitydroid.fragments;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 
 import android.app.Activity;
@@ -68,8 +67,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
    * @return
    */
   public boolean saveImage(Bitmap.CompressFormat format, int quality, OutputStream stream) {
-    mView.setDrawingCacheEnabled(true);
-    Bitmap bm = mView.getDrawingCache();
+    Bitmap bm = mView.getCroppedBitmap();
     return bm.compress(format, quality, stream);
   }
   

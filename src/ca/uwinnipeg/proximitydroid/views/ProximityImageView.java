@@ -1,7 +1,5 @@
 package ca.uwinnipeg.proximitydroid.views;
 
-import java.io.OutputStream;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -343,6 +341,18 @@ public class ProximityImageView extends ImageView {
         }
       }
     }.run();
+  }
+  
+  public Bitmap getCroppedBitmap() {
+    setDrawingCacheEnabled(true);
+    Bitmap bm = getDrawingCache();
+    RectF bounds = getImageScreenBounds();
+    return Bitmap.createBitmap(
+        bm, 
+        Math.round(bounds.left), 
+        Math.round(bounds.top),
+        Math.round(bounds.width()), 
+        Math.round(bounds.height()));
   }
   
   /**
