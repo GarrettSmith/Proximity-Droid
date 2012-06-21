@@ -66,6 +66,8 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
    * @param stream
    * @return
    */
+  // TODO: notify on save
+  // TODO: take off ui thread
   public boolean saveImage(Bitmap.CompressFormat format, int quality, OutputStream stream) {
     Bitmap bm = mView.getCroppedBitmap();
     return bm.compress(format, quality, stream);

@@ -11,16 +11,12 @@ import java.util.Map;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceScreen;
-import android.preference.SwitchPreference;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximity.image.AlphaFunc;
@@ -38,7 +34,7 @@ import ca.uwinnipeg.proximity.image.RedFunc;
 // TODO: change neighbourhood calculation to be linear?
 public class ProximityService 
   extends Service
-  implements OnPreferenceChangeListener {
+  implements OnSharedPreferenceChangeListener {
   
   public static final String TAG = "ProximityService"; 
   
@@ -85,7 +81,7 @@ public class ProximityService
     mBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
     
     // Load probe funcs
-    Map<String, List<ProbeFunc<Integer>>> features = loadProbeFuncs();
+    Map<String, List<ProbeFunc<Integer>>> features = getProbeFuncs();
     for (String catStr : features.keySet()) {
       for (ProbeFunc<Integer> func : features.get(catStr)) {
         String key = catStr + "_" + func.toString();
@@ -101,10 +97,144 @@ public class ProximityService
         mImage.addProbeFunc(mProbeFuncs.get(key));
       }
     }
+    
+    // get initial epsilons
+    mNeighbourhoodEpsilon = settings.getFloat(NEIGHBOURHOOD_EPSILON_SETTING, 0);
+    mIntersectEpsilon = settings.getFloat(INTERSECTION_EPSILON_SETTING, 0);
+    
+    // register to watch settings
+    settings.registerOnSharedPreferenceChangeListener(this);
   }  
 
   
   // Tasking 
+
+  private abstract class ProcessingTask 
+      extends AsyncTask<Region, Integer, List<Integer>>
+      implements PerceptualSystemSubscriber {
+  
+    protected Region mRegion;
+    protected boolean mRunning = true;
+  
+    public boolean isRunning() {
+      return mRunning;
+    }
+  
+    @Override
+    protected void onPostExecute(List<Integer> result) {
+      mRunning = false;
+      publishProgress(10000);
+    }
+    
+    public abstract String ProgressKey();
+  
+    protected float mLastProgress = 0;
+    protected final float PROGRESS_THERSHOLD = 0.001f;
+  
+    @Override
+    public void updateProgress(float progress) {
+      if (progress - mLastProgress > PROGRESS_THERSHOLD) {
+        mLastProgress = progress;
+        publishProgress(Integer.valueOf((int) (progress * 10000)));
+      }
+    }
+  
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+      int value = values[0].intValue();
+      // store progress
+      mProgress.put(ProgressKey(), value);
+      
+      // broadcast progress
+      Intent intent = new Intent(ProgressKey());
+      intent.putExtra(PROGRESS, value);
+      mBroadcastManager.sendBroadcast(intent);
+    }
+  
+  }
+
+  private class NeighbourhoodTask extends ProcessingTask {
+  
+    @Override
+    protected List<Integer> doInBackground(Region... params) {
+      mRegion = params[0];
+  
+      // check if we should stop because the task was cancelled
+      if (isCancelled()) return null;
+  
+      int center = mRegion.getCenterIndex(mImage);
+      int[] regionPixels = mRegion.getIndices(mImage);
+
+      long startTime = System.currentTimeMillis();
+      List<Integer> rtn = mImage.getHybridNeighbourhoodIndices(
+          center, 
+          regionPixels, 
+          mNeighbourhoodEpsilon, 
+          this);
+      Log.i(TAG, "Neighbourhood took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
+      
+      return rtn;
+    }
+  
+    @Override
+    protected void onPostExecute(List<Integer> result) {      
+      super.onPostExecute(result);
+      // save the result
+      setNeighbourhood(mRegion, result);
+    }
+  
+    @Override
+    public String ProgressKey() {
+      return ACTION_NEIGHBOURHOOD_PROGRESS;
+    }
+  
+  }
+
+  private class IntersectTask extends ProcessingTask {
+  
+    @Override
+    protected List<Integer> doInBackground(Region... params) {
+      mRegion = params[0];
+  
+      // check if we should stop because the task was cancelled
+      if (isCancelled()) return null;
+      
+      List<Integer> indices = new ArrayList<Integer>();
+      
+      // check if this is the only region
+      if (mIntersection.isEmpty()) {
+        indices = mRegion.getIndicesList(mImage);
+      }
+      // else take the intersection of the region and the current intersection
+      else {
+        long startTime = System.currentTimeMillis();
+        indices = mImage.getHybridIntersectIndices(
+            mIntersection, 
+            mRegion.getIndicesList(mImage),
+            mIntersectEpsilon, 
+            this);
+        Log.i(TAG, "Intersection took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
+      }
+  
+      return indices;
+      
+    }
+    
+    @Override
+    protected void onPostExecute(List<Integer> result) {
+      super.onPostExecute(result);
+      // store result as the new intersection
+      setIntersection(result);
+      // run the next intersection task if there is one
+      runNextIntersectionTask();
+    }
+  
+    @Override
+    public String ProgressKey() {
+      return ACTION_INTERSECTION_PROGRESS;
+    }
+    
+  }
 
   // The map of regions to the indices of the points in their neighbourhoods
   protected Map<Region, List<Integer>> mNeighbourhoods = new HashMap<Region, List<Integer>>();
@@ -125,7 +255,27 @@ public class ProximityService
   // the current progress of calculations  
   protected Map<String, Integer> mProgress = new HashMap<String, Integer>();
   
-  protected void updateNeighbourhood(Region region) {
+  protected float mIntersectEpsilon = 0;
+  protected float mNeighbourhoodEpsilon = 0;
+  
+  public static final String NEIGHBOURHOOD_EPSILON_SETTING = "Neighbourhood epsilon";
+  public static final String INTERSECTION_EPSILON_SETTING = "Intersection epsilon";
+  
+  protected void invalidate() {
+    invalidateNeighbourhoods();
+    invalidateIntersection();
+  }
+  
+  protected void invalidateNeighbourhoods() {
+    //clear all neighbourhoods
+    mNeighbourhoods.clear();
+    // update all neighbourhoods
+    for (Region r : mRegions) {
+      invalidateNeighbourhood(r);
+    } 
+  }
+  
+  protected void invalidateNeighbourhood(Region region) {
     // clear old points
     mNeighbourhoods.put(region, new ArrayList<Integer>());
     
@@ -134,13 +284,31 @@ public class ProximityService
     if (task != null && task.isRunning()) {
       task.cancel(true);
     }
-
+  
     // run the new task
     task = new NeighbourhoodTask();
     mNeighbourhoodTasks.put(region, task);
     task.execute(region);
   }
+
+  protected void invalidateIntersection() {
+    // stop all intersection tasks
+    // cancel running task
+    if (mIntersectTask != null) mIntersectTask.cancel(true);
+    // clear upcoming tasks
+    mIntersectQueue.clear();
+    // clear calculated intersection
+    mIntersection.clear();    
+    
+    // recalculate all intersections
+    for (Region r : mRegions) {
+      addIntersectionTask(r);
+    }    
+    // start running intersection tasks
+    runNextIntersectionTask();
+  }
   
+
   protected void addIntersectionTask(Region region) {
     // add the region to the queue
     mIntersectQueue.add(region);
@@ -151,7 +319,7 @@ public class ProximityService
     }
       
   }
-  
+
   protected void runNextIntersectionTask() {
     // only run if there are regions in the queue
     if (!mIntersectQueue.isEmpty()) {
@@ -159,158 +327,11 @@ public class ProximityService
       // run the task on the next region
       mIntersectTask = new IntersectTask();
       Region region = mIntersectQueue.remove(0);
-
+  
       // start the task
       mIntersectTask.execute(region);
     }
   }
-  
-  protected void updateAll() {
-    // stop all intersection tasks
-    // cancel running task
-    if (mIntersectTask != null) mIntersectTask.cancel(true);
-    // clear upcoming tasks
-    mIntersectQueue.clear();
-    // clear calculated intersection
-    mIntersection.clear();    
-    //clear all neighbourhoods
-    mNeighbourhoods.clear();
-    
-    // recalculate all neighbourhoods and intersections
-    for (Region r : mRegions) {
-      updateNeighbourhood(r);
-      addIntersectionTask(r);
-    }    
-    // start running intersection tasks
-    runNextIntersectionTask();
-  }
-  
-
-  private abstract class ProcessingTask 
-      extends AsyncTask<Region, Integer, List<Integer>>
-      implements PerceptualSystemSubscriber {
-
-    protected Region mRegion;
-    protected boolean mRunning = true;
-
-    public boolean isRunning() {
-      return mRunning;
-    }
-
-    @Override
-    protected void onPostExecute(List<Integer> result) {
-      mRunning = false;
-      publishProgress(10000);
-    }
-    
-    public abstract String ProgressKey();
-
-    protected float mLastProgress = 0;
-    protected final float PROGRESS_THERSHOLD = 0.001f;
-
-    @Override
-    public void updateProgress(float progress) {
-      if (progress - mLastProgress > PROGRESS_THERSHOLD) {
-        mLastProgress = progress;
-        publishProgress(Integer.valueOf((int) (progress * 10000)));
-      }
-    }
-
-    @Override
-    protected void onProgressUpdate(Integer... values) {
-      int value = values[0].intValue();
-      // store progress
-      mProgress.put(ProgressKey(), value);
-      
-      // broadcast progress
-      Intent intent = new Intent(ProgressKey());
-      intent.putExtra(PROGRESS, value);
-      mBroadcastManager.sendBroadcast(intent);
-    }
-
-  }
-
-  private class NeighbourhoodTask extends ProcessingTask {
-
-    @Override
-    protected List<Integer> doInBackground(Region... params) {
-      mRegion = params[0];
-
-      // check if we should stop because the task was cancelled
-      if (isCancelled()) return null;
-
-      int center = mRegion.getCenterIndex(mImage);
-      int[] regionPixels = mRegion.getIndices(mImage);
-
-      // this is wrapped in a try catch so if we get an async runtime exception the task will stop
-      try {
-        // TODO: set epsilon
-        return mImage.getHybridNeighbourhoodIndices(center, regionPixels, 0.1, this);
-      } 
-      catch(RuntimeException ex) {
-        return null;
-      }
-    }
-
-    @Override
-    protected void onPostExecute(List<Integer> result) {      
-      super.onPostExecute(result);
-      // save the result
-      setNeighbourhood(mRegion, result);
-    }
-
-    @Override
-    public String ProgressKey() {
-      return ACTION_NEIGHBOURHOOD_PROGRESS;
-    }
-
-  }
-
-  private class IntersectTask extends ProcessingTask {
-    
-      @Override
-      protected List<Integer> doInBackground(Region... params) {
-        mRegion = params[0];
-    
-        // check if we should stop because the task was cancelled
-        if (isCancelled()) return null;
-        
-        List<Integer> indices = new ArrayList<Integer>();
-    
-        // this is wrapped in a try catch so if we get an async runtime exception the task will stop
-        try {
-          // check if this is the only region
-          if (mIntersection.isEmpty()) {
-            indices = mRegion.getIndicesList(mImage);
-          }
-          // else take the intersection of the region and the current intersection
-          else {
-            indices = mImage.getDescriptionBasedIntersectIndices(mIntersection, mRegion.getIndicesList(mImage), this);
-          }
-        } 
-        catch(RuntimeException ex) {
-          return null;
-        }
-    
-        return indices;
-        
-      }
-      
-      @Override
-      protected void onPostExecute(List<Integer> result) {
-        super.onPostExecute(result);
-        // store result as the new intersection
-        setIntersection(result);
-        // run the next intersection task if there is one
-        runNextIntersectionTask();
-      }
-
-      @Override
-      public String ProgressKey() {
-        return ACTION_INTERSECTION_PROGRESS;
-      }
-      
-    }
 
   // Proximity
     
@@ -339,7 +360,7 @@ public class ProximityService
   public void addRegion(Region region) { 
     mRegions.add(region);
     // run the update on the added region
-    updateNeighbourhood(region);
+    invalidateNeighbourhood(region);
     addIntersectionTask(region);
     
     // broadcast that a region has been added
@@ -353,12 +374,13 @@ public class ProximityService
     // TODO: update neighbourhood and intersect after removing region
   }
   
+  // TODO: clear progress
   public void clearRegions() {
     // clear all regions
     mRegions.clear();
     
     // remove all tasks
-    updateAll();
+    invalidate();
     
     // broadcast clear
     Intent intent = new Intent(ACTION_REGIONS_CLEARED);
@@ -394,17 +416,6 @@ public class ProximityService
     return nhs;
   }
   
-  public int getNeighbourhoodProgress() {
-    // count the number of tasks running
-    int runningTasks = 0;
-    for (NeighbourhoodTask task : mNeighbourhoodTasks.values()) {
-      if (task.isRunning()) {
-        runningTasks++;
-      }
-    }
-    return getProgress(ACTION_NEIGHBOURHOOD_PROGRESS, runningTasks);
-  }
-  
   protected void setIntersection(List<Integer> indices) {
     // save the new intersection
     mIntersection.clear();
@@ -423,6 +434,27 @@ public class ProximityService
     return indicesToPoints(mIntersection);
   }
   
+  public void setNeighbourhoodEpsilon(float epsilon) {
+    mNeighbourhoodEpsilon = epsilon;
+    invalidateNeighbourhoods();
+  }
+  
+  public void setIntersectionEpsilon(float epsilon) {
+    mIntersectEpsilon = epsilon;
+    invalidateIntersection();
+  }
+  
+  public int getNeighbourhoodProgress() {
+    // count the number of tasks running
+    int runningTasks = 0;
+    for (NeighbourhoodTask task : mNeighbourhoodTasks.values()) {
+      if (task.isRunning()) {
+        runningTasks++;
+      }
+    }
+    return getProgress(ACTION_NEIGHBOURHOOD_PROGRESS, runningTasks);
+  }
+
   public int getIntersectionProgress() {
     return getProgress(ACTION_NEIGHBOURHOOD_PROGRESS, mIntersectQueue.size());
   }
@@ -435,11 +467,15 @@ public class ProximityService
       return prog / runningTasks;
     }
     else {
-      return 10000;
+      return 10000; // the maximum progress bar value
     }
   }
   
+  // TODO: get this off the ui thread and make it cancellable
   protected int[] indicesToPoints(List<Integer> indices) {
+    // handle nulls
+    if (indices == null) return new int[0];
+    
     int[] points = new int[indices.size() * 2];
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.get(i);
@@ -501,79 +537,8 @@ public class ProximityService
       
     }.execute(mBitmap);
   }
-  
-  //  public int[] getHighlightIndices() {
-//    
-//    // get the indices we are currently interseted in
-//    List<Integer> indices;
-//    if (mViewMode == NEIGHBOURHOOD_KEY) {
-//      indices = new ArrayList<Integer>();
-//      for (Region r : mRegions) {
-//        indices.addAll(mNeighbourhoods.get(r));
-//      }
-//    }
-//    else if (mViewMode == INTERSECT_KEY && mIntersection != null) {
-//      indices = mIntersection;
-//    }
-//    else {
-//      return null;
-//    }
-//    
-//    // convert indices to positions
-//    int[] points = new int[indices.size() * 2];
-//    for (int i = 0; i < indices.size(); i++) {
-//      int index = indices.get(i);
-//      points[i*2] = mImage.getX(index);
-//      points[i*2+1] = mImage.getY(index);
-//    }
-//    return points;
-//  }  
 
-  // Feature Preferences
-
-  public void populatePreferences(PreferenceScreen root) {
-    // Load features
-    Map<String, List<ProbeFunc<Integer>>> features = loadProbeFuncs();
-
-    // Generate preference items from features    
-    // generate a category for each given category    
-    for (String catStr : features.keySet()) {
-      List<ProbeFunc<Integer>> funcs = features.get(catStr);
-
-      // only add the category if it is non empty
-      if (funcs != null && !funcs.isEmpty()) {
-        PreferenceCategory category = new PreferenceCategory(this);
-        category.setTitle(catStr);
-        category.setKey(catStr);
-        root.addPreference(category);
-
-        // generate a preference for each probe func
-        for (ProbeFunc<Integer> func : funcs) {
-          
-          Preference pref;
-          
-          // Use switches when supported
-          if (android.os.Build.VERSION.SDK_INT >= 14) {
-            pref = new SwitchPreference(this);
-          }
-          else {
-            pref = new CheckBoxPreference(this);
-          }
-
-          // Set name and key
-          String key = catStr + "_" + func.toString();
-          pref.setTitle(func.toString());
-          pref.setKey(key);
-          category.addPreference(pref);
-          
-          // register the service as a preference listener
-          pref.setOnPreferenceChangeListener(this);
-        }
-      }
-    }
-  }
-
-  private Map<String, List<ProbeFunc<Integer>>> loadProbeFuncs() {
+  public Map<String, List<ProbeFunc<Integer>>> getProbeFuncs() {
     Map<String, List<ProbeFunc<Integer>>> features = new HashMap<String, List<ProbeFunc<Integer>>>();
     // load all the standard probe funcs
     features.put("Colour", new ArrayList<ProbeFunc<Integer>>());
@@ -587,21 +552,29 @@ public class ProximityService
     return features;
   }
 
+  // Preferences
+
   @Override
-  public boolean onPreferenceChange(Preference preference, Object newValue) {
-    if (newValue instanceof Boolean) {
-      // add or remove the probe func from the perceptual system
-      ProbeFunc<Integer> func = mProbeFuncs.get(preference.getKey());
-      if ((Boolean)newValue) {
+  public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+    // handle probe func changes
+    if (mProbeFuncs.keySet().contains(key)) {
+      ProbeFunc<Integer> func = mProbeFuncs.get(key);
+      if (prefs.getBoolean(key, false)) {
         mImage.addProbeFunc(func);
       }
       else {
         mImage.removeProbeFunc(func);
       }
-      // recalculate all neighbourhoods and intersection
-      updateAll();
+      invalidate();
+    }    
+    // handle epsilons
+    else if (key.equals(NEIGHBOURHOOD_EPSILON_SETTING)) {
+      setNeighbourhoodEpsilon(prefs.getFloat(key, 0));
     }
-    return true;
+    else if (key.equals(INTERSECTION_EPSILON_SETTING)) {
+      setIntersectionEpsilon(prefs.getFloat(key, 0));
+    }
+    
   }
   
 }

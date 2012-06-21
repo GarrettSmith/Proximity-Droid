@@ -3,6 +3,9 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
+import java.util.List;
+import java.util.Map;
+
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -10,18 +13,25 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.preference.SwitchPreference;
 import android.provider.MediaStore.Images;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
+import ca.uwinnipeg.proximity.ProbeFunc;
+import ca.uwinnipeg.proximitydroid.fragments.AboutDialogFragment;
 import ca.uwinnipeg.proximitydroid.fragments.ImageFragment.ProximityServiceProvider;
 import ca.uwinnipeg.proximitydroid.fragments.IntersectionFragment;
-import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
+import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnClosedListener;
@@ -119,7 +129,7 @@ public class ProximityDroidActivity
       
       // Check if we need to populate the preference screen
       if (mPreferenceScreen != null) {
-        mService.populatePreferences(mPreferenceScreen);
+        populatePreferences(mService.getProbeFuncs());
       }
     }
     
@@ -340,8 +350,15 @@ public class ProximityDroidActivity
    * Displays the about dialog.
    */
   public void showAbout() {
-    Intent i = new Intent(this, AboutActivity.class);
-    startActivity(i);
+    // Create and show the dialog.
+    FragmentTransaction transaction = mFragmentManager.beginTransaction();
+    Fragment prev = mFragmentManager.findFragmentByTag("dialog");
+    if (prev != null) {
+      transaction.remove(prev);
+    }
+    transaction.addToBackStack(null);
+    DialogFragment newFragment = new AboutDialogFragment();
+    newFragment.show(transaction, "dialog");
   }
 
   /**
@@ -378,6 +395,44 @@ public class ProximityDroidActivity
     
     // store the preference screen so we can add to it when the service is bound
     mPreferenceScreen = root;
+  }
+  
+
+  public void populatePreferences(Map<String, List<ProbeFunc<Integer>>> features) {
+
+    // Generate preference items from features    
+    // generate a category for each given category    
+    for (String catStr : features.keySet()) {
+      List<ProbeFunc<Integer>> funcs = features.get(catStr);
+
+      // only add the category if it is non empty
+      if (funcs != null && !funcs.isEmpty()) {
+        PreferenceCategory category = new PreferenceCategory(this);
+        category.setTitle(catStr);
+        category.setKey(catStr);
+        mPreferenceScreen.addPreference(category);
+
+        // generate a preference for each probe func
+        for (ProbeFunc<Integer> func : funcs) {
+          
+          Preference pref;
+          
+          // Use switches when supported
+          if (android.os.Build.VERSION.SDK_INT >= 14) {
+            pref = new SwitchPreference(this);
+          }
+          else {
+            pref = new CheckBoxPreference(this);
+          }
+
+          // Set name and key
+          String key = catStr + "_" + func.toString();
+          pref.setTitle(func.toString());
+          pref.setKey(key);
+          category.addPreference(pref);
+        }
+      }
+    }
   }
 
 }
