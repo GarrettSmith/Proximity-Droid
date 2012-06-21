@@ -8,14 +8,31 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import ca.uwinnipeg.proximitydroid.ProximityService;
+import ca.uwinnipeg.proximitydroid.R;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 
 
 /**
  * @author Garrett Smith
  *
  */
+// TODO: remove intersection and neighbourhood fragment duplication
 public class IntersectionFragment extends RegionShowFragment {
+  
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setHasOptionsMenu(true);
+  }
   
   @Override
   public void onAttach(Activity activity) {
@@ -41,6 +58,36 @@ public class IntersectionFragment extends RegionShowFragment {
       mView.addHighlight(points);
     }
   } 
+  
+  // options menu
+  
+  @Override
+  public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    super.onCreateOptionsMenu(menu, inflater);
+    inflater.inflate(R.menu.epsilon, menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    if (item.getItemId() == R.id.menu_epsilon) {
+      FragmentManager fm = getActivity().getSupportFragmentManager();
+      FragmentTransaction transaction = fm.beginTransaction();
+      Fragment prev = fm.findFragmentByTag("dialog");
+      if (prev != null) {
+        transaction.remove(prev);
+      }
+      transaction.addToBackStack(null);
+      // TODO: get current epsilon
+      
+      DialogFragment newFragment = 
+          EpsilonDialogFragment.newInstance(ProximityService.INTERSECTION_EPSILON_SETTING);
+      newFragment.show(transaction, "dialog");
+      return true;
+    }
+    else {
+      return super.onOptionsItemSelected(item);
+    }
+  }
   
   // broadcasts
   
