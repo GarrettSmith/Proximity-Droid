@@ -17,4 +17,6 @@
     <string name="menu_save_image">Save Image</string>
     <string name="menu_epsilon">Set Epsilon</string>
     <string name="app_epsilon">Set Epsilon</string>
+    <string name="save_success">The image has been saved.</string>
+    <string name="save_fail">The image failed to save.</string>
 </resources>

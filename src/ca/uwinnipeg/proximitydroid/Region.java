@@ -82,7 +82,6 @@ public class Region implements Parcelable {
    * @param img
    * @return
    */  
-  // TODO: set progress to indefinite while calculating indices
   public int[] getIndices(Image img) {
     
     int[] indices;

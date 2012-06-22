@@ -77,7 +77,6 @@ public class IntersectionFragment extends RegionShowFragment {
         transaction.remove(prev);
       }
       transaction.addToBackStack(null);
-      // TODO: get current epsilon
       
       DialogFragment newFragment = 
           EpsilonDialogFragment.newInstance(ProximityService.INTERSECTION_EPSILON_SETTING);

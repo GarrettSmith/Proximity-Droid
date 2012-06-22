@@ -17,10 +17,12 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
@@ -66,8 +68,6 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
    * @param stream
    * @return
    */
-  // TODO: notify on save
-  // TODO: take off ui thread
   public boolean saveImage(Bitmap.CompressFormat format, int quality, OutputStream stream) {
     Bitmap bm = mView.getCroppedBitmap();
     return bm.compress(format, quality, stream);
@@ -94,8 +94,12 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
    * @param fileName
    * @return
    */
-  // TODO: check if media is mounted
   public boolean saveImage(String fileName) {
+    
+    // check if we can write to external storage
+    String state = Environment.getExternalStorageState();
+    if (!Environment.MEDIA_MOUNTED.equals(state)) return false;
+    
     File path = new File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), 
         PICTURES_DIRECTORY_NAME);
@@ -103,8 +107,6 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     
     // Make sure the directory exists
     path.mkdirs();
-    
-    // TODO: check if the file already exists
     
     // save the image
     if (saveImage(file)) {
@@ -148,13 +150,50 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     if (item.getItemId() == R.id.menu_save_image) {
-      // TODO: set image name
-      saveImage("TEST.jpg");
+      
+      // save image off of the ui thread
+      new AsyncTask<Void, Void, Boolean>() {
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+          return saveImage(getFileName());
+        }
+        
+        protected void onPostExecute(Boolean result) {
+          // TODO: give better error message
+          String msg = result ? getString(R.string.save_success) : getString(R.string.save_fail);
+          Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show();
+        };
+        
+      }.execute();
+      
       return true;
     }
     else {
       return super.onOptionsItemSelected(item);
     }
+  }
+  
+  protected String getFileName() {
+    File path = new File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), 
+        PICTURES_DIRECTORY_NAME);
+    
+    // get the file's name
+    StringBuilder str = new StringBuilder(mProvider.getService().getImageName());
+    str.append('-');
+    
+    // append number
+    for (int i = 0; true; i++) {
+      if (!new File(path, str.toString() + i + ".jpg").exists()) {
+        str.append(i);
+        break;
+      }
+    }
+    
+    // append file type
+    str.append(".jpg");
+    return str.toString();
   }
   
   protected void setupView() {

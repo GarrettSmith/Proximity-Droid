@@ -385,7 +385,6 @@ public class ProximityService
     // TODO: update neighbourhood and intersect after removing region
   }
   
-  // TODO: clear progress
   public void clearRegions() {
     // clear all regions
     mRegions.clear();
@@ -549,6 +548,14 @@ public class ProximityService
       }
       
     }.execute(mBitmap);
+  }
+  
+  public String getImageName() {
+    String path = mUri.getPath();
+    int start = path.lastIndexOf('/');
+    int end = path.lastIndexOf('.');
+    end = end < start ? path.length() : end;
+    return path.substring(start, end);
   }
 
   public Map<String, List<ProbeFunc<Integer>>> getProbeFuncs() {

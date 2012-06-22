@@ -23,7 +23,6 @@ import ca.uwinnipeg.proximitydroid.Util;
  * @author Garrett Smith
  *
  */
-// TODO: connect to service
 public class EpsilonDialogFragment 
   extends DialogFragment 
   implements OnSeekBarChangeListener {
@@ -131,13 +130,13 @@ public class EpsilonDialogFragment
 
   @Override
   public void onStartTrackingTouch(SeekBar seekBar) {
-    // TODO Auto-generated method stub
+    // Do nothing!
     
   }
 
   @Override
   public void onStopTrackingTouch(SeekBar seekBar) {
-    // TODO Auto-generated method stub
+    // Still do nothing!!
     
   }
 

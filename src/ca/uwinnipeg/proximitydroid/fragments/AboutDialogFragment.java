@@ -19,13 +19,6 @@ public class AboutDialogFragment extends DialogFragment {
   protected TextView mVersionTextView;
   
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    // set style
-    setStyle(DialogFragment.STYLE_NORMAL, R.style.Sherlock___Theme_Dialog);
-  }
-  
-  @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     // set title
