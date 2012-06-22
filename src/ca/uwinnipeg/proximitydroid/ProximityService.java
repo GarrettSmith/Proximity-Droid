@@ -32,6 +32,7 @@ import ca.uwinnipeg.proximity.image.RedFunc;
  *
  */
 // TODO: change neighbourhood calculation to be linear?
+// TODO: calculate nearness and similarity
 public class ProximityService 
   extends Service
   implements OnSharedPreferenceChangeListener {

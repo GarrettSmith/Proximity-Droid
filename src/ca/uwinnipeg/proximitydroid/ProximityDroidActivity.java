@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.StrictMode;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
@@ -63,6 +64,8 @@ public class ProximityDroidActivity
              ProximityServiceProvider {
 
   public static final String TAG = "ProximityDroidActivity";
+  
+  public static final boolean DEVELOPER_MODE = true;
   
   // UI
   private FragmentManager mFragmentManager;
@@ -154,17 +157,28 @@ public class ProximityDroidActivity
 
   @Override
   protected void onCreate(Bundle state) {
+    if (DEVELOPER_MODE) {
+      StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+      .detectAll()
+      .penaltyLog()
+      .build());
+      StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+      .detectAll()
+      .penaltyLog()
+      .penaltyDeath()
+      .build());
+    }
     super.onCreate(state);    
-    
+
     // to display progress
     requestWindowFeature(Window.FEATURE_PROGRESS);    
-    
+
     setContentView(R.layout.main);
-    
+
     mFragmentManager = getSupportFragmentManager();
 
     mSmallScreen = findViewById(R.id.main_layout) == null;
-    
+
     // setup the spinner
     mActionBar = getSupportActionBar();
     mSpinnerAdapter = ArrayAdapter.createFromResource(

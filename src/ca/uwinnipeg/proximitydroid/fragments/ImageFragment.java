@@ -6,6 +6,7 @@ package ca.uwinnipeg.proximitydroid.fragments;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import android.app.Activity;
@@ -80,13 +81,21 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
    */
   public boolean saveImage(File file) {
     FileOutputStream output;
+    boolean rtn = false;
     try {
       output = new FileOutputStream(file);
-    } catch (FileNotFoundException e) {
+      rtn = saveImage(CompressFormat.JPEG, 95, output);
+      output.close();
+      return rtn;
+    } 
+    catch (FileNotFoundException e) {
       Log.e(TAG, e.toString());
       return false;
+    } 
+    catch (IOException e) {
+      Log.e(TAG, e.toString());
+      return rtn;
     }
-    return saveImage(CompressFormat.JPEG, 95, output);
   }
   
   /**
