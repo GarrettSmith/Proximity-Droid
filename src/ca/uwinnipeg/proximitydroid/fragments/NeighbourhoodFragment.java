@@ -86,7 +86,6 @@ public class NeighbourhoodFragment extends RegionShowFragment {
         transaction.remove(prev);
       }
       transaction.addToBackStack(null);
-      // TODO: get current epsilon
       
       DialogFragment newFragment = 
           EpsilonDialogFragment.newInstance(ProximityService.NEIGHBOURHOOD_EPSILON_SETTING);

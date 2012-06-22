@@ -123,7 +123,14 @@ public class ProximityService
     @Override
     protected void onPostExecute(List<Integer> result) {
       mRunning = false;
-      publishProgress(10000);
+      updateProgress(10000);
+    }
+    
+    @Override
+    protected void onCancelled() {
+      super.onCancelled();
+      mRunning = false;
+      updateProgress(0);
     }
     
     public abstract String ProgressKey();
@@ -132,7 +139,7 @@ public class ProximityService
     protected final float PROGRESS_THERSHOLD = 0.001f;
   
     @Override
-    public void updateProgress(float progress) {
+    public void onProgressSet(float progress) {
       if (progress - mLastProgress > PROGRESS_THERSHOLD) {
         mLastProgress = progress;
         publishProgress(Integer.valueOf((int) (progress * 10000)));
@@ -142,13 +149,17 @@ public class ProximityService
     @Override
     protected void onProgressUpdate(Integer... values) {
       int value = values[0].intValue();
+      updateProgress(value);
+    }
+    
+    protected void updateProgress(int value) {
       // store progress
       mProgress.put(ProgressKey(), value);
       
       // broadcast progress
       Intent intent = new Intent(ProgressKey());
       intent.putExtra(PROGRESS, value);
-      mBroadcastManager.sendBroadcast(intent);
+      mBroadcastManager.sendBroadcast(intent);      
     }
   
   }
@@ -163,7 +174,7 @@ public class ProximityService
       if (isCancelled()) return null;
   
       int center = mRegion.getCenterIndex(mImage);
-      int[] regionPixels = mRegion.getIndices(mImage);
+      List<Integer> regionPixels = mRegion.getIndicesList(mImage);
 
       long startTime = System.currentTimeMillis();
       List<Integer> rtn = mImage.getHybridNeighbourhoodIndices(
@@ -282,7 +293,7 @@ public class ProximityService
     // Cancel running task
     NeighbourhoodTask task = mNeighbourhoodTasks.get(region);
     if (task != null && task.isRunning()) {
-      task.cancel(true);
+      task.cancel(false);
     }
   
     // run the new task
@@ -294,7 +305,7 @@ public class ProximityService
   protected void invalidateIntersection() {
     // stop all intersection tasks
     // cancel running task
-    if (mIntersectTask != null) mIntersectTask.cancel(true);
+    if (mIntersectTask != null && mIntersectTask.isRunning()) mIntersectTask.cancel(false);
     // clear upcoming tasks
     mIntersectQueue.clear();
     // clear calculated intersection
@@ -305,7 +316,8 @@ public class ProximityService
       addIntersectionTask(r);
     }    
     // start running intersection tasks
-    runNextIntersectionTask();
+    // we dont need to do this as adding the first task will make it run
+    //runNextIntersectionTask();
   }
   
 
@@ -419,15 +431,17 @@ public class ProximityService
   protected void setIntersection(List<Integer> indices) {
     // save the new intersection
     mIntersection.clear();
-    if (indices != null) mIntersection.addAll(indices);
+    mIntersection.addAll(indices);
     
     // convert to points
     int[] points = indicesToPoints(indices);
     
-    // broadcast the change
-    Intent intent = new Intent(ACTION_INTERSECTION_SET);
-    intent.putExtra(POINTS, points);
-    mBroadcastManager.sendBroadcast(intent);
+    // broadcast the change if we are finished calculating
+    if (mIntersectQueue.isEmpty()) {
+      Intent intent = new Intent(ACTION_INTERSECTION_SET);
+      intent.putExtra(POINTS, points);
+      mBroadcastManager.sendBroadcast(intent);
+    }
   }
   
   public int[] getIntersection() {
