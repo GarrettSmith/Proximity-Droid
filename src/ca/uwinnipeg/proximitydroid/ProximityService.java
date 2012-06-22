@@ -311,13 +311,12 @@ public class ProximityService
     // clear calculated intersection
     mIntersection.clear();    
     
-    // recalculate all intersections
+    // add all regions to the queue to be recalculated
     for (Region r : mRegions) {
-      addIntersectionTask(r);
+      mIntersectQueue.add(r);
     }    
     // start running intersection tasks
-    // we dont need to do this as adding the first task will make it run
-    //runNextIntersectionTask();
+    runNextIntersectionTask();
   }
   
 
