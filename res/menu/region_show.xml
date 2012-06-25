@@ -5,13 +5,13 @@
         android:id="@+id/menu_add"
         android:icon="@drawable/ic_menu_add"
         android:showAsAction="always|withText"
-        android:title="@string/menu_add">
+        android:title="@string/menu_add" android:orderInCategory="0">
     </item>
     <item
         android:id="@+id/menu_clear"
-        android:icon="@drawable/ic_menu_reset"
+        android:icon="@drawable/ic_menu_delete"
         android:showAsAction="always|withText"
-        android:title="@string/menu_clear">
+        android:title="@string/menu_clear" android:orderInCategory="3">
     </item>
 
 </menu>
