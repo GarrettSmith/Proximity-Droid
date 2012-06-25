@@ -94,6 +94,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     } 
     catch (IOException e) {
       Log.e(TAG, e.toString());
+      // return whether the image save successfully
       return rtn;
     }
   }

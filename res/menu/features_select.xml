@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/menu_features"
-        android:title="@string/menu_features">
+        android:title="@string/menu_features" android:orderInCategory="8">
     </item>
 
 </menu>
