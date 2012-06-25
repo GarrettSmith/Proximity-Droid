@@ -43,13 +43,6 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
   protected List<Region> mRegions = new ArrayList<Region>();
   
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    // declare there are items to be added to the action bar
-    setHasOptionsMenu(true);
-  }
-  
-  @Override
   public View onCreateView(
       LayoutInflater inflater, 
       ViewGroup container,

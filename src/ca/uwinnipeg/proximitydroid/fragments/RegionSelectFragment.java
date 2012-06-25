@@ -67,8 +67,6 @@ public class RegionSelectFragment
     super.onCreate(savedInstanceState);
     // retain state even if activity is destroyed
     setRetainInstance(true);
-    // declare there are items to be added to the action bar
-    setHasOptionsMenu(true);
   }
 
   @Override

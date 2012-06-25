@@ -44,7 +44,6 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
 
   protected RotatedBitmap mBitmap;
   
-  // TODO: setup file name
   protected String mFileName;
 
   protected V mView;
@@ -70,7 +69,10 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   
   public void onAttachService(ProximityService service) {
     // first time bitmap setup
-    mBitmap = getService().getBitmap();
+    if (service.hasBitmap()) {
+      mBitmap = service.getBitmap();
+      mFileName = service.getFileName();
+    }
   }
   
   // Image saving
@@ -221,18 +223,19 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     return str.toString();
   }
   
+  public void invalidate() {
+    if (mBitmap != null && mService != null) setupView();
+  }
+  
   protected void setupView() {
     mView.setImageBitmap(mBitmap);
   }  
 
-  public void setBitmap(RotatedBitmap bm) {
+  public void setBitmap(RotatedBitmap bm, String fileName) {
     mBitmap = bm;
+    mFileName = fileName;
     invalidate();
   } 
-  
-  public void invalidate() {
-    if (mBitmap != null) setupView();
-  }
   
   /**
    * Register to broadcasts.
@@ -255,6 +258,8 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     super.onDestroy();
     // unregister from broadcasts
     mBroadcastManager.unregisterReceiver(mBitmapchangedReceiver);
+    // disconnect from the service 
+    mService = null;
   }
   
   // Broadcasts
@@ -268,8 +273,8 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
       if (action.equals(ProximityService.ACTION_BITMAP_SET)) {
         RotatedBitmap bm = intent.getParcelableExtra(ProximityService.BITMAP);
         if (bm != null) {
-          setBitmap(bm);
-          mFileName = intent.getStringExtra(ProximityService.FILE_NAME);
+          String fileName = intent.getStringExtra(ProximityService.FILE_NAME);
+          setBitmap(bm, fileName);
         }
       }
     }

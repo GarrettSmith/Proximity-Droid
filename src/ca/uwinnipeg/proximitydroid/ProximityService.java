@@ -366,6 +366,10 @@ public class ProximityService
   // the uri of the image
   protected Uri mUri;
 
+  public Uri getUri() {
+    return mUri;
+  }
+
   public List<Region> getRegions() {
     return new ArrayList<Region>(mRegions);
   }

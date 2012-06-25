@@ -11,6 +11,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.StrictMode;
@@ -54,6 +55,7 @@ import com.actionbarsherlock.view.Window;
 //TODO: Allow screen rotation
 //TODO: Add editing created regions
 //TODO: Show an image loading view
+//TODO: Clear progress on switching tabs
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,
@@ -63,26 +65,36 @@ public class ProximityDroidActivity
 
   public static final String TAG = "ProximityDroidActivity";
   
-  public static final boolean DEVELOPER_MODE = true;
+  public static final boolean DEVELOPER_MODE = false;
   
   // UI
   private FragmentManager mFragmentManager;
   protected ActionBar mActionBar;
   protected SpinnerAdapter mSpinnerAdapter;  
   protected PreferenceScreen mPreferenceScreen;
+  protected ImageFragment<?> mCurrentFragment;
 
   // true if we are on a small screen devices
   protected boolean mSmallScreen;
   
   // Constants
+  
+  // Fragment tags
+  public static final String REGION_TAG = "region";
+  public static final String NEIGHBOURHOOD_TAG = "neighbourhood";
+  public static final String INTERSECTION_TAG = "intersection";
 
   // bundle keys
-  protected static final String BUNDLE_KEY_MODE = "Mode";
+  protected static final String BUNDLE_SELECTED_TAB = "Selected Tab";
+  protected static final String BUNDLE_URI = "Uri";
   
   // Service connection
   
   // The service we are bound to
   private ProximityService mService;
+  
+  // the uri to be sent to the service once it is connected
+  private Uri mUri;
 
   // Whether we are currently bound
   protected boolean mBound = false;
@@ -99,10 +111,13 @@ public class ProximityDroidActivity
       mService = binder.getService();
       mBound = true;
       
-      Log.i(TAG, "Binding service");
+      Log.v(TAG, "Binding service");
       
       // check if we need to start an activity to load a bitmap
-      if (!mService.hasBitmap()) {
+      if (mUri != null) {
+        mService.setBitmap(mUri);
+      }
+      else {
         Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
         startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
       }
@@ -113,7 +128,7 @@ public class ProximityDroidActivity
       }
       
       // connect the service to the current fragment
-      ((ImageFragment<?>) mActionBar.getSelectedTab().getTag()).setService(mService);
+      if (mCurrentFragment != null) mCurrentFragment.setService(mService);
     }
     
     @Override
@@ -161,27 +176,35 @@ public class ProximityDroidActivity
 
     mActionBar = getSupportActionBar();
     
+    mActionBar.setDisplayShowTitleEnabled(false);
+
     // setup tabs
     mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-    
+
     Tab tab = mActionBar.newTab()
         .setText(R.string.regions)
         .setTabListener(
-            new TabListener<RegionShowFragment>(this, "TAG", RegionShowFragment.class));
+            new TabListener<RegionShowFragment>(this, REGION_TAG, RegionShowFragment.class));
     mActionBar.addTab(tab, true);
-    
+
     tab = mActionBar.newTab()
         .setText(R.string.neighbourhoods)
         .setTabListener(
-            new TabListener<NeighbourhoodFragment>(this, "TAG", NeighbourhoodFragment.class));
+            new TabListener<NeighbourhoodFragment>(this, NEIGHBOURHOOD_TAG, NeighbourhoodFragment.class));
     mActionBar.addTab(tab);
-    
+
     tab = mActionBar.newTab()
         .setText(R.string.intersection)
         .setTabListener(
-            new TabListener<IntersectionFragment>(this, "TAG", IntersectionFragment.class));
+            new TabListener<IntersectionFragment>(this, INTERSECTION_TAG, IntersectionFragment.class));
     mActionBar.addTab(tab);
-    
+
+    // restore the selected tab and image
+    if (state != null) {
+      mActionBar.setSelectedNavigationItem(state.getInt(BUNDLE_SELECTED_TAB));
+      mUri = (Uri) state.getParcelable(BUNDLE_URI);
+    }
+
     // hide features if we are on a small screen
     if (mSmallScreen) {
       Fragment frag = mFragmentManager.findFragmentById(R.id.feature_fragment);
@@ -194,11 +217,12 @@ public class ProximityDroidActivity
     Intent intent = new Intent(this, ProximityService.class);
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
   }
-  
+
   @Override
   protected void onDestroy() {
     // release the service
     if (mBound) {
+      Log.v(TAG, "Unbinding service");
       unbindService(mConnection);
       mBound = false;
     }
@@ -207,12 +231,12 @@ public class ProximityDroidActivity
   
   @Override
   protected void onSaveInstanceState(Bundle state) {
+    // save the selected tab
+    state.putInt(BUNDLE_SELECTED_TAB, mActionBar.getSelectedNavigationIndex());
+    if (mBound) {
+      state.putParcelable(BUNDLE_URI, mService.getUri());
+    }
     super.onSaveInstanceState(state);
-  }
-  
-  @Override
-  protected void onRestoreInstanceState(Bundle savedInstanceState) {
-    super.onRestoreInstanceState(savedInstanceState);
   }
 
   @Override
@@ -377,7 +401,6 @@ public class ProximityDroidActivity
   }
   
   /**
-   * From http://developer.android.com/guide/topics/ui/actionbar.html#Tabs
    * @author Garrett Smith
    *
    * @param <T>
@@ -403,36 +426,44 @@ public class ProximityDroidActivity
 
     @Override
     public void onTabSelected(Tab tab, FragmentTransaction ft) {
-        // Check if the fragment is already initialized
-        if (mFragment == null) {
-            // If not, instantiate and add it to the activity
-            mFragment = (ImageFragment<?>) Fragment.instantiate(mActivity, mClass.getName());
-            // provide the service to the fragment if it is already attached
-            if (mService != null) mFragment.setService(mService);
-            // set the tag to be the tab's fragment
-            tab.setTag(mFragment);
-            // connect the service if it is 
-            if (mService != null) mFragment.setService(mService);
-            // add the fragment
-            ft.add(R.id.image_fragment_container, mFragment, mTag);
-        } else {
-            // If it exists, simply attach it in order to show it
-            ft.attach(mFragment);
-        }
+      // previous Fragment management
+      Fragment prevFragment = mFragmentManager.findFragmentByTag(mTag); 
+      if (prevFragment != null) { 
+        mFragment = (ImageFragment<?>) prevFragment; 
+        // connect the service if we can
+        if (mBound) mFragment.setService(mService);
+      }
+      
+      // Check if the fragment is already initialized
+      if (mFragment == null) {
+        // If not, instantiate and add it to the activity
+        mFragment = (ImageFragment<?>) Fragment.instantiate(mActivity, mClass.getName());
+        // Set the tab's tag to be the fragment
+        tab.setTag(mFragment);
+        // connect the service if we can
+        if (mBound) mFragment.setService(mService);
+        ft.add(R.id.image_fragment_container, mFragment, mTag);
+      } else {
+        // If it exists, simply attach it in order to show it
+        ft.attach(mFragment);
+      }
+      
+      // record the tab's fragment as the current fragment
+      mCurrentFragment = mFragment;
     }
 
     @Override
     public void onTabUnselected(Tab tab, FragmentTransaction ft) {
-        if (mFragment != null) {
-            // Detach the fragment, because another one is being attached
-            ft.detach(mFragment);
-        }
+      if (mFragment != null) {
+        // Remove the fragment, because another one is being added
+        ft.detach(mFragment);
+      }
     }
 
     @Override
     public void onTabReselected(Tab tab, FragmentTransaction ft) {
-        // User selected the already selected tab. Usually do nothing.
+      // User selected the already selected tab. Usually do nothing.
     }
-}
+  }
 
 }
