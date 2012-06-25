@@ -42,11 +42,6 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
   
   protected List<Region> mRegions = new ArrayList<Region>();
   
-//  public RegionShowFragment(List<Region> regions, RotatedBitmap bitmap) {
-//    super(bitmap);
-//    mRegions = regions;
-//  }
-  
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -62,13 +57,6 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
     super.onCreateView(inflater, container, savedInstanceState);
     mView = (RegionShowView) inflater.inflate(R.layout.region_show, container, false);
     return mView;
-  }
-  
-  @Override
-  public void onStart() {
-    super.onStart();
-    //if (mProvider != null) setupView();
-    
   }
   
   @Override
@@ -126,7 +114,7 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
   
   protected void setProgress(int progress) {
     Activity activity = getActivity();
-    if (activity != null) {
+    if (activity != null && isVisible()) {
       activity.setProgressBarVisibility(true);
       activity.setProgress(progress);
     }

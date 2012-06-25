@@ -58,6 +58,7 @@ public class ProximityService
   public static final String REGION = "Region";
   public static final String PROGRESS = "Progress";
   public static final String POINTS = "points";
+  public static final String FILE_NAME = "file name";
   
   // The broadcast manager used to send and receive messages
   protected LocalBroadcastManager mBroadcastManager;
@@ -534,6 +535,7 @@ public class ProximityService
     // Broadcast the change
     Intent intent = new Intent(ACTION_BITMAP_SET);
     intent.putExtra(BITMAP, mBitmap);
+    intent.putExtra(FILE_NAME, getFileName());
     mBroadcastManager.sendBroadcast(intent);
     
     // a task that loads the pixels into the perceptual system
@@ -551,7 +553,7 @@ public class ProximityService
     }.execute(mBitmap);
   }
   
-  public String getImageName() {
+  public String getFileName() {
     String path = mUri.getPath();
     int start = path.lastIndexOf('/');
     int end = path.lastIndexOf('.');

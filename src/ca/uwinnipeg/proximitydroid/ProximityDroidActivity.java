@@ -25,11 +25,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
-import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximitydroid.fragments.AboutDialogFragment;
-import ca.uwinnipeg.proximitydroid.fragments.ImageFragment.ProximityServiceProvider;
+import ca.uwinnipeg.proximitydroid.fragments.ImageFragment;
 import ca.uwinnipeg.proximitydroid.fragments.IntersectionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
@@ -41,6 +40,7 @@ import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.OnAddRegionSelec
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
+import com.actionbarsherlock.app.ActionBar.Tab;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -57,11 +57,9 @@ import com.actionbarsherlock.view.Window;
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,
-             OnAddRegionSelectedListener, 
-             OnNavigationListener,
+             OnAddRegionSelectedListener,
              ListNavigationProvider,
-             OnClosedListener,
-             ProximityServiceProvider {
+             OnClosedListener {
 
   public static final String TAG = "ProximityDroidActivity";
   
@@ -76,23 +74,7 @@ public class ProximityDroidActivity
   // true if we are on a small screen devices
   protected boolean mSmallScreen;
   
-  // All the view modes
-  public enum ViewMode { 
-    VIEW_REGIONS, 
-    VIEW_NEIGHBOURHOODS, 
-    VIEW_INTERSECTION, 
-    SELECT_REGION, 
-    EDIT_REGION };
-    
-  // The current mode
-  protected ViewMode mMode;
-  
   // Constants
-  
-  // Used to read the positions of the view mode spinner
-  public static final int LIST_SHOW_INDEX = 0;
-  public static final int LIST_NEIGHBOURHOOD_INDEX = 1;
-  public static final int LIST_INTERSECTION_INDEX = 2;
 
   // bundle keys
   protected static final String BUNDLE_KEY_MODE = "Mode";
@@ -101,11 +83,6 @@ public class ProximityDroidActivity
   
   // The service we are bound to
   private ProximityService mService;
-  
-  @Override
-  public ProximityService getService() {
-    return mService;
-  }
 
   // Whether we are currently bound
   protected boolean mBound = false;
@@ -134,6 +111,9 @@ public class ProximityDroidActivity
       if (mPreferenceScreen != null) {
         populatePreferences(mService.getProbeFuncs());
       }
+      
+      // connect the service to the current fragment
+      ((ImageFragment<?>) mActionBar.getSelectedTab().getTag()).setService(mService);
     }
     
     @Override
@@ -179,15 +159,28 @@ public class ProximityDroidActivity
 
     mSmallScreen = findViewById(R.id.main_layout) == null;
 
-    // setup the spinner
     mActionBar = getSupportActionBar();
-    mSpinnerAdapter = ArrayAdapter.createFromResource(
-        this, 
-        R.array.operations_list, 
-        R.layout.sherlock_spinner_dropdown_item);
-
-    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);   
-    resetListNavigationCallbacks();
+    
+    // setup tabs
+    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    
+    Tab tab = mActionBar.newTab()
+        .setText(R.string.regions)
+        .setTabListener(
+            new TabListener<RegionShowFragment>(this, "TAG", RegionShowFragment.class));
+    mActionBar.addTab(tab, true);
+    
+    tab = mActionBar.newTab()
+        .setText(R.string.neighbourhoods)
+        .setTabListener(
+            new TabListener<NeighbourhoodFragment>(this, "TAG", NeighbourhoodFragment.class));
+    mActionBar.addTab(tab);
+    
+    tab = mActionBar.newTab()
+        .setText(R.string.intersection)
+        .setTabListener(
+            new TabListener<IntersectionFragment>(this, "TAG", IntersectionFragment.class));
+    mActionBar.addTab(tab);
     
     // hide features if we are on a small screen
     if (mSmallScreen) {
@@ -214,92 +207,25 @@ public class ProximityDroidActivity
   
   @Override
   protected void onSaveInstanceState(Bundle state) {
-    // save the current view mode
-    if (mMode != null) {
-      state.putString(BUNDLE_KEY_MODE, mMode.name());
-    }
     super.onSaveInstanceState(state);
   }
   
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
-    //restore the view mode
-    String modeName = savedInstanceState.getString(BUNDLE_KEY_MODE);
-    setViewMode(ViewMode.valueOf(modeName));
   }
-  
-  // the previous position in the navigation list, used to restore view after adding a region
-  protected int mPreviousPosition = LIST_SHOW_INDEX;
 
   @Override
   public void setListNavigationCallbacks(
       SpinnerAdapter adapter,
       OnNavigationListener listener) {
+    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
     mActionBar.setListNavigationCallbacks(adapter, listener);
   }
 
   @Override
   public void resetListNavigationCallbacks() {
-    mActionBar.setListNavigationCallbacks(mSpinnerAdapter, this);
-    mActionBar.setSelectedNavigationItem(mPreviousPosition);
-  }
-
-  @Override
-  public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-    switch(itemPosition) {
-      case LIST_SHOW_INDEX:
-        setViewMode(ViewMode.VIEW_REGIONS);
-        break;
-        
-      case LIST_NEIGHBOURHOOD_INDEX:
-        setViewMode(ViewMode.VIEW_NEIGHBOURHOODS);
-        break;
-
-      case LIST_INTERSECTION_INDEX:
-        setViewMode(ViewMode.VIEW_INTERSECTION);
-        break;
-    }
-    return true;
-  }
-  
-  protected void setViewMode(ViewMode newMode) {
-    boolean changed = mMode != newMode;
-    mMode = newMode;
-    
-    if (changed) {      
-      FragmentTransaction trans = mFragmentManager.beginTransaction();
-
-      Fragment frag;
-      int progress = 10000;
-      switch(mMode) {
-        case VIEW_INTERSECTION:
-          frag = new IntersectionFragment();
-          progress = mService.getIntersectionProgress();
-          break;
-        case VIEW_NEIGHBOURHOODS:
-          frag = new NeighbourhoodFragment();
-          progress = mService.getNeighbourhoodProgress();
-          break;
-        default:
-          frag = new RegionShowFragment();
-          break;
-      }
-
-      // switch the fragments
-      trans.replace(R.id.image_fragment_container, frag);
-      trans.commit();
-      
-      // change the progress bar
-      // if the progress was set or calculation was previously finished
-      if (progress != 10000) {
-        setProgressBarVisibility(true);
-        setProgress(progress);
-      }
-      else {
-        setProgressBarVisibility(false);
-      }
-    }
+    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
   }
 
   @Override
@@ -381,14 +307,15 @@ public class ProximityDroidActivity
   public void onAddRegionSelected() {
 
     // we will need the options menu redrawn
-    invalidateOptionsMenu();    
-
-    // to restore to the proper view later
-    mPreviousPosition = mActionBar.getSelectedNavigationIndex();
+    invalidateOptionsMenu(); 
+    
+    // create the fragment
+    RegionSelectFragment frag = new RegionSelectFragment();
+    frag.setService(mService);
 
     // swap the select fragment in
     mFragmentManager.beginTransaction()
-    .replace(R.id.image_fragment_container, new RegionSelectFragment())
+    .replace(R.id.image_fragment_container, frag)
     .addToBackStack(null)
     .commit();
   }
@@ -448,5 +375,64 @@ public class ProximityDroidActivity
       }
     }
   }
+  
+  /**
+   * From http://developer.android.com/guide/topics/ui/actionbar.html#Tabs
+   * @author Garrett Smith
+   *
+   * @param <T>
+   */
+  public class TabListener<T extends ImageFragment<?>> implements ActionBar.TabListener {
+    private ImageFragment<?> mFragment;
+    private final Activity mActivity;
+    private final String mTag;
+    private final Class<T> mClass;
+
+    /** Constructor used each time a new tab is created.
+      * @param activity  The host Activity, used to instantiate the fragment
+      * @param tag  The identifier tag for the fragment
+      * @param clz  The fragment's Class, used to instantiate the fragment
+      */
+    public TabListener(Activity activity, String tag, Class<T> clz) {
+        mActivity = activity;
+        mTag = tag;
+        mClass = clz;
+    }
+
+    /* The following are each of the ActionBar.TabListener callbacks */
+
+    @Override
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        // Check if the fragment is already initialized
+        if (mFragment == null) {
+            // If not, instantiate and add it to the activity
+            mFragment = (ImageFragment<?>) Fragment.instantiate(mActivity, mClass.getName());
+            // provide the service to the fragment if it is already attached
+            if (mService != null) mFragment.setService(mService);
+            // set the tag to be the tab's fragment
+            tab.setTag(mFragment);
+            // connect the service if it is 
+            if (mService != null) mFragment.setService(mService);
+            // add the fragment
+            ft.add(R.id.image_fragment_container, mFragment, mTag);
+        } else {
+            // If it exists, simply attach it in order to show it
+            ft.attach(mFragment);
+        }
+    }
+
+    @Override
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        if (mFragment != null) {
+            // Detach the fragment, because another one is being attached
+            ft.detach(mFragment);
+        }
+    }
+
+    @Override
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        // User selected the already selected tab. Usually do nothing.
+    }
+}
 
 }

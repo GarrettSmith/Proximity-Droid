@@ -3,6 +3,8 @@
  */
 package ca.uwinnipeg.proximitydroid.fragments;
 
+import java.util.Formatter;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -23,6 +25,7 @@ import ca.uwinnipeg.proximitydroid.Util;
  * @author Garrett Smith
  *
  */
+// TODO: make the maximum value the norm
 public class EpsilonDialogFragment 
   extends DialogFragment 
   implements OnSeekBarChangeListener {
@@ -38,7 +41,10 @@ public class EpsilonDialogFragment
   protected SharedPreferences mPreferencs;
   
   // the number of steps you can adjust by
-  protected final int STEPS = 10;
+  protected final int STEPS = 20;
+  
+  // the number formatter
+  protected static final String FORMAT = "%1.2f";
   
   // Argument keys
   protected static final String PREF_KEY = "pref key";
@@ -117,7 +123,7 @@ public class EpsilonDialogFragment
   }
   
   protected void updateValueText() {
-    String str = Float.toString(mCurrentValue);
+    String str = new Formatter().format(FORMAT, mCurrentValue).toString();
     mValueText.setText(str);
   }
 

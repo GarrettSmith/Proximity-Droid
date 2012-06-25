@@ -43,6 +43,9 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   public static final String TAG = "ImageFragment";
 
   protected RotatedBitmap mBitmap;
+  
+  // TODO: setup file name
+  protected String mFileName;
 
   protected V mView;
 
@@ -50,17 +53,27 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   
   protected BitmapChangedReceiver mBitmapchangedReceiver = new BitmapChangedReceiver();
   
-  protected ProximityServiceProvider mProvider;
+  public static final String PICTURES_DIRECTORY_NAME = "ProximityDroid";  
   
-  public static final String PICTURES_DIRECTORY_NAME = "ProximityDroid";
+  // Service
   
-  public interface ProximityServiceProvider {
-    public ProximityService getService();
-  }
+  private ProximityService mService;
+
+  public void setService(ProximityService service) {
+    mService = service;
+    onAttachService(mService);
+  }  
   
   public ProximityService getService() {
-    return mProvider.getService();
+    return mService;
   }
+  
+  public void onAttachService(ProximityService service) {
+    // first time bitmap setup
+    mBitmap = getService().getBitmap();
+  }
+  
+  // Image saving
   
   /**
    * Saves the image given all the settings.
@@ -138,6 +151,8 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     }
   }
   
+  // Lifecycle
+  
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -190,7 +205,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
         PICTURES_DIRECTORY_NAME);
     
     // get the file's name
-    StringBuilder str = new StringBuilder(mProvider.getService().getImageName());
+    StringBuilder str = new StringBuilder(mFileName);
     str.append('-');
     
     // append number
@@ -224,16 +239,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
    */
   @Override
   public void onAttach(Activity activity) {
-    super.onAttach(activity);    
-    // setup access to the service
-    try {
-      mProvider = (ProximityServiceProvider) activity;
-    } catch (ClassCastException e) {
-      throw new ClassCastException(activity.toString() + 
-          " must implement ProximityServiceProvider");
-    }  
-    // first time bitmap setup
-    mBitmap = getService().getBitmap();
+    super.onAttach(activity);
     // get the application's broadcast manager
     mBroadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
     // register to receive bitmap broadcasts
@@ -263,11 +269,11 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
         RotatedBitmap bm = intent.getParcelableExtra(ProximityService.BITMAP);
         if (bm != null) {
           setBitmap(bm);
+          mFileName = intent.getStringExtra(ProximityService.FILE_NAME);
         }
       }
     }
     
   }
-  
 
 }
