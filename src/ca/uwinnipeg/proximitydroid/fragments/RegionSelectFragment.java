@@ -122,7 +122,7 @@ public class RegionSelectFragment
         R.layout.sherlock_spinner_dropdown_item);
     mProvider.setListNavigationCallbacks(mSpinnerAdapter, this);
   }
-
+  
   @Override
   public void onDestroyOptionsMenu() {
     super.onDestroyOptionsMenu();

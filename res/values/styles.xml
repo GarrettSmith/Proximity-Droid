@@ -2,6 +2,17 @@
 <resources>
 
     <style name="base" parent="Theme.Sherlock">
+        <item name="android:actionBarTabTextStyle">@style/tab_text</item>
+        <item name="android:actionBarTabStyle">@style/tab</item>
+    </style>
+    
+    <style name="tab_text" parent="Widget.Sherlock.ActionBar.TabText">
+        <item name="android:lines">1</item>
+    </style>
+    
+    <style name="tab" parent="Widget.Sherlock.ActionBar.TabView">
+        <item name="android:paddingLeft">14dip</item>
+        <item name="android:paddingRight">14dip</item>
     </style>
 
 </resources>

@@ -22,4 +22,5 @@
     <string name="neighbourhoods">Neighbourhoods</string>
     <string name="regions">Regions</string>
     <string name="intersection">Intersection</string>
+    <string name="intersection_degree">Degree:</string>
 </resources>

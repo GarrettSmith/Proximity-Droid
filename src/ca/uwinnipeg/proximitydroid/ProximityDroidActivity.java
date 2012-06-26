@@ -11,10 +11,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.StrictMode;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
@@ -52,10 +50,10 @@ import com.actionbarsherlock.view.Window;
  * @author Garrett Smith
  *
  */
-//TODO: Save regions on rotation
 //TODO: Add editing created regions
 //TODO: Show an image loading view
 //TODO: Clear progress on switching tabs
+//TODO: Don't give fragments a reference to service
 public class ProximityDroidActivity 
   extends SherlockFragmentActivity 
   implements OnPreferenceAttachedListener,
@@ -64,8 +62,6 @@ public class ProximityDroidActivity
              OnClosedListener {
 
   public static final String TAG = "ProximityDroidActivity";
-  
-  public static final boolean DEVELOPER_MODE = false;
   
   // UI
   private FragmentManager mFragmentManager;
@@ -83,10 +79,12 @@ public class ProximityDroidActivity
   public static final String REGION_TAG = "region";
   public static final String NEIGHBOURHOOD_TAG = "neighbourhood";
   public static final String INTERSECTION_TAG = "intersection";
+  public static final String SELECT_TAG = "select";
 
   // bundle keys
   protected static final String BUNDLE_SELECTED_TAB = "Selected Tab";
-  protected static final String BUNDLE_URI = "Uri";
+  protected static final String BUNDLE_SELECTING_REGION = "Selecting region";
+
   
   // Service connection
   
@@ -110,7 +108,7 @@ public class ProximityDroidActivity
       
       Log.v(TAG, "Binding service");
 
-      // request an image if the service doe not already have one
+      // request an image if the service does not already have one
       if (!mService.hasBitmap()) {
         Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
         startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
@@ -146,17 +144,6 @@ public class ProximityDroidActivity
 
   @Override
   protected void onCreate(Bundle state) {
-    if (DEVELOPER_MODE) {
-      StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-      .detectAll()
-      .penaltyLog()
-      .build());
-      StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-      .detectAll()
-      .penaltyLog()
-      .penaltyDeath()
-      .build());
-    }
     super.onCreate(state);    
 
     // to display progress
@@ -169,8 +156,6 @@ public class ProximityDroidActivity
     mSmallScreen = findViewById(R.id.main_layout) == null;
 
     mActionBar = getSupportActionBar();
-    
-    mActionBar.setDisplayShowTitleEnabled(false);
 
     // setup tabs
     mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -179,7 +164,7 @@ public class ProximityDroidActivity
         .setText(R.string.regions)
         .setTabListener(
             new TabListener<RegionShowFragment>(this, REGION_TAG, RegionShowFragment.class));
-    mActionBar.addTab(tab, true);
+    mActionBar.addTab(tab);
 
     tab = mActionBar.newTab()
         .setText(R.string.neighbourhoods)
@@ -192,12 +177,14 @@ public class ProximityDroidActivity
         .setTabListener(
             new TabListener<IntersectionFragment>(this, INTERSECTION_TAG, IntersectionFragment.class));
     mActionBar.addTab(tab);
-
+    
     // restore the selected tab
+    int selected = 0;
     if (state != null) {
-      mActionBar.setSelectedNavigationItem(state.getInt(BUNDLE_SELECTED_TAB));
+      selected = state.getInt(BUNDLE_SELECTED_TAB);
     }
-
+    mActionBar.setSelectedNavigationItem(selected);
+        
     // hide features if we are on a small screen
     if (mSmallScreen) {
       Fragment frag = mFragmentManager.findFragmentById(R.id.feature_fragment);
@@ -234,21 +221,8 @@ public class ProximityDroidActivity
   @Override
   protected void onSaveInstanceState(Bundle state) {
     // save the selected tab
-    state.putInt(BUNDLE_SELECTED_TAB, mActionBar.getSelectedNavigationIndex());    
+    state.putInt(BUNDLE_SELECTED_TAB, mActionBar.getSelectedNavigationIndex());
     super.onSaveInstanceState(state);
-  }
-
-  @Override
-  public void setListNavigationCallbacks(
-      SpinnerAdapter adapter,
-      OnNavigationListener listener) {
-    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-    mActionBar.setListNavigationCallbacks(adapter, listener);
-  }
-
-  @Override
-  public void resetListNavigationCallbacks() {
-    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
   }
 
   @Override
@@ -340,19 +314,27 @@ public class ProximityDroidActivity
 
     // swap the select fragment in
     mFragmentManager.beginTransaction()
-    .replace(R.id.image_fragment_container, frag)
+    .replace(R.id.image_fragment_container, frag, SELECT_TAG)
     .addToBackStack(null)
     .commit();
   }
 
   @Override
+  public void setListNavigationCallbacks(
+      SpinnerAdapter adapter,
+      OnNavigationListener listener) {
+    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+    mActionBar.setListNavigationCallbacks(adapter, listener);
+  }
+
+  @Override
+  public void resetListNavigationCallbacks() {
+    mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+  }
+
+  @Override
   public void onClosed() {
     mFragmentManager.popBackStack();
-  }
-  
-  protected boolean isLoading() {
-    boolean loading = false;    
-    return loading;
   }
   
   @Override

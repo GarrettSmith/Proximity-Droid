@@ -16,7 +16,7 @@
     <item
         android:id="@+id/menu_reset"
         android:icon="@drawable/ic_menu_reset"
-        android:showAsAction="ifRoom|withText"
+        android:showAsAction="ifRoom"
         android:title="@string/menu_reset" android:orderInCategory="2">
     </item>
 

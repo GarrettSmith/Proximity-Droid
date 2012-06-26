@@ -8,10 +8,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
 
@@ -27,6 +33,15 @@ import com.actionbarsherlock.view.MenuItem;
 // TODO: remove intersection and neighbourhood fragment duplication
 public class IntersectionFragment extends RegionShowFragment {
   
+  protected TextView mDegreeText;
+  protected ProgressBar mDegreeBar;
+  
+  @Override
+  public View onCreateView(LayoutInflater inflater, ViewGroup container,
+      Bundle savedInstanceState) {
+    return super.onCreateView(inflater, container, savedInstanceState);
+  }
+  
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -34,6 +49,7 @@ public class IntersectionFragment extends RegionShowFragment {
     filter.addAction(ProximityService.ACTION_INTERSECTION_PROGRESS);
     filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);
     mBroadcastManager.registerReceiver(mIntersectionReceiver, filter);
+    
   }
   
   @Override
@@ -58,6 +74,12 @@ public class IntersectionFragment extends RegionShowFragment {
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     super.onCreateOptionsMenu(menu, inflater);
     inflater.inflate(R.menu.epsilon, menu);
+    inflater.inflate(R.menu.intersection, menu);
+    
+    MenuItem item = menu.findItem(R.id.menu_degree);
+    View view = item.getActionView();
+    mDegreeText = (TextView) view.findViewById(R.id.degree_value);
+    mDegreeBar = (ProgressBar) view.findViewById(R.id.degree_bar);
   }
 
   @Override
@@ -93,6 +115,8 @@ public class IntersectionFragment extends RegionShowFragment {
       if (action.equals(ProximityService.ACTION_INTERSECTION_SET)) {
         int[] points = intent.getIntArrayExtra(ProximityService.POINTS);
         mView.setHighlight(points);
+        mDegreeBar.setIndeterminate(true);
+        mDegreeText.setText(Integer.toString(points.length));
       }
       else if (action.equals(ProximityService.ACTION_INTERSECTION_PROGRESS)) {
         int progress = intent.getIntExtra(ProximityService.PROGRESS, 0);
