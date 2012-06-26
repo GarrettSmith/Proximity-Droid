@@ -68,7 +68,7 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
   }
   
   @Override
-  public void onDestroy() {
+  public void onDetach() {
     mBroadcastManager.unregisterReceiver(mRegionsChangedReceiver);
     super.onDestroy();
   }
@@ -122,6 +122,7 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
       String action = intent.getAction();
       if (action.equals(ProximityService.ACTION_REGION_ADDED)) {
         Region r = intent.getParcelableExtra(ProximityService.REGION);
+        // FIXME: find why we get a null pointer exception here after rotating
         mView.add(r);
       }
       else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {

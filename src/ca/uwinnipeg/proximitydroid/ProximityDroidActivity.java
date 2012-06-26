@@ -52,7 +52,7 @@ import com.actionbarsherlock.view.Window;
  * @author Garrett Smith
  *
  */
-//TODO: Allow screen rotation
+//TODO: Save regions on rotation
 //TODO: Add editing created regions
 //TODO: Show an image loading view
 //TODO: Clear progress on switching tabs
@@ -92,9 +92,6 @@ public class ProximityDroidActivity
   
   // The service we are bound to
   private ProximityService mService;
-  
-  // the uri to be sent to the service once it is connected
-  private Uri mUri;
 
   // Whether we are currently bound
   protected boolean mBound = false;
@@ -112,12 +109,9 @@ public class ProximityDroidActivity
       mBound = true;
       
       Log.v(TAG, "Binding service");
-      
-      // check if we need to start an activity to load a bitmap
-      if (mUri != null) {
-        mService.setBitmap(mUri);
-      }
-      else {
+
+      // request an image if the service doe not already have one
+      if (!mService.hasBitmap()) {
         Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
         startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
       }
@@ -199,10 +193,9 @@ public class ProximityDroidActivity
             new TabListener<IntersectionFragment>(this, INTERSECTION_TAG, IntersectionFragment.class));
     mActionBar.addTab(tab);
 
-    // restore the selected tab and image
+    // restore the selected tab
     if (state != null) {
       mActionBar.setSelectedNavigationItem(state.getInt(BUNDLE_SELECTED_TAB));
-      mUri = (Uri) state.getParcelable(BUNDLE_URI);
     }
 
     // hide features if we are on a small screen
@@ -212,14 +205,23 @@ public class ProximityDroidActivity
       .hide(frag)
       .commit();
     }    
+    
 
-    // bind to service
     Intent intent = new Intent(this, ProximityService.class);
+    // start the service
+    startService(intent);
+    // bind to service
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
   }
 
   @Override
   protected void onDestroy() {
+    // stop the service if we are finishing
+    if (isFinishing()) {
+      Log.v(TAG, "Stopping service");
+      Intent intent = new Intent(this, ProximityService.class);
+      stopService(intent);
+    }
     // release the service
     if (mBound) {
       Log.v(TAG, "Unbinding service");
@@ -232,10 +234,7 @@ public class ProximityDroidActivity
   @Override
   protected void onSaveInstanceState(Bundle state) {
     // save the selected tab
-    state.putInt(BUNDLE_SELECTED_TAB, mActionBar.getSelectedNavigationIndex());
-    if (mBound) {
-      state.putParcelable(BUNDLE_URI, mService.getUri());
-    }
+    state.putInt(BUNDLE_SELECTED_TAB, mActionBar.getSelectedNavigationIndex());    
     super.onSaveInstanceState(state);
   }
 
@@ -292,12 +291,14 @@ public class ProximityDroidActivity
     // toggle hiding probe frag
     if (show) {
       if (mSmallScreen) {
+        mActionBar.hide();
         transaction.addToBackStack(null);
       }
       transaction.show(fragment);
     }
     else {      
       if (mSmallScreen) {
+        mActionBar.show();
       }      
       transaction.hide(fragment);      
     }

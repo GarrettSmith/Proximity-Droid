@@ -160,6 +160,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     super.onCreate(savedInstanceState);
     // set that this fragment has an options menu
     setHasOptionsMenu(true);
+    setRetainInstance(true);
   }
 
   @Override

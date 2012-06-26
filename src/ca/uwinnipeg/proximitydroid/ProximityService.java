@@ -76,6 +76,12 @@ public class ProximityService
   // Lifecycle
   
   @Override
+  public int onStartCommand(Intent intent, int flags, int startId) {
+    // state this service must be explicitly stopped
+    return START_STICKY;
+  }
+  
+  @Override
   public void onCreate() {
     super.onCreate();
     
