@@ -71,6 +71,7 @@ public class ProximityDroidActivity
   // Service connection
   
   protected void onProximityServiceConnected() {
+    super.onProximityServiceConnected();
     // request an image if the service does not already have one
     if (!getService().hasBitmap()) {
       Intent i = new Intent(Intent.ACTION_PICK, Images.Media.INTERNAL_CONTENT_URI);
@@ -152,6 +153,10 @@ public class ProximityDroidActivity
     MenuInflater inflater = getSupportMenuInflater();
     inflater.inflate(R.menu.main, menu);
     inflater.inflate(R.menu.features_select, menu);
+    // setup toggle text on large screens
+    if (!mSmallScreen) {
+      updateToggleText(menu.findItem(R.id.menu_features), true);
+    }
     return true;
   }
 
