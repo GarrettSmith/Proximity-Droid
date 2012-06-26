@@ -22,6 +22,7 @@
             </intent-filter>
         </activity>
         <service android:name="ProximityService"></service>
+        <activity android:label="@string/app_features" android:name="FeatureActivity"></activity>
     </application>
 
 </manifest>

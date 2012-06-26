@@ -8,10 +8,4 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <fragment
-        android:id="@+id/feature_fragment"
-        android:name="ca.uwinnipeg.proximitydroid.fragments.FeatureFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
 </FrameLayout>
