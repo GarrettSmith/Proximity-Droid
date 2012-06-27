@@ -8,6 +8,7 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.MathUtil;
 import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
@@ -35,12 +36,13 @@ public class RegionView extends Region{
   
   //Paint shared by all neighbourhoods
   public static final Paint REGION_PAINT = new Paint();
+  public static final Paint CENTER_BASE_PAINT = new Paint();
+
+  // Path used to draw center point
+  public static final Path CENTER_BASE_PATH = new Path();
 
   // The view containing this neighbourhood.
   protected ProximityImageView mView;
-
-  // Whether this neighbourhood is selected or not.
-  boolean mFocused;
 
   // The matrix used to move from image space to screen space
   protected Matrix mScreenMatrix; 
@@ -50,10 +52,17 @@ public class RegionView extends Region{
   
   public RegionView(ProximityImageView view, Region source) {
     super(source);
+    setup(view);
+  }
+
+  public RegionView(ProximityImageView view, Image image) {
+    super(image);
+    setup(view);
+  }
+  
+  private void setup(ProximityImageView view) {
     
     mView = view;
-
-    // Grab the matrix
     mScreenMatrix = mView.getFinalMatrix();
     
     // One-time setup
@@ -66,24 +75,16 @@ public class RegionView extends Region{
       REGION_PAINT.setStyle(Paint.Style.STROKE);
       REGION_PAINT.setColor(rs.getColor(R.color.region_unfocused_color));
       REGION_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+
+      CENTER_BASE_PAINT.setStyle(Paint.Style.FILL);
+      CENTER_BASE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+
+      CENTER_BASE_PATH.addCircle(
+          0, 
+          0, 
+          rs.getDimension(R.dimen.region_center_radius), 
+          Path.Direction.CW);
     }
-  }
-
-  public RegionView(ProximityImageView view) {
-    this(view, null);
-  }
-
-  /**
-   * Sets the focused status of this neighbourhood.
-   * A focused neighbourhood draws differently.
-   * @param focus
-   */
-  public void setFocused(Boolean focus) {
-    mFocused = focus;
-  }
-
-  public boolean isFocused() {
-    return mFocused;
   }
 
   /**
@@ -331,10 +332,18 @@ public class RegionView extends Region{
         Math.round(r.bottom));
   }
   
+  public void drawWithCenter(Canvas canvas) {
+    draw(canvas);
+    drawCenter(canvas);
+  }
+  
   public void draw(Canvas canvas) {
     canvas.drawPath(getShapePath(), REGION_PAINT);
   }
   
+  public void drawCenter(Canvas canvas) {
+    canvas.drawPath(getCenterPath(), getCenterPaint());
+  }
   
   public Path getShapePath() {
     RectF bounds = getScreenSpaceBounds();
@@ -354,6 +363,23 @@ public class RegionView extends Region{
     }
     
     return shapePath;
+  }
+  
+  public Path getCenterPath() {
+    Path centerPath = new Path();
+    RectF bounds = getScreenSpaceBounds();
+    
+    centerPath.addPath(CENTER_BASE_PATH, bounds.centerX(), bounds.centerY());
+    
+    return centerPath;
+  }
+  
+  public Paint getCenterPaint() {
+    Paint paint = new Paint(CENTER_BASE_PAINT);
+    int index = getCenterIndex();
+    int color = mImage.getObject(index);
+    paint.setColor(color);
+    return paint;
   }
 
 }

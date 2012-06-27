@@ -184,8 +184,8 @@ public class ProximityService
       // check if we should stop because the task was cancelled
       if (isCancelled()) return null;
   
-      int center = mRegion.getCenterIndex(mImage);
-      List<Integer> regionPixels = mRegion.getIndicesList(mImage);
+      int center = mRegion.getCenterIndex();
+      List<Integer> regionPixels = mRegion.getIndicesList();
 
       long startTime = System.currentTimeMillis();
       List<Integer> rtn = mImage.getHybridNeighbourhoodIndices(
@@ -225,14 +225,14 @@ public class ProximityService
       
       // check if this is the only region
       if (mIntersection.isEmpty()) {
-        indices = mRegion.getIndicesList(mImage);
+        indices = mRegion.getIndicesList();
       }
       // else take the intersection of the region and the current intersection
       else {
         long startTime = System.currentTimeMillis();
         indices = mImage.getHybridIntersectIndices(
             mIntersection, 
-            mRegion.getIndicesList(mImage),
+            mRegion.getIndicesList(),
             mIntersectEpsilon, 
             this);
         Log.i(TAG, "Intersection took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
@@ -248,7 +248,7 @@ public class ProximityService
       
       // store the new degree 
       float intSize = result.size();
-      float unionSize = MathUtil.union(mIntersection, mRegion.getIndicesList(mImage)).size();
+      float unionSize = MathUtil.union(mIntersection, mRegion.getIndicesList()).size();
       float degree = 1 - (intSize / unionSize);
       setIntersectionDegree(degree);
       
@@ -386,6 +386,10 @@ public class ProximityService
   
   // the uri of the image
   protected Uri mUri;
+  
+  public Image getImage() {
+    return mImage;
+  }
 
   public Uri getUri() {
     return mUri;

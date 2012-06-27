@@ -75,14 +75,16 @@ public class RegionSelectFragment
       ViewGroup container,
       Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-    mView =  (RegionSelectView) inflater.inflate(R.layout.region_select, container, false);    
-    mRegionView = mView.getRegion();
+    mView = (RegionSelectView) inflater.inflate(R.layout.region_select, container, false);    
     return mView;
   }
   
   @Override
   protected void setupView() {
     super.setupView();
+
+    mView.setImage(getService().getImage());
+    mRegionView = mView.getRegion();
 
     int width = mBitmap.getWidth();
     int height = mBitmap.getHeight();

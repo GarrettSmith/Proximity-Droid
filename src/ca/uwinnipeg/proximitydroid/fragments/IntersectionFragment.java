@@ -73,7 +73,7 @@ public class IntersectionFragment extends RegionShowFragment {
     }
   } 
   
-  public static final String DEGREE_FORMAT = "%1.2f";
+  public static final String DEGREE_FORMAT = " %1.2f";
   
   protected void setDegree(float degree) {
     mDegreeBar.setProgress((int) (STEPS - (degree * STEPS)));

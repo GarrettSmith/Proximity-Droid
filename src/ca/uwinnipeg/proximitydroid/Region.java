@@ -30,13 +30,23 @@ public class Region implements Parcelable {
   // The list of points that make up the polygon
   protected Polygon mPoly = new Polygon();
   
-  public Region() {}
+  // The image this region belongs to
+  protected Image mImage;
+  
+  public void setImage(Image image) {
+    mImage = image;
+  }
+  
+  public Region(Image image) {
+    mImage = image;
+  }
   
   public Region(Region source) {
     if (source != null) {
       mShape = source.mShape;
       mBounds = source.mBounds;
       mPoly = source.mPoly;
+      mImage = source.mImage;
     }
   }
 
@@ -82,7 +92,7 @@ public class Region implements Parcelable {
    * @param img
    * @return
    */  
-  public int[] getIndices(Image img) {
+  public int[] getIndices() {
     
     int[] indices;
     
@@ -95,7 +105,7 @@ public class Region implements Parcelable {
         for (int y = mBounds.top; y < mBounds.bottom; y++) {
           for (int x = mBounds.left; x < mBounds.right; x++) {
             if (mPoly.contains(x, y)) {
-              tmp[++i] = img.getIndex(x, y);
+              tmp[++i] = mImage.getIndex(x, y);
             }
           }
         }
@@ -127,7 +137,7 @@ public class Region implements Parcelable {
             
             // if the point is within the oval
             if ( dx + dy <= 1) {
-              tmp2[++j] = img.getIndex(x, y);
+              tmp2[++j] = mImage.getIndex(x, y);
             }
           }
         }
@@ -136,14 +146,14 @@ public class Region implements Parcelable {
         break;
         
       default:
-        indices = img.getIndices(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
+        indices = mImage.getIndices(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
         break;
     }
     return indices;
   }
   
-  public List<Integer> getIndicesList(Image img) {
-    int[] indices = getIndices(img);
+  public List<Integer> getIndicesList() {
+    int[] indices = getIndices();
     List<Integer> list = new ArrayList<Integer>();
     for (int i = 0; i < indices.length; i++) {
       list.add(indices[i]);
@@ -156,8 +166,8 @@ public class Region implements Parcelable {
    * @param img
    * @return
    */  
-  public int getCenterIndex(Image img) {
-    return img.getIndex(mBounds.centerX(), mBounds.centerY());
+  public int getCenterIndex() {
+    return mImage.getIndex(mBounds.centerX(), mBounds.centerY());
   }
 
   @Override

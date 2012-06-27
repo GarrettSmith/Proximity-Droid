@@ -12,6 +12,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.MotionEvent;
+import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
 
@@ -58,8 +59,8 @@ public class SelectRegionView extends RegionView {
   
   protected RegionSelectView mSelectView;
 
-  public SelectRegionView(RegionSelectView v) {
-    super(v);
+  public SelectRegionView(RegionSelectView v, Image image) {
+    super(v, image);
     
     if (!SETUP) {
       SETUP = true;
@@ -108,15 +109,12 @@ public class SelectRegionView extends RegionView {
   @Override
   public void reset() {
     super.reset();
-    if (mFocused) {
-      mSelectView.followResize(this);
-    }
+    mSelectView.followResize(this);
   }
 
   @Override
   public Rect getPaddedScreenSpaceBounds() {
-    int padding = 
-        (int)(mFocused ? HANDLE_SIZE: REGION_PAINT.getStrokeWidth());
+    int padding = (int) HANDLE_SIZE;
     padding += 1;
     RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
     mScreenMatrix.mapRect(r);
@@ -351,23 +349,16 @@ public class SelectRegionView extends RegionView {
   public void draw(Canvas canvas) {
   
     Path shapePath = getShapePath();
-  
-    if (mFocused) {        
-  
-      // dim outside
-      drawUnselected(canvas, shapePath);
-  
-      // draw handles
-      if (mAction == Action.MOVE_POINT) {
-        drawSelected(canvas);
-      }
-      else {      
-        drawHandles(canvas);          
-      }
+    
+    // dim outside
+    drawUnselected(canvas, shapePath);
+
+    // draw handles
+    if (mAction == Action.MOVE_POINT) {
+      drawSelected(canvas);
     }
-    else {
-      // just draw the shape
-      super.draw(canvas);
+    else {      
+      drawHandles(canvas);          
     }
   
     // Draw bounds guide for non rectangles
