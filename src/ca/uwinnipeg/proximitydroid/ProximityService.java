@@ -53,12 +53,15 @@ public class ProximityService
   public static final String ACTION_NEIGHBOURHOOD_SET = "action.NEIGHBOURHOOD_SET";
   public static final String ACTION_INTERSECTION_SET = "action.INTERSECTION_SET";
   
+  public static final String ACTION_INTERSECTION_DEGREE_SET = "action.INTERSECTION_DEGREE_SET";
+  
   // Parcel keys
   public static final String BITMAP = "Bitmap";
   public static final String REGION = "Region";
   public static final String PROGRESS = "Progress";
   public static final String POINTS = "points";
   public static final String FILE_NAME = "file name";
+  public static final String DEGREE = "degree";
   
   // The broadcast manager used to send and receive messages
   protected LocalBroadcastManager mBroadcastManager;
@@ -242,8 +245,17 @@ public class ProximityService
     @Override
     protected void onPostExecute(List<Integer> result) {
       super.onPostExecute(result);
+      
+      // store the new degree 
+      float intSize = result.size();
+      float aSize = mRegion.getIndices(mImage).length;
+      float bSize = mIntersection.size();
+      float degree = 1 - (intSize / Math.max(aSize, bSize));
+      setIntersectionDegree(degree);
+      
       // store result as the new intersection
       setIntersection(result);
+      
       // run the next intersection task if there is one
       runNextIntersectionTask();
     }
@@ -276,6 +288,8 @@ public class ProximityService
   
   protected float mIntersectEpsilon = 0;
   protected float mNeighbourhoodEpsilon = 0;
+  
+  protected float mIntersectionDegree = 1;
   
   public static final String NEIGHBOURHOOD_EPSILON_SETTING = "Neighbourhood epsilon";
   public static final String INTERSECTION_EPSILON_SETTING = "Intersection epsilon";
@@ -318,6 +332,8 @@ public class ProximityService
     mIntersectQueue.clear();
     // clear calculated intersection
     mIntersection.clear();    
+    // reset the intersection degree
+    setIntersectionDegree(1);
     
     // add all regions to the queue to be recalculated
     for (Region r : mRegions) {
@@ -454,8 +470,23 @@ public class ProximityService
     }
   }
   
+  protected void setIntersectionDegree(float degree) {
+    mIntersectionDegree = degree;
+    
+    // broadcast the change if we are finished calculating
+    if (mIntersectQueue.isEmpty()) {
+      Intent intent = new Intent(ACTION_INTERSECTION_DEGREE_SET);
+      intent.putExtra(DEGREE, degree);
+      mBroadcastManager.sendBroadcast(intent);
+    }
+  }
+  
   public int[] getIntersection() {
     return indicesToPoints(mIntersection);
+  }
+  
+  public float getIntersectionDegree() {
+    return mIntersectionDegree;
   }
   
   public void setNeighbourhoodEpsilon(float epsilon) {

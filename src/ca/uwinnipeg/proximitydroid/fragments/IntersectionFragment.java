@@ -3,6 +3,8 @@
  */
 package ca.uwinnipeg.proximitydroid.fragments;
 
+import java.util.Formatter;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -36,6 +38,8 @@ public class IntersectionFragment extends RegionShowFragment {
   protected TextView mDegreeText;
   protected ProgressBar mDegreeBar;
   
+  protected final static int STEPS = 100;
+  
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
@@ -46,6 +50,7 @@ public class IntersectionFragment extends RegionShowFragment {
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     IntentFilter filter = new IntentFilter(ProximityService.ACTION_INTERSECTION_SET);
+    filter.addAction(ProximityService.ACTION_INTERSECTION_DEGREE_SET);
     filter.addAction(ProximityService.ACTION_INTERSECTION_PROGRESS);
     filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);
     mBroadcastManager.registerReceiver(mIntersectionReceiver, filter);
@@ -68,6 +73,13 @@ public class IntersectionFragment extends RegionShowFragment {
     }
   } 
   
+  public static final String DEGREE_FORMAT = "%1.2f";
+  
+  protected void setDegree(float degree) {
+    mDegreeBar.setProgress((int) (STEPS - (degree * STEPS)));
+    mDegreeText.setText(new Formatter().format(DEGREE_FORMAT, degree).toString());
+  }
+  
   // options menu
   
   @Override
@@ -80,6 +92,9 @@ public class IntersectionFragment extends RegionShowFragment {
     View view = item.getActionView();
     mDegreeText = (TextView) view.findViewById(R.id.degree_value);
     mDegreeBar = (ProgressBar) view.findViewById(R.id.degree_bar);
+    
+    // set the current degree
+    setDegree(getService().getIntersectionDegree());
   }
 
   @Override
@@ -115,8 +130,6 @@ public class IntersectionFragment extends RegionShowFragment {
       if (action.equals(ProximityService.ACTION_INTERSECTION_SET)) {
         int[] points = intent.getIntArrayExtra(ProximityService.POINTS);
         mView.setHighlight(points);
-        mDegreeBar.setIndeterminate(true);
-        mDegreeText.setText(Integer.toString(points.length));
       }
       else if (action.equals(ProximityService.ACTION_INTERSECTION_PROGRESS)) {
         int progress = intent.getIntExtra(ProximityService.PROGRESS, 0);
@@ -124,6 +137,9 @@ public class IntersectionFragment extends RegionShowFragment {
       }
       else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
         mView.clearHighlight();
+      }
+      else if (action.equals(ProximityService.ACTION_INTERSECTION_DEGREE_SET)) {
+        setDegree(intent.getFloatExtra(ProximityService.DEGREE, 1));
       }
     }
     
