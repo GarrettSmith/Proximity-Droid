@@ -3,6 +3,11 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import android.graphics.Point;
 import android.util.FloatMath;
 
@@ -64,4 +69,18 @@ public class MathUtil {
     return dist;
   }
   
+  /**
+   * Returns the union of two Integer lists.
+   * @param A
+   * @param B
+   * @return
+   */
+  public static <T> List<T> union(List<T> A, List<T> B) {
+    Set<T> set = new HashSet<T>();
+
+    set.addAll(A);
+    set.addAll(B);
+
+    return new ArrayList<T>(set);
+  }
 }

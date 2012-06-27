@@ -248,9 +248,8 @@ public class ProximityService
       
       // store the new degree 
       float intSize = result.size();
-      float aSize = mRegion.getIndices(mImage).length;
-      float bSize = mIntersection.size();
-      float degree = 1 - (intSize / Math.max(aSize, bSize));
+      float unionSize = MathUtil.union(mIntersection, mRegion.getIndicesList(mImage)).size();
+      float degree = 1 - (intSize / unionSize);
       setIntersectionDegree(degree);
       
       // store result as the new intersection
