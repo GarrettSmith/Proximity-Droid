@@ -13,6 +13,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximitydroid.fragments.AboutDialogFragment;
+import ca.uwinnipeg.proximitydroid.fragments.ComplimentFragment;
 import ca.uwinnipeg.proximitydroid.fragments.ImageFragment;
 import ca.uwinnipeg.proximitydroid.fragments.IntersectionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
@@ -61,11 +62,11 @@ public class ProximityDroidActivity
   public static final String REGION_TAG = "region";
   public static final String NEIGHBOURHOOD_TAG = "neighbourhood";
   public static final String INTERSECTION_TAG = "intersection";
+  public static final String COMPLIMENT_TAG = "compliment";
   public static final String SELECT_TAG = "select";
 
   // bundle keys
   protected static final String BUNDLE_SELECTED_TAB = "Selected Tab";
-  protected static final String BUNDLE_SELECTING_REGION = "Selecting region";
 
   
   // Service connection
@@ -131,6 +132,12 @@ public class ProximityDroidActivity
         .setText(R.string.intersection)
         .setTabListener(
             new TabListener<IntersectionFragment>(this, INTERSECTION_TAG, IntersectionFragment.class));
+    mActionBar.addTab(tab);
+
+    tab = mActionBar.newTab()
+        .setText(R.string.compliment)
+        .setTabListener(
+            new TabListener<ComplimentFragment>(this, COMPLIMENT_TAG, ComplimentFragment.class));
     mActionBar.addTab(tab);
     
     // restore the selected tab

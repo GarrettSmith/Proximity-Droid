@@ -32,7 +32,7 @@ import ca.uwinnipeg.proximity.image.RedFunc;
  *
  */
 // TODO: change neighbourhood calculation to be linear?
-// TODO: calculate nearness and similarity
+// TODO: break different calculations into seperate services
 public class ProximityService 
   extends Service
   implements OnSharedPreferenceChangeListener {
@@ -49,9 +49,11 @@ public class ProximityService
   
   public static final String ACTION_NEIGHBOURHOOD_PROGRESS = "action.NEIGHBOURHOOD_PROGRESS";
   public static final String ACTION_INTERSECTION_PROGRESS = "action.INTERSECTION_PROGRESS";
+  public static final String ACTION_COMPLIMENT_PROGRESS = "action.INTERSECTION_PROGRESS";
 
   public static final String ACTION_NEIGHBOURHOOD_SET = "action.NEIGHBOURHOOD_SET";
   public static final String ACTION_INTERSECTION_SET = "action.INTERSECTION_SET";
+  public static final String ACTION_COMPLIMENT_SET = "action.COMPLIMENT_SET";
   
   public static final String ACTION_INTERSECTION_DEGREE_SET = "action.INTERSECTION_DEGREE_SET";
   
@@ -265,12 +267,37 @@ public class ProximityService
     }
     
   }
+  
+  private class ComplimentTask extends ProcessingTask {
 
-  // The map of regions to the indices of the points in their neighbourhoods
+    @Override
+    public String ProgressKey() {
+      // TODO Auto-generated method stub
+      return null;
+    }
+
+    @Override
+    protected List<Integer> doInBackground(Region... params) {
+      // TODO Auto-generated method stub
+      return null;
+    }
+    
+    @Override
+    protected void onPostExecute(List<Integer> result) {
+      // TODO Auto-generated method stub
+      super.onPostExecute(result);
+    }
+    
+  }
+
+  // The map of regions to the indices of the pixels in their neighbourhoods
   protected Map<Region, List<Integer>> mNeighbourhoods = new HashMap<Region, List<Integer>>();
   
-  // The indices of the points in the intersection
+  // The indices of the pixels in the intersection
   protected List<Integer> mIntersection = new ArrayList<Integer>();
+  
+  // the indices of the pixels in the compliment
+  protected List<Integer> mCompliment = new ArrayList<Integer>();
 
   // Map each region to the task generating it's neighbourhood
   protected Map<Region, NeighbourhoodTask> mNeighbourhoodTasks = 
@@ -296,6 +323,7 @@ public class ProximityService
   protected void invalidate() {
     invalidateNeighbourhoods();
     invalidateIntersection();
+    invalidateCompliment();
   }
   
   protected void invalidateNeighbourhoods() {
@@ -365,6 +393,10 @@ public class ProximityService
       // start the task
       mIntersectTask.execute(region);
     }
+  }
+  
+  protected void invalidateCompliment() {
+    // TODO: recalculate compliment
   }
 
   // Proximity
@@ -462,15 +494,16 @@ public class ProximityService
     mIntersection.clear();
     mIntersection.addAll(indices);
     
-    // convert to points
-    int[] points = indicesToPoints(indices);
-    
     // broadcast the change if we are finished calculating
     if (mIntersectQueue.isEmpty()) {
-      Intent intent = new Intent(ACTION_INTERSECTION_SET);
-      intent.putExtra(POINTS, points);
-      mBroadcastManager.sendBroadcast(intent);
+      broadcastResult(ACTION_INTERSECTION_SET, mIntersection);
     }
+  }
+  
+  protected void broadcastResult(String action, List<Integer> indices) {
+    Intent intent = new Intent(action);
+    intent.putExtra(POINTS, indicesToPoints(indices));
+    mBroadcastManager.sendBroadcast(intent);
   }
   
   protected void setIntersectionDegree(float degree) {
@@ -486,6 +519,19 @@ public class ProximityService
   
   public int[] getIntersection() {
     return indicesToPoints(mIntersection);
+  }
+  
+  protected void setCompliment(List<Integer> indices) {
+    // save the new compliment
+    mCompliment.clear();
+    mCompliment.addAll(indices);
+    
+    // broadcast // TODO: factor out setting results broadcast
+    broadcastResult(ACTION_COMPLIMENT_SET, mCompliment);
+  }
+
+  public int[] getCompliment() {
+    return indicesToPoints(mCompliment);
   }
   
   public float getIntersectionDegree() {
@@ -515,6 +561,11 @@ public class ProximityService
 
   public int getIntersectionProgress() {
     return getProgress(ACTION_NEIGHBOURHOOD_PROGRESS, mIntersectQueue.size());
+  }
+  
+  public int getComplimentProgress() {
+    // TODO: scale compliment progress
+    return getProgress(ACTION_COMPLIMENT_PROGRESS, 1);
   }
   
   protected int getProgress(String key, int runningTasks) {

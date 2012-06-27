@@ -38,13 +38,7 @@ public class IntersectionFragment extends RegionShowFragment {
   protected TextView mDegreeText;
   protected ProgressBar mDegreeBar;
   
-  protected final static int STEPS = 100;
-  
-  @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container,
-      Bundle savedInstanceState) {
-    return super.onCreateView(inflater, container, savedInstanceState);
-  }
+  protected final static int DEGREE_STEPS = 100;
   
   @Override
   public void onAttach(Activity activity) {
@@ -76,7 +70,7 @@ public class IntersectionFragment extends RegionShowFragment {
   public static final String DEGREE_FORMAT = " %1.2f";
   
   protected void setDegree(float degree) {
-    mDegreeBar.setProgress((int) (STEPS - (degree * STEPS)));
+    mDegreeBar.setProgress((int) (DEGREE_STEPS - (degree * DEGREE_STEPS)));
     mDegreeText.setText(new Formatter().format(DEGREE_FORMAT, degree).toString());
   }
   
