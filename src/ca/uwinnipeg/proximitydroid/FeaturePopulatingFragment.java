@@ -6,6 +6,7 @@ package ca.uwinnipeg.proximitydroid;
 import java.util.List;
 import java.util.Map;
 
+import android.annotation.TargetApi;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
@@ -41,7 +42,7 @@ public abstract class FeaturePopulatingFragment
     mPreferenceScreen = root;
   }
   
-
+  @TargetApi(14)
   public void populatePreferences(Map<String, List<ProbeFunc<Integer>>> features) {
 
     // Generate preference items from features    
