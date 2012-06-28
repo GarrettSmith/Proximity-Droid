@@ -53,12 +53,6 @@ public class IntersectionService extends EpsilonLinearService {
     }
   }
 
-  protected void invalidate() {
-    // reset the intersection degree
-    setDegree(1);
-    super.invalidate();
-  }
-
   @Override
   protected List<Integer> calculateProperty(Region region, PerceptualSystemSubscriber sub) {
     // check if we should stop because the task was cancelled

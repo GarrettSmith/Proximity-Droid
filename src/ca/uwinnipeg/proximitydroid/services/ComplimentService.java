@@ -6,58 +6,40 @@ package ca.uwinnipeg.proximitydroid.services;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.util.Log;
+
+import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
  * @author Garrett Smith
  *
  */
-public class ComplimentService extends PropertyService {
+public class ComplimentService extends LinearService {
   
   public static final String TAG = "PropertyService";
   
   public static final String CATEGORY = "Compliment";
-
-  // the indices of the pixels in the compliment
-  protected List<Integer> mCompliment = new ArrayList<Integer>();
   
   public ComplimentService() {
     super(CATEGORY);
   }
   
   public int[] getCompliment() {
-    return indicesToPoints(mCompliment);
+    return indicesToPoints(getValue());
   }
 
-  protected void setCompliment(List<Integer> indices) {
-    // save the new compliment
-    mCompliment.clear();
-    mCompliment.addAll(indices);
-    
-    //broadcast
-    broadcastValueChanged(mCompliment);
-  }
+  @Override
+  protected List<Integer> calculateProperty(Region region, PerceptualSystemSubscriber sub) {
+    // check if we should stop because the task was cancelled
+    if (sub.isCancelled()) return null;
 
-  protected void invalidate() {
-    // TODO: recalculate compliment
-  }
+    List<Integer> indices = new ArrayList<Integer>();
+    long startTime = System.currentTimeMillis();
+    indices = mImage.getDescriptiveComplimentIndices(region.getIndicesList(), sub);
+    Log.i(TAG, "Compliment took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
 
-  // Tasking 
-  
-  private class ComplimentTask extends PropertyTask {
-  
-    @Override
-    protected List<Integer> doInBackground(Region... params) {
-      // TODO Auto-generated method stub
-      return null;
-    }
-    
-    @Override
-    protected void onPostExecute(List<Integer> result) {
-      // TODO Auto-generated method stub
-      super.onPostExecute(result);
-    }
-    
+    return indices;
   }
 
 }
