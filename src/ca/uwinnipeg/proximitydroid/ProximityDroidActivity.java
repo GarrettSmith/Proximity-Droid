@@ -41,7 +41,6 @@ import com.actionbarsherlock.view.Window;
 //TODO: Add editing created regions
 //TODO: Show an image loading view
 //TODO: Clear progress on switching tabs
-//TODO: Don't give fragments a reference to service
 public class ProximityDroidActivity 
   extends FeaturePopulatingFragment 
   implements OnAddRegionSelectedListener,

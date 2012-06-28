@@ -80,8 +80,8 @@ public class RegionSelectFragment
   }
   
   @Override
-  protected void setupView() {
-    super.setupView();
+  protected void draw() {
+    super.draw();
 
     mView.setImage(getService().getImage());
     mRegionView = mView.getRegion();

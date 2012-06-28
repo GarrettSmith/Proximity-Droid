@@ -43,11 +43,13 @@ implements OnSharedPreferenceChangeListener {
 
   public static final String TAG = "ProximityService"; 
 
-  public static final Class<?>[] SERVICE_CLASSES = new Class<?>[] { 
-    NeighbourhoodService.class, 
-    IntersectionService.class, 
-    ComplimentService.class 
-  };
+  @SuppressWarnings("unchecked")
+  public static final Class<PropertyService>[] SERVICE_CLASSES = 
+    (Class<PropertyService>[]) new Class<?>[] { 
+      NeighbourhoodService.class, 
+      IntersectionService.class, 
+      ComplimentService.class 
+    };
 
   // The perceptual system
   protected Image mImage = new Image();

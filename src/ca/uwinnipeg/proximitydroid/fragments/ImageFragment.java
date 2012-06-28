@@ -60,14 +60,14 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
 
   public void setService(ProximityService service) {
     mService = service;
-    onServiceAttach(mService);
+    onServiceAttached(mService);
   }  
   
   public ProximityService getService() {
     return mService;
   }
   
-  public void onServiceAttach(ProximityService service) {
+  protected void onServiceAttached(ProximityService service) {
     // first time bitmap setup
     if (service.hasBitmap()) {
       mBitmap = service.getBitmap();
@@ -228,10 +228,10 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
    * The service is not guaranteed to be attached here.
    */
   public void invalidate() {
-    if (mBitmap != null) setupView();
+    if (mBitmap != null) draw();
   }
   
-  protected void setupView() {
+  protected void draw() {
     mView.setImageBitmap(mBitmap);
   }  
 

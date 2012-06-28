@@ -6,11 +6,6 @@ package ca.uwinnipeg.proximitydroid.fragments;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -18,8 +13,6 @@ import android.support.v4.app.FragmentTransaction;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.services.NeighbourhoodService;
-import ca.uwinnipeg.proximitydroid.services.PropertyService;
-import ca.uwinnipeg.proximitydroid.services.ProximityService;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -29,30 +22,22 @@ import com.actionbarsherlock.view.MenuItem;
  * @author Garrett Smith
  *
  */
-public class NeighbourhoodFragment extends RegionFragment {
-  
+public class NeighbourhoodFragment extends PropertyFragment<NeighbourhoodService> {
+
   protected Map<Region, int[]> mNeighbourhoods = new HashMap<Region, int[]>();
   
-  @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    IntentFilter filter = new IntentFilter();
-    filter.addAction(PropertyService.ACTION_PROGRESS_CHANGED);
-    filter.addAction(PropertyService.ACTION_VALUE_CHANGED);    
-    filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);    
-    filter.addCategory(NeighbourhoodService.CATEGORY);
-    mBroadcastManager.registerReceiver(mNeighbourhoodReceiver, filter);
+  public NeighbourhoodFragment() {
+    super(NeighbourhoodService.class, NeighbourhoodService.CATEGORY);
   }
   
   @Override
-  public void onDestroy() {
-    mBroadcastManager.unregisterReceiver(mNeighbourhoodReceiver);
-    super.onDestroy();
+  protected void onPropertyServiceAvailable(NeighbourhoodService service) {
+    mNeighbourhoods = service.getNeighbourhoods();
   }
   
   @Override
-  protected void setupView() {
-    super.setupView();
+  protected void draw() {
+    super.draw();
     
 //    mNeighbourhoods = getService().getNeighbourhoods();
 //    
@@ -93,31 +78,14 @@ public class NeighbourhoodFragment extends RegionFragment {
       return super.onOptionsItemSelected(item);
     }
   }
-
-  // broadcasts
   
-  protected NeighbourhoodReceiver  mNeighbourhoodReceiver = new NeighbourhoodReceiver ();
+  @Override
+  protected void onValueChanged(Region region, int[] points) {
+    mNeighbourhoods.put(region, points);
+  }
   
-  public class NeighbourhoodReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      String action = intent.getAction();
-      if (action.equals(PropertyService.ACTION_VALUE_CHANGED)) {
-        Region reg = intent.getParcelableExtra(PropertyService.REGION);
-        int[] points = intent.getIntArrayExtra(PropertyService.POINTS);
-        mNeighbourhoods.put(reg, points);
-        invalidate();
-      }
-      else if (action.equals(PropertyService.ACTION_PROGRESS_CHANGED)) {
-        int progress = intent.getIntExtra(PropertyService.PROGRESS, 0);
-        setProgress(progress);
-      }
-      else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
-        mNeighbourhoods.clear();
-        invalidate();
-      }
-    }
-    
+  @Override
+  protected void onRegionsCleared() {
+    mNeighbourhoods.clear();
   }
 }

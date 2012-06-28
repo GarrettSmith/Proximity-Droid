@@ -16,13 +16,13 @@ public class ComplimentService extends PropertyService {
   
   public static final String TAG = "PropertyService";
   
-  public static final String CAETGORY = "Compliment";
+  public static final String CATEGORY = "Compliment";
 
   // the indices of the pixels in the compliment
   protected List<Integer> mCompliment = new ArrayList<Integer>();
   
   public ComplimentService() {
-    super(CAETGORY);
+    super(CATEGORY);
   }
   
   public int[] getCompliment() {
@@ -34,7 +34,7 @@ public class ComplimentService extends PropertyService {
     mCompliment.clear();
     mCompliment.addAll(indices);
     
-    // broadcast // TODO: factor out setting results broadcast
+    //broadcast
     broadcastValueChanged(mCompliment);
   }
 

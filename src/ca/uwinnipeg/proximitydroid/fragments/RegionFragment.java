@@ -74,14 +74,14 @@ public class RegionFragment extends ImageFragment<RegionShowView> {
   }
   
   @Override
-  public void onServiceAttach(ProximityService service) {
-    super.onServiceAttach(service);
+  protected void onServiceAttached(ProximityService service) {
+    super.onServiceAttached(service);
     mRegions = service.getRegions();
   }
 
   @Override
-  protected void setupView() {
-    super.setupView();
+  protected void draw() {
+    super.draw();
 
     mView.clear();
     for (Region reg : mRegions) {
@@ -110,14 +110,6 @@ public class RegionFragment extends ImageFragment<RegionShowView> {
   }
   
   // broadcasts
-  
-  protected void setProgress(int progress) {
-    Activity activity = getActivity();
-    if (activity != null && isVisible()) {
-      activity.setProgressBarVisibility(true);
-      activity.setProgress(progress);
-    }
-  }
 
   protected RegionsChangedReciever mRegionsChangedReceiver = new RegionsChangedReciever();
   

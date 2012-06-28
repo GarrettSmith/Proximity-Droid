@@ -5,8 +5,6 @@ package ca.uwinnipeg.proximitydroid.fragments;
 
 import java.util.Formatter;
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -19,8 +17,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.services.IntersectionService;
-import ca.uwinnipeg.proximitydroid.services.PropertyService;
-import ca.uwinnipeg.proximitydroid.services.ProximityService;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -32,8 +28,8 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 // TODO: remove intersection and neighbourhood fragment duplication
-public class IntersectionFragment extends RegionFragment {
-  
+public class IntersectionFragment extends PropertyFragment<IntersectionService> {
+
   protected TextView mDegreeText;
   protected ProgressBar mDegreeBar;
   
@@ -42,37 +38,25 @@ public class IntersectionFragment extends RegionFragment {
   public static final String DEGREE_FORMAT = " %1.2f";
   
   public int[] mPoints;
+  public float mDegree = 1;
   
-  @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    IntentFilter filter = new IntentFilter();
-    filter.addAction(PropertyService.ACTION_PROGRESS_CHANGED);
-    filter.addAction(PropertyService.ACTION_VALUE_CHANGED);    
-    filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);  
-    filter.addAction(IntersectionService.ACTION_DEGREE_CHANGED);
-    filter.addCategory(IntersectionService.CATEGORY);
-    mBroadcastManager.registerReceiver(mIntersectionReceiver, filter);
-    
+  public IntersectionFragment() {
+    super(
+        IntersectionService.class, 
+        IntersectionService.CATEGORY,
+        new IntentFilter(IntersectionService.ACTION_DEGREE_CHANGED));
   }
   
   @Override
-  public void onDestroy() {
-    mBroadcastManager.unregisterReceiver(mIntersectionReceiver);
-    super.onDestroy();
+  protected void onPropertyServiceAvailable(IntersectionService service) {
+    super.onPropertyServiceAvailable(service);
+    mPoints = service.getIntersection();
+    mDegree = service.getDegree();
   }
   
   @Override
-  public void onServiceAttach(ProximityService service) {
-    super.onServiceAttach(service);
-    IntersectionService s = 
-        (IntersectionService) service.getPropertyService(IntersectionService.class);
-    mPoints = s.getIntersection();
-  }
-  
-  @Override
-  protected void setupView() {
-    super.setupView();
+  protected void draw() {
+    super.draw();
     if (mPoints != null) {
       mView.setHighlight(mPoints);
     }
@@ -100,7 +84,7 @@ public class IntersectionFragment extends RegionFragment {
     mDegreeBar = (ProgressBar) view.findViewById(R.id.degree_bar);
     
     // set the current degree
-//    setDegree(getService().getDegree());
+    setDegree(mDegree);
   }
 
   @Override
@@ -124,31 +108,29 @@ public class IntersectionFragment extends RegionFragment {
     }
   }
   
-  // broadcasts
-  
-  protected IntersectionReceiver  mIntersectionReceiver = new IntersectionReceiver ();
-  
-  public class IntersectionReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      String action = intent.getAction();
-      if (action.equals(PropertyService.ACTION_VALUE_CHANGED)) {
-        mPoints = intent.getIntArrayExtra(PropertyService.POINTS);
-        invalidate();
-      }
-      else if (action.equals(PropertyService.ACTION_PROGRESS_CHANGED)) {
-        int progress = intent.getIntExtra(PropertyService.PROGRESS, 0);
-        setProgress(progress);
-      }
-      else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
-        mPoints = null;
-        invalidate();
-      }
-      else if (action.equals(IntersectionService.ACTION_DEGREE_CHANGED)) {
-        setDegree(intent.getFloatExtra(IntersectionService.DEGREE, 1));
-      }
+  @Override
+  protected void onRecieve(Context context, Intent intent) {
+    String action = intent.getAction();
+    if (action.equals(IntersectionService.ACTION_DEGREE_CHANGED)) {
+      onDegreeChanged(intent.getFloatExtra(IntersectionService.DEGREE, 1));
     }
-    
+    else {
+      super.onRecieve(context, intent);
+    }
+  }
+  
+  @Override
+  protected void onValueChanged(int[] points) {
+    mPoints = points;
+  }
+  
+  @Override
+  protected void onRegionsCleared() {
+    mPoints = null;
+  }
+  
+  protected void onDegreeChanged(float degree) {
+    mDegree = degree;
+    setDegree(mDegree);
   }
 }

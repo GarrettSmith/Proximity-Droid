@@ -3,48 +3,45 @@
  */
 package ca.uwinnipeg.proximitydroid.fragments;
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import ca.uwinnipeg.proximitydroid.services.ComplimentService;
+
 
 /**
  * @author Garrett Smith
  *
  */
-public class ComplimentFragment extends RegionFragment {
+public class ComplimentFragment extends PropertyFragment<ComplimentService> {
+  
+  protected int[] mPoints;
+  
+  public ComplimentFragment() {
+    super(ComplimentService.class, ComplimentService.CATEGORY);
+  }
+  
+  @Override
+  protected void onPropertyServiceAvailable(ComplimentService service) {
+    super.onPropertyServiceAvailable(service);
+    mPoints = service.getCompliment();
+  }
 
-  
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    IntentFilter filter = new IntentFilter();
-    mBroadcastManager.registerReceiver(mIntersectionReceiver, filter);    
-  }
-  
-  @Override
-  public void onDestroy() {
-    mBroadcastManager.unregisterReceiver(mIntersectionReceiver);
-    super.onDestroy();
-  }
-  
-  @Override
-  protected void setupView() {
-    super.setupView();
-  }
-  
-  // broadcasts
-  
-  protected ComplimentReceiver  mIntersectionReceiver = new ComplimentReceiver ();
-  
-  public class ComplimentReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      String action = intent.getAction();
-      // TODO: receive compliment broadcasts
+  protected void draw() {
+    super.draw();
+    if (mPoints != null) {
+      mView.setHighlight(mPoints);
     }
-    
+    else {
+      mView.clearHighlight();
+    }
+  }
+  
+  @Override
+  protected void onValueChanged(int[] points) {
+    mPoints = points;
+  }
+  
+  @Override
+  protected void onRegionsCleared() {
+    mPoints = null;
   }
 }
