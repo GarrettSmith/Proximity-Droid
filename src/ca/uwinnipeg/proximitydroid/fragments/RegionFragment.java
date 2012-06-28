@@ -15,9 +15,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
+import ca.uwinnipeg.proximitydroid.services.ProximityService;
 import ca.uwinnipeg.proximitydroid.views.RegionShowView;
 
 import com.actionbarsherlock.view.Menu;
@@ -30,9 +30,9 @@ import com.actionbarsherlock.view.MenuItem;
  */
 // TODO: Add selecting regions
 // TODO: Add pan and zooming
-public class RegionShowFragment extends ImageFragment<RegionShowView> {
+public class RegionFragment extends ImageFragment<RegionShowView> {
 
-  public static final String TAG = "RegionShowFragment";
+  public static final String TAG = "RegionFragment";
     
   protected OnAddRegionSelectedListener mListener;  
   
@@ -72,13 +72,19 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
     mBroadcastManager.unregisterReceiver(mRegionsChangedReceiver);
     super.onDestroy();
   }
+  
+  @Override
+  public void onServiceAttach(ProximityService service) {
+    super.onServiceAttach(service);
+    mRegions = service.getRegions();
+  }
 
   @Override
   protected void setupView() {
     super.setupView();
 
     mView.clear();
-    for (Region reg : getService().getRegions()) {
+    for (Region reg : mRegions) {
       mView.add(reg);
     }
   }
@@ -122,11 +128,12 @@ public class RegionShowFragment extends ImageFragment<RegionShowView> {
       String action = intent.getAction();
       if (action.equals(ProximityService.ACTION_REGION_ADDED)) {
         Region r = intent.getParcelableExtra(ProximityService.REGION);
-        // FIXME: find why we get a null pointer exception here after rotating
-        mView.add(r);
+        mRegions.add(r);
+        invalidate();
       }
       else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {
-        mView.clear();
+        mRegions.clear();
+        invalidate();
       }
     }
     

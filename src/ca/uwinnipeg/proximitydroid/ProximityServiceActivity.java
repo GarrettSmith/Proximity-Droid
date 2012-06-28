@@ -11,6 +11,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import ca.uwinnipeg.proximitydroid.services.LocalBinder;
+import ca.uwinnipeg.proximitydroid.services.ProximityService;
+
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 /**

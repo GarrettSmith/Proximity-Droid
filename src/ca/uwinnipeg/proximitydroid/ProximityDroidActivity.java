@@ -3,6 +3,9 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,11 +20,11 @@ import ca.uwinnipeg.proximitydroid.fragments.ComplimentFragment;
 import ca.uwinnipeg.proximitydroid.fragments.ImageFragment;
 import ca.uwinnipeg.proximitydroid.fragments.IntersectionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
+import ca.uwinnipeg.proximitydroid.fragments.RegionFragment;
+import ca.uwinnipeg.proximitydroid.fragments.RegionFragment.OnAddRegionSelectedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnClosedListener;
-import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment;
-import ca.uwinnipeg.proximitydroid.fragments.RegionShowFragment.OnAddRegionSelectedListener;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
@@ -51,7 +54,6 @@ public class ProximityDroidActivity
   private FragmentManager mFragmentManager;
   protected ActionBar mActionBar;
   protected SpinnerAdapter mSpinnerAdapter;  
-  protected ImageFragment<?> mCurrentFragment;
 
   // true if we are on a small screen devices
   protected boolean mSmallScreen;
@@ -64,7 +66,30 @@ public class ProximityDroidActivity
   public static final String INTERSECTION_TAG = "intersection";
   public static final String COMPLIMENT_TAG = "compliment";
   public static final String SELECT_TAG = "select";
-
+  
+  @SuppressWarnings("unchecked")
+  public static final Class<ImageFragment<?>>[] FRAGMENT_CLASSES = 
+    (Class<ImageFragment<?>>[]) new Class<?>[] {
+      RegionFragment.class,
+      NeighbourhoodFragment.class,
+      IntersectionFragment.class,
+      ComplimentFragment.class
+    };
+  
+  public static final String[] FRAGMENT_TAGS = new String[] {
+    REGION_TAG,
+    NEIGHBOURHOOD_TAG,
+    INTERSECTION_TAG,
+    COMPLIMENT_TAG
+  };
+  
+  public static final int[] FRAGMENT_TEXT = new int[] {
+    R.string.regions,
+    R.string.neighbourhoods,
+    R.string.intersection,
+    R.string.compliment
+  };
+  
   // bundle keys
   protected static final String BUNDLE_SELECTED_TAB = "Selected Tab";
 
@@ -79,8 +104,17 @@ public class ProximityDroidActivity
       startActivityForResult(i, REQUEST_CODE_SELECT_IMAGE);
     }
     
-    // connect the service to the current fragment
-    if (mCurrentFragment != null) mCurrentFragment.setService(getService());
+    // get the currently added fragments
+    List<ImageFragment<?>> fragments = new ArrayList<ImageFragment<?>>();
+    for (String tag : FRAGMENT_TAGS) {
+      Fragment frag = mFragmentManager.findFragmentByTag(tag);
+      if (frag != null) fragments.add((ImageFragment<?>) frag);
+    }
+    
+    // connect the service to the fragments
+    for (ImageFragment<?> frag : fragments) {
+      frag.setService(getService());
+    }
   }
   
   // Intents
@@ -115,30 +149,18 @@ public class ProximityDroidActivity
 
     // setup tabs
     mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-
-    Tab tab = mActionBar.newTab()
-        .setText(R.string.regions)
-        .setTabListener(
-            new TabListener<RegionShowFragment>(this, REGION_TAG, RegionShowFragment.class));
-    mActionBar.addTab(tab);
-
-    tab = mActionBar.newTab()
-        .setText(R.string.neighbourhoods)
-        .setTabListener(
-            new TabListener<NeighbourhoodFragment>(this, NEIGHBOURHOOD_TAG, NeighbourhoodFragment.class));
-    mActionBar.addTab(tab);
-
-    tab = mActionBar.newTab()
-        .setText(R.string.intersection)
-        .setTabListener(
-            new TabListener<IntersectionFragment>(this, INTERSECTION_TAG, IntersectionFragment.class));
-    mActionBar.addTab(tab);
-
-    tab = mActionBar.newTab()
-        .setText(R.string.compliment)
-        .setTabListener(
-            new TabListener<ComplimentFragment>(this, COMPLIMENT_TAG, ComplimentFragment.class));
-    mActionBar.addTab(tab);
+    
+    for (int i = 0; i < FRAGMENT_CLASSES.length; i++) {
+      Class<ImageFragment<?>> clazz = FRAGMENT_CLASSES[i];
+      String tag = FRAGMENT_TAGS[i];
+      int text = FRAGMENT_TEXT[i];
+      
+      Tab tab = mActionBar.newTab()
+          .setText(text)
+          .setTabListener(
+              new TabListener(this, tag, clazz));
+      mActionBar.addTab(tab);
+    }
     
     // restore the selected tab
     int selected = 0;
@@ -275,18 +297,18 @@ public class ProximityDroidActivity
    *
    * @param <T>
    */
-  public class TabListener<T extends ImageFragment<?>> implements ActionBar.TabListener {
+  public class TabListener implements ActionBar.TabListener {
     private ImageFragment<?> mFragment;
     private final Activity mActivity;
     private final String mTag;
-    private final Class<T> mClass;
+    private final Class<ImageFragment<?>> mClass;
 
     /** Constructor used each time a new tab is created.
       * @param activity  The host Activity, used to instantiate the fragment
       * @param tag  The identifier tag for the fragment
       * @param clz  The fragment's Class, used to instantiate the fragment
       */
-    public TabListener(Activity activity, String tag, Class<T> clz) {
+    public TabListener(Activity activity, String tag, Class<ImageFragment<?>> clz) {
         mActivity = activity;
         mTag = tag;
         mClass = clz;
@@ -317,9 +339,6 @@ public class ProximityDroidActivity
         // If it exists, simply attach it in order to show it
         ft.attach(mFragment);
       }
-      
-      // record the tab's fragment as the current fragment
-      mCurrentFragment = mFragment;
     }
 
     @Override

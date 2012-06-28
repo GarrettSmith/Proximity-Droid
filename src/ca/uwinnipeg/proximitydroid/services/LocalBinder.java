@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.uwinnipeg.proximitydroid;
+package ca.uwinnipeg.proximitydroid.services;
 
 import java.lang.ref.WeakReference;
 

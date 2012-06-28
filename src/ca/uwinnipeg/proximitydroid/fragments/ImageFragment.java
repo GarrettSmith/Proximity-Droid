@@ -24,9 +24,9 @@ import android.os.Environment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
-import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.RotatedBitmap;
+import ca.uwinnipeg.proximitydroid.services.ProximityService;
 import ca.uwinnipeg.proximitydroid.views.ProximityImageView;
 
 import com.actionbarsherlock.app.SherlockFragment;
@@ -60,14 +60,14 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
 
   public void setService(ProximityService service) {
     mService = service;
-    onAttachService(mService);
+    onServiceAttach(mService);
   }  
   
   public ProximityService getService() {
     return mService;
   }
   
-  public void onAttachService(ProximityService service) {
+  public void onServiceAttach(ProximityService service) {
     // first time bitmap setup
     if (service.hasBitmap()) {
       mBitmap = service.getBitmap();
@@ -224,8 +224,11 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     return str.toString();
   }
   
+  /**
+   * The service is not guaranteed to be attached here.
+   */
   public void invalidate() {
-    if (mBitmap != null && mService != null) setupView();
+    if (mBitmap != null) setupView();
   }
   
   protected void setupView() {

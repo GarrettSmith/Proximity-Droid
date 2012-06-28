@@ -13,7 +13,7 @@ import android.content.IntentFilter;
  * @author Garrett Smith
  *
  */
-public class ComplimentFragment extends RegionShowFragment {
+public class ComplimentFragment extends RegionFragment {
 
   
   @Override

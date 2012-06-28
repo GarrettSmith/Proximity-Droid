@@ -15,9 +15,11 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import ca.uwinnipeg.proximitydroid.ProximityService;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
+import ca.uwinnipeg.proximitydroid.services.NeighbourhoodService;
+import ca.uwinnipeg.proximitydroid.services.PropertyService;
+import ca.uwinnipeg.proximitydroid.services.ProximityService;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -27,16 +29,18 @@ import com.actionbarsherlock.view.MenuItem;
  * @author Garrett Smith
  *
  */
-public class NeighbourhoodFragment extends RegionShowFragment {
+public class NeighbourhoodFragment extends RegionFragment {
   
   protected Map<Region, int[]> mNeighbourhoods = new HashMap<Region, int[]>();
   
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
-    IntentFilter filter = new IntentFilter(ProximityService.ACTION_NEIGHBOURHOOD_SET);
-    filter.addAction(ProximityService.ACTION_NEIGHBOURHOOD_PROGRESS);
-    filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(PropertyService.ACTION_PROGRESS_CHANGED);
+    filter.addAction(PropertyService.ACTION_VALUE_CHANGED);    
+    filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);    
+    filter.addCategory(NeighbourhoodService.CATEGORY);
     mBroadcastManager.registerReceiver(mNeighbourhoodReceiver, filter);
   }
   
@@ -50,8 +54,8 @@ public class NeighbourhoodFragment extends RegionShowFragment {
   protected void setupView() {
     super.setupView();
     
-    mNeighbourhoods = getService().getNeighbourhoods();
-    
+//    mNeighbourhoods = getService().getNeighbourhoods();
+//    
     mView.clearHighlight();
     for (Region reg : mNeighbourhoods.keySet()) {
       int[] points = mNeighbourhoods.get(reg);
@@ -81,7 +85,7 @@ public class NeighbourhoodFragment extends RegionShowFragment {
       transaction.addToBackStack(null);
       
       DialogFragment newFragment = 
-          EpsilonDialogFragment.newInstance(ProximityService.NEIGHBOURHOOD_EPSILON_SETTING);
+          EpsilonDialogFragment.newInstance(NeighbourhoodService.EPSILON_KEY);
       newFragment.show(transaction, "dialog");
       return true;
     }
@@ -99,14 +103,14 @@ public class NeighbourhoodFragment extends RegionShowFragment {
     @Override
     public void onReceive(Context context, Intent intent) {
       String action = intent.getAction();
-      if (action.equals(ProximityService.ACTION_NEIGHBOURHOOD_SET)) {
-        Region reg = intent.getParcelableExtra(ProximityService.REGION);
-        int[] points = intent.getIntArrayExtra(ProximityService.POINTS);
+      if (action.equals(PropertyService.ACTION_VALUE_CHANGED)) {
+        Region reg = intent.getParcelableExtra(PropertyService.REGION);
+        int[] points = intent.getIntArrayExtra(PropertyService.POINTS);
         mNeighbourhoods.put(reg, points);
         invalidate();
       }
-      else if (action.equals(ProximityService.ACTION_NEIGHBOURHOOD_PROGRESS)) {
-        int progress = intent.getIntExtra(ProximityService.PROGRESS, 0);
+      else if (action.equals(PropertyService.ACTION_PROGRESS_CHANGED)) {
+        int progress = intent.getIntExtra(PropertyService.PROGRESS, 0);
         setProgress(progress);
       }
       else if (action.equals(ProximityService.ACTION_REGIONS_CLEARED)) {

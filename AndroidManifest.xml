@@ -21,8 +21,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="ProximityService"></service>
-        <activity android:label="@string/app_features" android:name="FeatureActivity"></activity>
+        <activity android:label="@string/app_features" android:name="FeatureActivity"></activity><service android:name=".services.ProximityService"></service>
+        
+        <service android:name=".services.NeighbourhoodService"></service>
+        <service android:name=".services.IntersectionService"></service>
+        <service android:name=".services.ComplimentService"></service>
     </application>
 
 </manifest>
