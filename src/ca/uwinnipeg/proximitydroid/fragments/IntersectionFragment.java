@@ -8,10 +8,6 @@ import java.util.Formatter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -27,8 +23,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @author Garrett Smith
  *
  */
-// TODO: remove intersection and neighbourhood fragment duplication
-public class IntersectionFragment extends PropertyFragment<IntersectionService> {
+public class IntersectionFragment extends EpsilonPropertyFragment<IntersectionService> {
 
   protected TextView mDegreeText;
   protected ProgressBar mDegreeBar;
@@ -44,7 +39,8 @@ public class IntersectionFragment extends PropertyFragment<IntersectionService> 
     super(
         IntersectionService.class, 
         IntersectionService.CATEGORY,
-        new IntentFilter(IntersectionService.ACTION_DEGREE_CHANGED));
+        new IntentFilter(IntersectionService.ACTION_DEGREE_CHANGED),
+        IntersectionService.EPSILON_KEY);
   }
   
   @Override
@@ -75,7 +71,6 @@ public class IntersectionFragment extends PropertyFragment<IntersectionService> 
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     super.onCreateOptionsMenu(menu, inflater);
-    inflater.inflate(R.menu.epsilon, menu);
     inflater.inflate(R.menu.intersection, menu);
     
     MenuItem item = menu.findItem(R.id.menu_degree);
@@ -85,27 +80,6 @@ public class IntersectionFragment extends PropertyFragment<IntersectionService> 
     
     // set the current degree
     setDegree(mDegree);
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    if (item.getItemId() == R.id.menu_epsilon) {
-      FragmentManager fm = getActivity().getSupportFragmentManager();
-      FragmentTransaction transaction = fm.beginTransaction();
-      Fragment prev = fm.findFragmentByTag("dialog");
-      if (prev != null) {
-        transaction.remove(prev);
-      }
-      transaction.addToBackStack(null);
-      
-      DialogFragment newFragment = 
-          EpsilonDialogFragment.newInstance(IntersectionService.EPSILON_KEY);
-      newFragment.show(transaction, "dialog");
-      return true;
-    }
-    else {
-      return super.onOptionsItemSelected(item);
-    }
   }
   
   @Override

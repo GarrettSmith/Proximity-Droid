@@ -15,6 +15,7 @@ import ca.uwinnipeg.proximitydroid.Region;
  * @author Garrett Smith
  *
  */
+// TODO: take compliment of all regions
 public class ComplimentService extends LinearService {
   
   public static final String TAG = "PropertyService";
