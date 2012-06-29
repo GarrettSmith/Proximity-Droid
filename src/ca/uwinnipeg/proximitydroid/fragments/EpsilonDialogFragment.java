@@ -52,7 +52,7 @@ public class EpsilonDialogFragment
   protected TextView mValueText;
   
   // prevent calling the constructor
-  private EpsilonDialogFragment() {}
+  public EpsilonDialogFragment() {}
   
   public static EpsilonDialogFragment newInstance(String prefKey) {
     EpsilonDialogFragment frag = new EpsilonDialogFragment();
