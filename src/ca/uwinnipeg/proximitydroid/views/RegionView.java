@@ -79,11 +79,8 @@ public class RegionView extends Region{
       CENTER_BASE_PAINT.setStyle(Paint.Style.FILL);
       CENTER_BASE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      CENTER_BASE_PATH.addCircle(
-          0, 
-          0, 
-          rs.getDimension(R.dimen.region_center_radius), 
-          Path.Direction.CW);
+      float size = rs.getDimension(R.dimen.region_center_radius);
+      CENTER_BASE_PATH.addRect(-size, -size, size, size, Path.Direction.CW);
     }
   }
 

@@ -37,6 +37,12 @@ public class RegionShowView extends ProximityImageView {
   
   // The highlight to draw over the image, this shows the neighbourhoods and intersetion
   protected int[] mHighlight = new int[0];
+  
+  // if the center point of regions will be drawn
+  protected boolean mDrawCenter = false;
+  
+  // if we should dim the areas that are outside of the regions
+  protected boolean mDim = true;
 
   public RegionShowView(Context context) {
     super(context);
@@ -119,19 +125,37 @@ public class RegionShowView extends ProximityImageView {
     }
     invalidate();
   }
+  
+  public void setDrawCenterPoint(boolean drawCenter) {
+    boolean changed = mDrawCenter != drawCenter;
+    mDrawCenter = true;
+    if (changed) {
+      invalidate();
+    }
+  }
+  
+  public void setDim(boolean dim) {
+    boolean changed = mDim != dim;
+    mDim = true;
+    if (changed) {
+      invalidate();
+    }
+  }
 
   @Override
   public void draw(Canvas canvas) {
     super.draw(canvas);
     // dim the unselected area
-    Path unselected = new Path();
-    for (RegionView reg : mRegions.values()) {
-      unselected.addPath(reg.getShapePath());
+    if (mDim) {
+      Path unselected = new Path();
+      for (RegionView reg : mRegions.values()) {
+        unselected.addPath(reg.getShapePath());
+      }
+      canvas.save();
+      canvas.clipPath(unselected, android.graphics.Region.Op.DIFFERENCE);
+      canvas.drawPaint(UNSELECTED_PAINT);
+      canvas.restore();
     }
-    canvas.save();
-    canvas.clipPath(unselected, android.graphics.Region.Op.DIFFERENCE);
-    canvas.drawPaint(UNSELECTED_PAINT);
-    canvas.restore();
     
     // draw the highlight    
     if (mBitmap != null && mHighlight.length > 0) {
@@ -146,6 +170,10 @@ public class RegionShowView extends ProximityImageView {
     // draw all the regions
     for (RegionView reg : mRegions.values()) {
       reg.draw(canvas);
+      // draw center point
+      if (mDrawCenter) {
+        reg.drawWithCenter(canvas);
+      }
     }   
   }
 

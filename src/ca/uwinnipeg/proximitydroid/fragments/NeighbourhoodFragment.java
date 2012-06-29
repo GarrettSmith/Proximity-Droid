@@ -33,8 +33,6 @@ public class NeighbourhoodFragment extends EpsilonPropertyFragment<Neighbourhood
   protected void draw() {
     super.draw();
     
-//    mNeighbourhoods = getService().getNeighbourhoods();
-//    
     mView.clearHighlight();
     for (Region reg : mNeighbourhoods.keySet()) {
       int[] points = mNeighbourhoods.get(reg);
@@ -42,6 +40,12 @@ public class NeighbourhoodFragment extends EpsilonPropertyFragment<Neighbourhood
         mView.addHighlight(points);
       }
     }
+  }
+  
+  @Override
+  public void invalidate() {
+    mView.setDrawCenterPoint(true);
+    super.invalidate();
   }
   
   @Override
