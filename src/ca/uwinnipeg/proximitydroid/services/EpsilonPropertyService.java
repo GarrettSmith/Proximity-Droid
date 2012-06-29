@@ -13,7 +13,8 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
  */
 public abstract class EpsilonPropertyService 
   extends PropertyService 
-  implements OnSharedPreferenceChangeListener {
+  implements  EpsilonProperty,
+              OnSharedPreferenceChangeListener {
   
   public static final String TAG = "EpsilonPropertyService";
   
@@ -43,10 +44,12 @@ public abstract class EpsilonPropertyService
     }
   }
   
+  @Override
   public float getEpsilon() {
     return mEpsilon;
   }
   
+  @Override
   public void setEpsilon(float epsilon) {
     mEpsilon = epsilon;
     invalidate();

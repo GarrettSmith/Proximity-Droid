@@ -67,7 +67,7 @@ public class IntersectionService extends EpsilonLinearService {
     // else take the intersection of the region and the current intersection
     else {
       long startTime = System.currentTimeMillis();
-      indices = mImage.getHybridIntersectIndices(
+      indices = mImage.hybridIntersection(
           mValue, 
           region.getIndicesList(),
           getEpsilon(), 

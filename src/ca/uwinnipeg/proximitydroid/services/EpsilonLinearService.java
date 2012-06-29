@@ -13,7 +13,7 @@ import ca.uwinnipeg.proximitydroid.Util;
  */
 public abstract class EpsilonLinearService 
   extends LinearService 
-  implements OnSharedPreferenceChangeListener {
+  implements OnSharedPreferenceChangeListener, EpsilonProperty {
   
   public static final String TAG = "EpsilonLinearService";
   
@@ -43,10 +43,18 @@ public abstract class EpsilonLinearService
     }
   }
   
+  /* (non-Javadoc)
+   * @see ca.uwinnipeg.proximitydroid.services.EpsilonProperty#getEpsilon()
+   */
+  @Override
   public float getEpsilon() {
     return mEpsilon;
   }
   
+  /* (non-Javadoc)
+   * @see ca.uwinnipeg.proximitydroid.services.EpsilonProperty#setEpsilon(float)
+   */
+  @Override
   public void setEpsilon(float epsilon) {
     mEpsilon = epsilon;
     invalidate();

@@ -11,12 +11,12 @@ import ca.uwinnipeg.proximitydroid.services.ComplimentService;
  *
  */
 // TODO: don't darken unselected area
-public class ComplimentFragment extends PropertyFragment<ComplimentService> {
+public class ComplimentFragment extends EpsilonPropertyFragment<ComplimentService> {
   
   protected int[] mPoints;
   
   public ComplimentFragment() {
-    super(ComplimentService.class, ComplimentService.CATEGORY);
+    super(ComplimentService.class, ComplimentService.CATEGORY, ComplimentService.EPSILON_KEY);
   }
   
   @Override

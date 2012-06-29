@@ -123,7 +123,7 @@ public class NeighbourhoodService extends EpsilonPropertyService {
       List<Integer> regionPixels = mRegion.getIndicesList();
   
       long startTime = System.currentTimeMillis();
-      List<Integer> rtn = mImage.getHybridNeighbourhoodIndices(
+      List<Integer> rtn = mImage.hybridNeighbourhood(
           center, 
           regionPixels, 
           getEpsilon(), 

@@ -15,15 +15,16 @@ import ca.uwinnipeg.proximitydroid.Region;
  * @author Garrett Smith
  *
  */
-// TODO: take compliment of all regions
-public class ComplimentService extends LinearService {
+public class ComplimentService extends EpsilonLinearService {
   
   public static final String TAG = "PropertyService";
   
   public static final String CATEGORY = "Compliment";
   
+  public static final String EPSILON_KEY = "Compliment epsilon";
+  
   public ComplimentService() {
-    super(CATEGORY);
+    super(CATEGORY, EPSILON_KEY);
   }
   
   public int[] getCompliment() {
@@ -32,13 +33,24 @@ public class ComplimentService extends LinearService {
 
   @Override
   protected List<Integer> calculateProperty(Region region, PerceptualSystemSubscriber sub) {
-    // check if we should stop because the task was cancelled
-    if (sub.isCancelled()) return null;
-
     List<Integer> indices = new ArrayList<Integer>();
-    long startTime = System.currentTimeMillis();
-    indices = mImage.getDescriptiveComplimentIndices(region.getIndicesList(), sub);
-    Log.i(TAG, "Compliment took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
+
+    // check if we should stop because the task was cancelled
+    if (sub.isCancelled()) {
+      indices = null;
+    }
+    else {
+      // take the initial compliment
+      long startTime = System.currentTimeMillis();
+      if (mValue.isEmpty()) {
+        indices = mImage.hybridCompliment(region.getIndicesList(), getEpsilon(), sub);
+      }
+      // take the difference of with the next object
+      else {  
+        indices = mImage.hybridDifference(mValue, region.getIndicesList(), getEpsilon(), sub);
+      }
+      Log.i(TAG, "Compliment took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
+    }
 
     return indices;
   }

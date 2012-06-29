@@ -44,7 +44,7 @@ public abstract class LinearService extends PropertyService {
   protected void setValue(List<Integer> indices) {
     // save the new intersection
     mValue.clear();
-    mValue.addAll(indices);
+    if (indices != null) mValue.addAll(indices);
     
     // broadcast the change if we are finished calculating
     if (mQueue.isEmpty()) {
