@@ -10,7 +10,6 @@ import ca.uwinnipeg.proximitydroid.services.ComplimentService;
  * @author Garrett Smith
  *
  */
-// TODO: don't darken unselected area
 public class ComplimentFragment extends EpsilonPropertyFragment<ComplimentService> {
   
   protected int[] mPoints;

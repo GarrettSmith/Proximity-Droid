@@ -227,8 +227,10 @@ public class SelectRegionView extends RegionView {
         return Edge.TL;
       case BOTTOM_LEFT:
         return Edge.BL;
-      default: // BOTTOM_RIGHT
+      case BOTTOM_RIGHT:
         return Edge.BR;
+      default:
+        return Edge.NONE;
     }
   }
 

@@ -2,6 +2,7 @@
 ##########################
 bin/
 gen/
+libs/
 .project
 .settings
 .classpath
