@@ -21,6 +21,19 @@ import ca.uwinnipeg.proximitydroid.R;
  *
  */
 public class SelectRegionView extends RegionView {  
+  
+  public static final String TAG = "SelectRegionView";
+  
+  // Bitmask for checking the touched edge of the region
+  public static final byte LEFT =   8;
+  public static final byte TOP  =   4;
+  public static final byte RIGHT =  2;
+  public static final byte BOTTOM = 1;
+  
+  public static final byte TOP_LEFT =     12;
+  public static final byte TOP_RIGHT =    10;
+  public static final byte BOTTOM_LEFT =  9;
+  public static final byte BOTTOM_RIGHT = 3;
 
   // Paint shared by all select regions
   private static final Paint FOCUSED_PAINT = new Paint();
@@ -34,7 +47,7 @@ public class SelectRegionView extends RegionView {
 
   // Handle drawing constants
   private static float HANDLE_SIZE;
-  private static final Path HANDLE_PATH = new Path();
+  private static final Path HANDLE_PATH = new Path();  
   
   // The action currently taking place
   public enum Action { NONE, MOVE, RESIZE, MOVE_POINT }
@@ -176,24 +189,47 @@ public class SelectRegionView extends RegionView {
     int right = mBounds.right;
     int top = mBounds.top;
     int bottom = mBounds.bottom;
-
-    Edge rtn = Edge.NONE;
+    
+    byte mask = 0;
 
     float shift = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_SHIFT;
     float padding = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_PADDING;
 
-    if      (Math.abs(x - left  + shift) <= padding) rtn = Edge.L;
-    else if (Math.abs(x - right - shift) <= padding) rtn = Edge.R;
+    // left and right
+    if (Math.abs(x - left  + shift) <= padding) {
+      mask = LEFT;
+    }
+    else if (Math.abs(x - right - shift) <= padding) {
+      mask = RIGHT;
+    }
 
-    // TODO: Use a bit mask
+    // top and bottom
     if (Math.abs(y - top + shift) <= padding) {
-      rtn = (rtn == Edge.L) ? Edge.TL : (rtn == Edge.R ? Edge.TR : Edge.T); 
+      mask += TOP;
     }
     else if (Math.abs(y - bottom - shift) <= padding) {
-      rtn = (rtn == Edge.L) ? Edge.BL : (rtn == Edge.R ? Edge.BR : Edge.B);
+      mask += BOTTOM;
     }
-
-    return rtn;
+    
+    // translate bitmask to Edge
+    switch (mask) {
+      case LEFT:
+        return Edge.L;
+      case RIGHT:
+        return Edge.R;
+      case TOP:
+        return Edge.T;
+      case BOTTOM:
+        return Edge.B;
+      case TOP_LEFT:
+        return Edge.TL;
+      case TOP_RIGHT:
+        return Edge.TL;
+      case BOTTOM_LEFT:
+        return Edge.BL;
+      default: // BOTTOM_RIGHT
+        return Edge.BR;
+    }
   }
 
   /**

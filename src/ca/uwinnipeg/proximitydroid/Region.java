@@ -23,7 +23,7 @@ public class Region implements Parcelable {
   public enum Shape { RECTANGLE, OVAL, POLYGON }
 
   // The edge or pair of edges that are currently selected
-  public enum Edge { NONE, TL, T, TR, R, BR, B, BL, L, ALL }
+  public enum Edge { NONE, TL, T, TR, R, BR, B, BL, L }
 
   protected Shape mShape = Shape.RECTANGLE;
 
