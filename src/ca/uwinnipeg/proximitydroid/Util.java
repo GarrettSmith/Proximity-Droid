@@ -170,9 +170,10 @@ public class Util {
   public static void setImage(Image img, Bitmap bm) {
     int width = bm.getWidth();
     int height = bm.getHeight();
-    IntBuffer intBuff = IntBuffer.allocate(width * height);
-    bm.copyPixelsToBuffer(intBuff);
-    img.set(intBuff.array(), width, height);
+    
+    int[] pixels = new int[width * height];
+    bm.getPixels(pixels, 0, width, 0, 0, width, height);
+    img.set(pixels, width, height);
   }  
   
   public static SharedPreferences getSupportDefaultSharedPrefences(Context context) {

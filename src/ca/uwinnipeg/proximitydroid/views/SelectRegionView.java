@@ -331,6 +331,9 @@ public class SelectRegionView extends RegionView {
     
     // dim outside
     drawUnselected(canvas, shapePath);
+    
+    // draw the center pixel
+    drawCenter(canvas);
 
     // draw handles
     if (mAction == Action.MOVE_POINT) {

@@ -8,6 +8,7 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.Log;
 import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.MathUtil;
 import ca.uwinnipeg.proximitydroid.Polygon;
@@ -372,8 +373,7 @@ public class RegionView extends Region{
   
   public Paint getCenterPaint() {
     Paint paint = new Paint(CENTER_BASE_PAINT);
-    int index = getCenterIndex();
-    int color = mImage.getObject(index);
+    int color = mImage.getPixel(mBounds.centerX(), mBounds.centerY());
     paint.setColor(color);
     return paint;
   }
