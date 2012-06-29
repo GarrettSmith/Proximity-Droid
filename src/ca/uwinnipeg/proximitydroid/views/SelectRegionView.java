@@ -37,7 +37,7 @@ public class SelectRegionView extends RegionView {
   private static final Path HANDLE_PATH = new Path();
   
   // The action currently taking place
-  public enum Action { NONE, MOVE, RESIZE, SCALE, MOVE_POINT }
+  public enum Action { NONE, MOVE, RESIZE, MOVE_POINT }
 
   // The amount a touch can be off and still be considered touching an edge
   protected static final float TOUCH_PADDING = 0.05f;
@@ -243,102 +243,43 @@ public class SelectRegionView extends RegionView {
   /**
    * handles motion to move the neighbourhood.
    */
-  // TODO: Break down handleMove
   // TODO: Handle input history
-  // TODO: Why are we recording the last point like 7 times
   public void handleMove(MotionEvent event) {
-    float[] p = convertToImageSpace(event.getX(), event.getY());
-    float x = p[0];
-    float y = p[1];
-
-    // Deal with multitouch
-    if (mAction != Action.SCALE) {
-      // check for pinch
-      if (event.getPointerCount() >= 2) {
-        mLastAction = mAction;
-        mAction = Action.SCALE;
-        mLastDistanceX = Math.abs(x - event.getX(1));
-        mLastDistanceY = Math.abs(y - event.getY(1));
-        // Mark last X to prevent jump
-        mLastX = -1;
-      }      
-    }
-    // Check if there are still other pointers
-    else if (event.getPointerCount() == 1) { 
-      // Reset last point
-      mLastX = x;
-      mLastY = y;
-      // return to last action
-      mAction = mLastAction;
-    }
 
     // Check if any action is being performed
     if (mAction != Action.NONE) {
 
+      float[] p = convertToImageSpace(event.getX(), event.getY());
+      float x = p[0];
+      float y = p[1];
+
       // rectangle that needs redraw
       Rect dirty = getPaddedScreenSpaceBounds();
 
-      float dx = 0;
-      float dy = 0;
+      float dx = x - mLastX;
+      float dy = y - mLastY;
+
       // Determine which action to take
       switch (mAction) {
         case MOVE:
-          // Calculate change in position of first point
-          dx = x - mLastX;
-          dy = y - mLastY;
           move((int)dx, (int)dy);
-          // Record position
-          mLastX = x;
-          mLastY = y;
           break;
         case RESIZE:
-          // Calculate change in position of first point
-          dx = x - mLastX;
-          dy = y - mLastY;
           resize((int)dx, (int)dy, mSelectedEdge);
-          // Record position
-          mLastX = x;
-          mLastY = y;
-          break;
-          // TODO: Re-think scale action
-        case SCALE:
-          float x1 = event.getX(1);
-          float y1 = event.getY(1);
-          // Scale using distance
-          float distX = Math.abs(x - x1);
-          float distY = Math.abs(y - y1);
-          float dDistX = distX - mLastDistanceX;
-          float dDistY = distY - mLastDistanceY;
-          scale((int)dDistX, (int)dDistY);
-          // move using midpoint
-          float midX = (x + x1) / 2f;
-          float midY = (y + y1) / 2f;
-          // check if first time scaling to prevent jump
-          if (mLastX != -1) {
-            dx = midX - mLastX;
-            dy = midY - mLastY;
-            move((int)dx, (int)dy);
-          }
-          // record values
-          mLastDistanceX = distX;
-          mLastDistanceY = distY;
-          mLastX = midX;
-          mLastY = midY;
           break;
         case MOVE_POINT:
-          dx = x - mLastX;
-          dy = y - mLastY;
           mSelectedPoint.offset((int)dx, (int)dy);
           updateBounds();
-          mLastX = x;
-          mLastY = y;
           break;
       }
 
+      // Record this as the previous position
+      mLastX = x;
+      mLastY = y;
+
       // Reflect change on screen
       dirty.union(getPaddedScreenSpaceBounds());
-      mView.invalidate(dirty);      
-
+      mView.invalidate(dirty);
     }
   }
 

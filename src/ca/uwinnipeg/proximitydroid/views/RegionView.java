@@ -186,7 +186,6 @@ public class RegionView extends Region{
       // Add the point between the nearest point and it's nearest, to the new point, neighbour
       newPoint = mPoly.addPoint(index, newPoint);
       updateBounds();
-      // TODO: Invalidate dirty rect when adding points to poly
       mView.invalidate();
     }
     return newPoint;

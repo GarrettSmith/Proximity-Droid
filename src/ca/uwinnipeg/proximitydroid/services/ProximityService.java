@@ -35,8 +35,6 @@ import ca.uwinnipeg.proximitydroid.Util;
  * @author Garrett Smith
  *
  */
-// TODO: change neighbourhood calculation to be linear?
-// TODO: break different calculations into seperate services
 public class ProximityService 
 extends Service
 implements OnSharedPreferenceChangeListener {
