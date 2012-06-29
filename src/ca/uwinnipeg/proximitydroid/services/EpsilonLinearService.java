@@ -19,11 +19,11 @@ public abstract class EpsilonLinearService
   
   protected float mEpsilon;
   
-  protected final String mPreferencesKey;
+  protected final String mEpsilonKey;
 
   public EpsilonLinearService(String category, String prefKey) {
     super(category);
-    mPreferencesKey = prefKey;
+    mEpsilonKey = prefKey;
   }
   
   @Override
@@ -32,13 +32,13 @@ public abstract class EpsilonLinearService
     
     // get initial epsilon
     SharedPreferences prefs = Util.getSupportDefaultSharedPrefences(this);
-    mEpsilon = prefs.getFloat(mPreferencesKey, 0);
+    mEpsilon = prefs.getFloat(mEpsilonKey, 0);
     prefs.registerOnSharedPreferenceChangeListener(this);
   }
   
   @Override
   public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-    if (key.equals(mPreferencesKey)) {
+    if (key.equals(mEpsilonKey)) {
       setEpsilon(prefs.getFloat(key, 0));
     }
   }

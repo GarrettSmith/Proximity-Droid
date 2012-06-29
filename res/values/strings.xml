@@ -24,5 +24,6 @@
     <string name="intersection_degree">Degree:</string>
     <string name="app_features">Select Features</string>
     <string name="compliment">Compliment</string>
+    <string name="difference">Difference</string>
 
 </resources>

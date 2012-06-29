@@ -14,22 +14,22 @@ import ca.uwinnipeg.proximitydroid.Region;
  * @author Garrett Smith
  *
  */
-public class ComplimentService extends EpsilonLinearService {
+public class DifferenceService extends EpsilonLinearService {
   
-  public static final String TAG = "PropertyService";
+  public static final String TAG = "DifferenceService";
   
-  public static final String CATEGORY = "Compliment";
+  public static final String CATEGORY = "Difference";
   
-  public static final String EPSILON_KEY = "Compliment epsilon";
-  
-  public ComplimentService() {
+  public static final String EPSILON_KEY = "Difference Epsilon";
+
+  public DifferenceService() {
     super(CATEGORY, EPSILON_KEY);
   }
   
-  public int[] getCompliment() {
+  public int[] getDifference() {
     return indicesToPoints(getValue());
   }
-
+  
   @Override
   protected List<Integer> calculateProperty(Region region, PerceptualSystemSubscriber sub) {
     List<Integer> indices = new ArrayList<Integer>();
@@ -42,13 +42,13 @@ public class ComplimentService extends EpsilonLinearService {
       // take the initial compliment
       long startTime = System.currentTimeMillis();
       if (mValue.isEmpty()) {
-        indices = mImage.hybridCompliment(region.getIndicesList(), getEpsilon(), sub);
+        indices = region.getIndicesList();
       }
       // take the difference of with the next object
       else {  
         indices = mImage.hybridDifference(mValue, region.getIndicesList(), getEpsilon(), sub);
       }
-      Log.i(TAG, "Compliment took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
+      Log.i(TAG, "Difference took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
     }
 
     return indices;

@@ -17,6 +17,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximitydroid.fragments.AboutDialogFragment;
 import ca.uwinnipeg.proximitydroid.fragments.ComplimentFragment;
+import ca.uwinnipeg.proximitydroid.fragments.DifferenceFragment;
 import ca.uwinnipeg.proximitydroid.fragments.ImageFragment;
 import ca.uwinnipeg.proximitydroid.fragments.IntersectionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
@@ -64,6 +65,7 @@ public class ProximityDroidActivity
   public static final String NEIGHBOURHOOD_TAG = "neighbourhood";
   public static final String INTERSECTION_TAG = "intersection";
   public static final String COMPLIMENT_TAG = "compliment";
+  public static final String DIFFERENCE_TAG = "difference";
   public static final String SELECT_TAG = "select";
   
   @SuppressWarnings("unchecked")
@@ -72,21 +74,24 @@ public class ProximityDroidActivity
       RegionFragment.class,
       NeighbourhoodFragment.class,
       IntersectionFragment.class,
-      ComplimentFragment.class
+      ComplimentFragment.class,
+      DifferenceFragment.class
     };
   
   public static final String[] FRAGMENT_TAGS = new String[] {
     REGION_TAG,
     NEIGHBOURHOOD_TAG,
     INTERSECTION_TAG,
-    COMPLIMENT_TAG
+    COMPLIMENT_TAG,
+    DIFFERENCE_TAG
   };
   
   public static final int[] FRAGMENT_TEXT = new int[] {
     R.string.regions,
     R.string.neighbourhoods,
     R.string.intersection,
-    R.string.compliment
+    R.string.compliment,
+    R.string.difference
   };
   
   // bundle keys
