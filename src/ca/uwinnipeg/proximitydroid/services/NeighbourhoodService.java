@@ -79,7 +79,13 @@ public class NeighbourhoodService extends EpsilonPropertyService {
         runningTasks++;
       }
     }
-    return super.getProgress() / runningTasks;
+    
+    if (runningTasks != 0) {
+      return super.getProgress() / runningTasks;
+    }
+    else {
+      return MAX_PROGRESS;
+    }
   }
 
   @Override

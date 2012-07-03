@@ -26,6 +26,8 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   
   protected IntentFilter mFilter;
   
+  protected int mProgress;
+  
   public PropertyFragment(Class<S> clazz, String category) {
     mClass = clazz;
     mCategory = category;
@@ -50,6 +52,13 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   }
   
   @Override
+  public void onStart() {
+    super.onStart();
+    // write the current progress
+    updateProgress(getActivity());
+  }
+  
+  @Override
   public void onDestroy() {
     mBroadcastManager.unregisterReceiver(mPropertyReciever);
     super.onDestroy();
@@ -62,14 +71,22 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
     onPropertyServiceAvailable((S) service.getPropertyService(mClass));
   }
   
-  protected void onPropertyServiceAvailable(S service) {}
+  protected void onPropertyServiceAvailable(S service) {
+    // get the current progress
+    setProgress(service.getProgress());
+  }
   
   protected void setProgress(int progress) {
+    mProgress = progress;
     Activity activity = getActivity();
+    updateProgress(activity);
+  }
+  
+  protected void updateProgress(Activity activity) {
     if (activity != null && isVisible()) {
       activity.setProgressBarVisibility(true);
-      activity.setProgress(progress);
-    }
+      activity.setProgress(mProgress);
+    }    
   }
 
   protected class PropertyFragmentReceiver extends BroadcastReceiver {

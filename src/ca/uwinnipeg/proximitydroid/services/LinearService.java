@@ -54,7 +54,19 @@ public abstract class LinearService extends PropertyService {
 
   @Override
   public int getProgress() {
-    return (super.getProgress() / mQueue.size());
+    int tasks = mQueue.size();
+    
+    // add the current task to the count if it is running
+    if (mCurrentTask != null && mCurrentTask.isRunning()) {
+      tasks++;
+    }
+    
+    if (tasks > 0) {
+      return (super.getProgress() / tasks);
+    }
+    else {
+      return MAX_PROGRESS;
+    }
   }
 
   protected void invalidate() {

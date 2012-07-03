@@ -36,6 +36,7 @@ import ca.uwinnipeg.proximitydroid.Util;
  *
  */
 // TODO: make the currently viewed service run first followed by the remaining
+// TODO: make sure we remove highlights of removed regions
 public class ProximityService 
 extends Service
 implements OnSharedPreferenceChangeListener {
