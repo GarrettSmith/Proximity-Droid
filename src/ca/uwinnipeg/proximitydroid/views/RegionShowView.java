@@ -169,10 +169,11 @@ public class RegionShowView extends ProximityImageView {
     
     // draw all the regions
     for (RegionView reg : mRegions.values()) {
-      reg.draw(canvas);
-      // draw center point
       if (mDrawCenter) {
         reg.drawWithCenter(canvas);
+      }
+      else {
+        reg.draw(canvas);
       }
     }   
   }

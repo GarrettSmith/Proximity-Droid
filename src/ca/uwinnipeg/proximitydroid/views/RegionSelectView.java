@@ -73,7 +73,7 @@ public class RegionSelectView extends ProximityImageView {
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
-    mRegion.draw(canvas);
+    mRegion.drawWithCenter(canvas);
   }
 
   // region following

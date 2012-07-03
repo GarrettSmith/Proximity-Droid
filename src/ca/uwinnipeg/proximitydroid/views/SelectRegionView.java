@@ -333,7 +333,9 @@ public class SelectRegionView extends RegionView {
     drawUnselected(canvas, shapePath);
     
     // draw the center pixel
-    drawCenter(canvas);
+    if (mShape == Shape.POLYGON && mPoly.size() >= 3) {
+      drawCenter(canvas);
+    }
 
     // draw handles
     if (mAction == Action.MOVE_POINT) {

@@ -24,6 +24,7 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 // TODO: cleanup select fragment
+// TODO: don't allow adding polygons with less than 3 points
 public class RegionSelectFragment 
   extends ImageFragment<RegionSelectView>
   implements ActionBar.OnNavigationListener {
