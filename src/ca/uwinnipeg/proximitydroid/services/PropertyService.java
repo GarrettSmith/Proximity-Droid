@@ -139,6 +139,7 @@ public abstract class PropertyService extends Service {
     // broadcast progress
     Intent intent = new Intent(ACTION_PROGRESS_CHANGED);
     intent.putExtra(PROGRESS, value);
+    intent.addCategory(mCategory);
     mBroadcastManager.sendBroadcast(intent);    
   }
   

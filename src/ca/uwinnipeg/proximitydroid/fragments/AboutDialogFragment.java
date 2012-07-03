@@ -11,7 +11,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import ca.uwinnipeg.proximitydroid.R;
 
-// TODO: make about display properly on older apis
+/**
+ * 
+ * @author Garrett Smith
+ *
+ */
 public class AboutDialogFragment extends DialogFragment {
 
   public static final String TAG = "AboutDialog";
