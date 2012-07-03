@@ -22,7 +22,6 @@ import ca.uwinnipeg.proximitydroid.Region;
  * @author Garrett Smith
  *
  */
-// TODO: split into base class and one that draws highlights
 public class RegionShowView extends ProximityImageView {
   
   public static final String TAG = "RegionShowView";

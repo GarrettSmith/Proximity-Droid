@@ -25,5 +25,6 @@
     <string name="app_features">Select Features</string>
     <string name="compliment">Compliment</string>
     <string name="difference">Difference</string>
+    <string name="invalid_polygon">Polygons need at least three points.</string>
 
 </resources>

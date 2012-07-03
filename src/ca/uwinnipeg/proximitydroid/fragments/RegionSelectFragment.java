@@ -8,7 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
+import android.widget.Toast;
 import ca.uwinnipeg.proximitydroid.R;
+import ca.uwinnipeg.proximitydroid.Region.Shape;
 import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 import ca.uwinnipeg.proximitydroid.views.RegionView;
 
@@ -23,8 +25,6 @@ import com.actionbarsherlock.view.MenuItem;
  * @author Garrett Smith
  *
  */
-// TODO: cleanup select fragment
-// TODO: don't allow adding polygons with less than 3 points
 public class RegionSelectFragment 
   extends ImageFragment<RegionSelectView>
   implements ActionBar.OnNavigationListener {
@@ -140,7 +140,16 @@ public class RegionSelectFragment
         return true;
 
       case R.id.menu_accept:
-        getService().addRegion(mRegionView);
+        // check for trying to save a polygon with less than 3 points
+        if (!(mRegionView.getShape() == Shape.POLYGON && mRegionView.getPolygon().size() < 3)) {
+          getService().addRegion(mRegionView);
+          mListener.onClosed();
+        }
+        else {
+          // print the error message that the polygon is invalid
+          Toast.makeText(getActivity(), R.string.invalid_polygon, Toast.LENGTH_LONG).show();          
+        }
+        return true;
 
       case R.id.menu_cancel:
         mListener.onClosed();
@@ -150,7 +159,6 @@ public class RegionSelectFragment
         return false;
     }
   }
-
 
   @Override
   public boolean onNavigationItemSelected(int position, long itemId) {
