@@ -15,26 +15,26 @@ import android.view.MotionEvent;
 import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
-import ca.uwinnipeg.proximitydroid.Region.Shape;
 
 /**
  * @author Garrett Smith
  *
  */
+// TODO: change padding to dip
 public class SelectRegionView extends RegionView {  
   
   public static final String TAG = "SelectRegionView";
   
   // Bitmask for checking the touched edge of the region
-  public static final byte LEFT =   8;
-  public static final byte TOP  =   4;
-  public static final byte RIGHT =  2;
-  public static final byte BOTTOM = 1;
+  public static final byte LEFT =   8; // 0b1000
+  public static final byte TOP  =   4; // 0b0100
+  public static final byte RIGHT =  2; // 0b0010
+  public static final byte BOTTOM = 1; // 0b0001
   
-  public static final byte TOP_LEFT =     12;
-  public static final byte TOP_RIGHT =    10;
-  public static final byte BOTTOM_LEFT =  9;
-  public static final byte BOTTOM_RIGHT = 3;
+  public static final byte TOP_LEFT =     TOP + LEFT;     // 0b1100
+  public static final byte TOP_RIGHT =    TOP + RIGHT;    // 0b0110
+  public static final byte BOTTOM_LEFT =  BOTTOM + LEFT;  // 0b1001
+  public static final byte BOTTOM_RIGHT = BOTTOM + RIGHT; // 0b0011
 
   // Paint shared by all select regions
   private static final Paint FOCUSED_PAINT = new Paint();
@@ -225,7 +225,7 @@ public class SelectRegionView extends RegionView {
       case TOP_LEFT:
         return Edge.TL;
       case TOP_RIGHT:
-        return Edge.TL;
+        return Edge.TR;
       case BOTTOM_LEFT:
         return Edge.BL;
       case BOTTOM_RIGHT:
@@ -282,7 +282,6 @@ public class SelectRegionView extends RegionView {
   /**
    * handles motion to move the neighbourhood.
    */
-  // TODO: Handle input history
   public void handleMove(MotionEvent event) {
 
     // Check if any action is being performed
