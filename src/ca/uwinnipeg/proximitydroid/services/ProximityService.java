@@ -35,6 +35,7 @@ import ca.uwinnipeg.proximitydroid.Util;
  * @author Garrett Smith
  *
  */
+// TODO: make the currently viewed service run first followed by the remaining
 public class ProximityService 
 extends Service
 implements OnSharedPreferenceChangeListener {

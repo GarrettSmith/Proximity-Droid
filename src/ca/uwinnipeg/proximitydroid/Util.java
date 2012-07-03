@@ -4,7 +4,6 @@
 package ca.uwinnipeg.proximitydroid;
 
 import java.io.IOException;
-import java.nio.IntBuffer;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;

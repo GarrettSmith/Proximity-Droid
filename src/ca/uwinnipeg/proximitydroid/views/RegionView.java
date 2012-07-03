@@ -8,7 +8,6 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
 import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.MathUtil;
 import ca.uwinnipeg.proximitydroid.Polygon;
@@ -20,8 +19,7 @@ import ca.uwinnipeg.proximitydroid.Region;
  *
  */
 // TODO: Look into making rotate not affect input
-// TODO: Split out more select only parts
-public class RegionView extends Region{
+public class RegionView extends Region {
 
   public static final String TAG = "RegionView";
 
@@ -134,7 +132,7 @@ public class RegionView extends Region{
     super.setShape(s);
     mView.invalidate(getPaddedScreenSpaceBounds());
     // update the bounds if the poly has one point or less
-    if (mPoly.size() < 2) updateBounds();
+    if (mShape == Shape.POLYGON && mPoly.size() < 2) updateBounds();
   }
   
   public void setPolygon(Polygon poly) {
@@ -332,7 +330,7 @@ public class RegionView extends Region{
     draw(canvas);
 
     // only draw the the center when the shape is a poly with atleast 3 points
-    if (mShape == Shape.POLYGON && mPoly.size() >= 3) {
+    if (!(mShape == Shape.POLYGON && mPoly.size() < 3)) {
       drawCenter(canvas);
     }
   }

@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.Polygon;
 import ca.uwinnipeg.proximitydroid.R;
+import ca.uwinnipeg.proximitydroid.Region.Shape;
 
 /**
  * @author Garrett Smith
@@ -333,7 +334,7 @@ public class SelectRegionView extends RegionView {
     drawUnselected(canvas, shapePath);
     
     // draw the center pixel
-    if (mShape == Shape.POLYGON && mPoly.size() >= 3) {
+    if (!(mShape == Shape.POLYGON && mPoly.size() < 3)) {
       drawCenter(canvas);
     }
 
