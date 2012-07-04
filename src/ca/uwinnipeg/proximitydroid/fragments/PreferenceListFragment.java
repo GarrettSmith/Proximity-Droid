@@ -27,7 +27,7 @@ import com.actionbarsherlock.app.SherlockListFragment;
 
 /**
  * Emulate a preference fragment pre 4.0.
- * From http://forum.xda-developers.com/showthread.php?p=19719977#post19719977
+ * Slightly modified from http://forum.xda-developers.com/showthread.php?p=19719977#post19719977
  * @author Garrett Smith
  *
  */
@@ -56,14 +56,13 @@ public class PreferenceListFragment extends SherlockListFragment{
   private int xmlId;
   private int layoutId = R.layout.preference_list_content;
   
-  public PreferenceListFragment(int xmlId, int layoutId){
+  protected PreferenceListFragment(int xmlId, int layoutId){
       this.xmlId = xmlId;
       this.layoutId = layoutId;
   }
+  
   //must be provided
-  public PreferenceListFragment(){
-      
-  }
+  public PreferenceListFragment() {}
   
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle b){

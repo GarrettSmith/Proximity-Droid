@@ -10,6 +10,7 @@ import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.services.NeighbourhoodService;
 
 /**
+ * Displays the results of {@link NeighbourhoodService}.
  * @author Garrett Smith
  *
  */

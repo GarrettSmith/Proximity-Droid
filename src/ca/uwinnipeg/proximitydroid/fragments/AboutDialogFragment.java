@@ -12,14 +12,15 @@ import android.widget.TextView;
 import ca.uwinnipeg.proximitydroid.R;
 
 /**
- * 
+ * The dialog that displays the about information.
  * @author Garrett Smith
  *
  */
 public class AboutDialogFragment extends DialogFragment {
 
-  public static final String TAG = "AboutDialog";
+  public static final String TAG = "AboutDialogFragment";
   
+  // the text view to populate with the current version
   protected TextView mVersionTextView;
   
   @Override
@@ -36,6 +37,8 @@ public class AboutDialogFragment extends DialogFragment {
   
   /**
    * Returns the version name of the app.
+   * @param context
+   * @return
    */
   public String getVersionName(Context context) {
     String ver = "";

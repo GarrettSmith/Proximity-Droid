@@ -35,6 +35,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
 /**
+ * A fragment that displays a {@link RotatedBitmap}.
  * @author Garrett Smith
  *
  */
@@ -42,31 +43,49 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   
   public static final String TAG = "ImageFragment";
 
+  // the bitmap displayed
   protected RotatedBitmap mBitmap;
   
+  // the filename of the displayed bitmap
   protected String mFileName;
 
+  // the view used to display the bitmap
   protected V mView;
 
+  // used to register to receive broadcasts
   protected LocalBroadcastManager mBroadcastManager;
   
+  // receives broadcasts when the bitmap changes
   protected BitmapChangedReceiver mBitmapchangedReceiver = new BitmapChangedReceiver();
   
+  // the subdirectory in the pictures directory used to save screen shots
   public static final String PICTURES_DIRECTORY_NAME = "ProximityDroid";  
   
   // Service
   
   private ProximityService mService;
 
-  public void setService(ProximityService service) {
+  /**
+   * Binds the given service to the fragment.
+   * @param service
+   */
+  public void bindService(ProximityService service) {
     mService = service;
     onServiceAttached(mService);
   }  
   
+  /**
+   * Returns the currently bound service or null if no service is bound.
+   * @return
+   */
   public ProximityService getService() {
     return mService;
   }
   
+  /**
+   * Callback for when the {@link ProximityService} is bound to the fragment.
+   * @param service the bound service
+   */
   protected void onServiceAttached(ProximityService service) {
     // first time bitmap setup
     if (service.hasBitmap()) {
@@ -202,6 +221,13 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     }
   }
   
+  /**
+   * Returns the file name used to save screen shots.
+   * <p>
+   * The path is something like {PICTURES_DIRECTORY}/ProximityDroid/{BITMAP_NAME}-1.jpg and
+   * increments as you save more shots.
+   * @return
+   */
   protected String getFileName() {
     File path = new File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), 
@@ -225,16 +251,27 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   }
   
   /**
+   * Requests the draw method to be called. This does nothing if the bitmap is not set.
+   * <p>
    * The service is not guaranteed to be attached here.
    */
   public void invalidate() {
     if (mBitmap != null) draw();
   }
   
+  /**
+   * Called by invalidate. This should be called by subclasses to redraw the bitmap and overridden
+   * by them to draw changes.
+   */
   protected void draw() {
     mView.setImageBitmap(mBitmap);
   }  
 
+  /**
+   * Sets the bitmap and its filename and invalidates the fragment.
+   * @param bm
+   * @param fileName
+   */
   public void setBitmap(RotatedBitmap bm, String fileName) {
     mBitmap = bm;
     mFileName = fileName;
@@ -268,7 +305,11 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   
   // Broadcasts
   // These are used to update the views when a change or calculation has finished
-  
+  /**
+   * Watches for changes in the bitmap and updates the fragment when the occur.
+   * @author Garrett Smith
+   *
+   */
   public class BitmapChangedReceiver extends BroadcastReceiver {
 
     @Override

@@ -16,12 +16,16 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
 /**
+ * A fragment that displays the results of a calculation and sets the epsilon.
+ * <p>
+ * An {@link EpsilonDialogFragment} is used to select the epsilon.
  * @author Garrett Smith
  *
  */
 public abstract class EpsilonPropertyFragment<S extends PropertyService> 
   extends PropertyFragment<S> {
   
+  // the shared preference key used to set the epsilon
   protected final String mEpsilonKey;
 
   public EpsilonPropertyFragment(Class<S> clazz, String category, String epsilonKey) {
@@ -49,6 +53,7 @@ public abstract class EpsilonPropertyFragment<S extends PropertyService>
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     if (item.getItemId() == R.id.menu_epsilon) {
+      // show the epsilon dialog
       FragmentManager fm = getActivity().getSupportFragmentManager();
       FragmentTransaction transaction = fm.beginTransaction();
       Fragment prev = fm.findFragmentByTag("dialog");

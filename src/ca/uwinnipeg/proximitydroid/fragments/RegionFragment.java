@@ -25,6 +25,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
 /**
+ * An {@link ImageFragment} which also displays a list of {@link Region}s on top of the image.
  * @author Garrett Smith
  *
  */
@@ -36,6 +37,11 @@ public class RegionFragment extends ImageFragment<RegionShowView> {
     
   protected OnAddRegionSelectedListener mListener;  
   
+  /**
+   * Handles when the add region button is pressed.
+   * @author Garrett Smith
+   *
+   */
   public interface OnAddRegionSelectedListener {
     public void onAddRegionSelected();
   }

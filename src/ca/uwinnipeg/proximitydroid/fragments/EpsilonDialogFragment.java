@@ -22,6 +22,10 @@ import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Util;
 
 /**
+ * Dialog used to select the epsilon for a calculation.
+ * <p>
+ * This works be changing the value for a shared preference which the service performing the 
+ * calculation watches.
  * @author Garrett Smith
  *
  */
@@ -51,9 +55,16 @@ public class EpsilonDialogFragment
   
   protected TextView mValueText;
   
-  // prevent calling the constructor
+  /**
+   * Default constructor.
+   */
   public EpsilonDialogFragment() {}
   
+  /**
+   * Returns a new epsilon dialog which sets the preference with the given key.
+   * @param prefKey
+   * @return
+   */
   public static EpsilonDialogFragment newInstance(String prefKey) {
     EpsilonDialogFragment frag = new EpsilonDialogFragment();
     Bundle args = new Bundle();
@@ -84,7 +95,7 @@ public class EpsilonDialogFragment
     LayoutInflater inflater = activity.getLayoutInflater();
     View view = inflater.inflate(R.layout.epsilon, null);
     
-    // setup seekbar
+    // setup seek bar
     SeekBar sb = (SeekBar) view.findViewById(R.id.epsilon_seekbar); 
     sb.setMax(STEPS);
     sb.setProgress((int) (mCurrentValue * STEPS));
@@ -122,6 +133,9 @@ public class EpsilonDialogFragment
                 .create();
   }
   
+  /**
+   * Updates the value of the text field.
+   */
   protected void updateValueText() {
     String str = new Formatter().format(FORMAT, mCurrentValue).toString();
     mValueText.setText(str);

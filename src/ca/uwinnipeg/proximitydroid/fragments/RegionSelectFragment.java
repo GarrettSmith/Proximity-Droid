@@ -9,7 +9,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
+import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.R;
+import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.Region.Shape;
 import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
 import ca.uwinnipeg.proximitydroid.views.RegionView;
@@ -21,7 +23,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
 /**
- * The activity can select neighbourhoods from an image. 
+ * Fragment used to add {@link Region} to the {@link Image}.
  * @author Garrett Smith
  *
  */

@@ -5,8 +5,8 @@ package ca.uwinnipeg.proximitydroid.fragments;
 
 import ca.uwinnipeg.proximitydroid.services.ComplimentService;
 
-
 /**
+ * Displays the results of the {@link ComplimentService}.
  * @author Garrett Smith
  *
  */

@@ -13,29 +13,47 @@ import ca.uwinnipeg.proximitydroid.services.PropertyService;
 import ca.uwinnipeg.proximitydroid.services.ProximityService;
 
 /**
+ * A fragment that displays the results from a {@link PropertyService}.
  * @author Garrett Smith
  *
  */
 public abstract class PropertyFragment<S extends PropertyService> extends RegionFragment {
   
-  protected Class<S> mClass;
+  // the class of the property service
+  protected Class<S> mServiceClass;
   
+  // the category of broadcasts we are interested in
   protected String mCategory;
   
+  // receives broadcasts from the property service we are interseted in about progress changes and 
+  // results
   protected BroadcastReceiver mPropertyReciever = new PropertyFragmentReceiver();
   
+  // the intent filter used to filter broadcasts we are interseted in
   protected IntentFilter mFilter;
   
+  // the current progress of the service's calculation
   protected int mProgress;
   
+  /**
+   * Creates a new property fragment.
+   * @param clazz the class of {@link PropertyService} we are interested in
+   * @param category the category of broadcasts we are interested in
+   */
   public PropertyFragment(Class<S> clazz, String category) {
-    mClass = clazz;
+    mServiceClass = clazz;
     mCategory = category;
     mFilter = new IntentFilter();
   }
   
+  /**
+   * Creates a new property fragment with a custom filter.
+   * @param clazz the class of {@link PropertyService} we are interested in
+   * @param category the category of broadcasts we are interested in
+   * @param filter the filter containing the custom filtering rules
+   */
   public PropertyFragment(Class<S> clazz, String category, IntentFilter filter) {
-    mClass = clazz;
+    mServiceClass = clazz;
     mCategory = category;
     mFilter = filter;
   }
@@ -68,20 +86,32 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   @Override
   protected void onServiceAttached(ProximityService service) {
     super.onServiceAttached(service);
-    onPropertyServiceAvailable((S) service.getPropertyService(mClass));
+    onPropertyServiceAvailable((S) service.getPropertyService(mServiceClass));
   }
   
+  /**
+   * Callback for when the property service we are interested in available to us.
+   * @param service
+   */
   protected void onPropertyServiceAvailable(S service) {
     // get the current progress
     setProgress(service.getProgress());
   }
   
+  /**
+   * Sets the current progress.
+   * @param progress
+   */
   protected void setProgress(int progress) {
     mProgress = progress;
     Activity activity = getActivity();
     updateProgress(activity);
   }
   
+  /**
+   * Updates the progress display of the attached activity.
+   * @param activity
+   */
   protected void updateProgress(Activity activity) {
     if (activity != null && isVisible()) {
       activity.setProgressBarVisibility(true);
@@ -89,6 +119,11 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
     }    
   }
 
+  /**
+   * Receives broadcasts about progress changes and results.
+   * @author Garrett Smith
+   *
+   */
   protected class PropertyFragmentReceiver extends BroadcastReceiver {
 
     @Override
@@ -99,6 +134,12 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   }
   
   // callbacks
+  /**
+   * Handles receiving broadcasts from the {@link PropertyService} and passes the relevant 
+   * information to the callbacks.
+   * @param context
+   * @param intent
+   */
   protected void onRecieve(Context context, Intent intent) {
     String action = intent.getAction();
     if (action.equals(PropertyService.ACTION_VALUE_CHANGED)) {
@@ -122,10 +163,28 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
     }
   }
   
-  protected void onValueChanged(Region region, int[] points) {}
+  /**
+   * Called when the value for a particular region has changed.
+   * @param region
+   * @param points
+   */
+  protected void onValueChanged(Region region, int[] points) {} 
+  
+  /**
+   * Called when the general value for the property has changed.
+   * @param points
+   */
   protected void onValueChanged(int[] points) {};
+  
+  /**
+   * Called when the regions have been cleared.
+   */
   protected void onRegionsCleared() {};
   
+  /**
+   * Called when the current progress has changed.
+   * @param progress
+   */
   protected void onProgressChanged(int progress) {
     setProgress(progress);
   }

@@ -133,7 +133,7 @@ public class ProximityDroidActivity
     
     // connect the service to the fragments
     for (ImageFragment<?> frag : fragments) {
-      frag.setService(getService());
+      frag.bindService(getService());
     }
   }
   
@@ -298,7 +298,7 @@ public class ProximityDroidActivity
     
     // create the fragment
     RegionSelectFragment frag = new RegionSelectFragment();
-    frag.setService(getService());
+    frag.bindService(getService());
 
     // swap the select fragment in
     mFragmentManager.beginTransaction()
@@ -355,7 +355,7 @@ public class ProximityDroidActivity
       if (prevFragment != null) { 
         mFragment = (ImageFragment<?>) prevFragment; 
         // connect the service if we can
-        if (isBound()) mFragment.setService(getService());
+        if (isBound()) mFragment.bindService(getService());
       }
       
       // Check if the fragment is already initialized
@@ -365,7 +365,7 @@ public class ProximityDroidActivity
         // Set the tab's tag to be the fragment
         tab.setTag(mFragment);
         // connect the service if we can
-        if (isBound()) mFragment.setService(getService());
+        if (isBound()) mFragment.bindService(getService());
         ft.add(R.id.image_fragment_container, mFragment, mTag);
       } else {
         // If it exists, simply attach it in order to show it

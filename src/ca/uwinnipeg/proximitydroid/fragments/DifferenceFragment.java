@@ -1,7 +1,15 @@
+/**
+ * 
+ */
 package ca.uwinnipeg.proximitydroid.fragments;
 
 import ca.uwinnipeg.proximitydroid.services.DifferenceService;
 
+/**
+ * Displays the results of the {@link DifferenceService}.
+ * @author Garrett Smith
+ *
+ */
 public class DifferenceFragment extends EpsilonPropertyFragment<DifferenceService> {
   
   protected int[] mPoints;
