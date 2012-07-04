@@ -362,10 +362,10 @@ public class ProximityImageView extends ImageView {
     RectF bounds = getImageScreenBounds();
     return Bitmap.createBitmap(
         bm, 
-        Math.round(bounds.left), 
-        Math.round(bounds.top),
-        Math.round(bounds.width()), 
-        Math.round(bounds.height()));
+        Math.round(Math.max(bounds.left, 0)), 
+        Math.round(Math.max(bounds.top, 0)),
+        Math.round(Math.min(bounds.width(), bm.getWidth())), 
+        Math.round(Math.min(bounds.height(),bm.getHeight())));
   }
   
   /**
