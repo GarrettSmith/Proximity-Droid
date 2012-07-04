@@ -240,25 +240,36 @@ public class RegionShowView extends ProximityImageView {
     @Override
     public boolean onDoubleTap(MotionEvent e) {
       
-      float[] p = convertToImageSpace(e.getX(), e.getY());
-      float x = p[0];
-      float y = p[1];
-      
-      if (Math.abs(getScale() - MAX_SCALE) <= (MAX_SCALE / 2)) {
-        zoomTo(MIN_SCALE, 200);
+      if (Math.abs(getScale() - MAX_SCALE) <= (MAX_SCALE / 2)) {        
+        float[] p = convertToImageSpace(e.getX(), e.getY());
+        float x = p[0];
+        float y = p[1];
+        zoomTo(MIN_SCALE, x, y, 200);
       }
       else {
         zoomTo(MAX_SCALE/2, 200);
       }
       return true;
     }
+    
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float dx, float dy) {
+      panBy(dx, dy);
+      return true;
+    }
   }
   
   protected class CustomScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+    
     @Override
     public boolean onScale(ScaleGestureDetector detector) {
-      zoomBy(detector.getScaleFactor());
+      zoomBy(detector.getScaleFactor(), detector.getFocusX(), detector.getFocusY());
       return true;
+    }
+    
+    @Override
+    public void onScaleEnd(ScaleGestureDetector detector) {
+      // TODO: center axis that are fully visible
     }
   }
 
