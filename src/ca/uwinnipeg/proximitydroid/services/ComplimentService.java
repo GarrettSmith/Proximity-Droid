@@ -11,6 +11,8 @@ import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
+ * A service that calculates the compliment of a {@link Region}. Every additional region is used to
+ * take the difference from the original compliment.
  * @author Garrett Smith
  *
  */
@@ -26,6 +28,10 @@ public class ComplimentService extends EpsilonLinearService {
     super(CATEGORY, EPSILON_KEY);
   }
   
+  /**
+   * Returns the points within the most recently calculated compliment.
+   * @return
+   */
   public int[] getCompliment() {
     return indicesToPoints(getValue());
   }

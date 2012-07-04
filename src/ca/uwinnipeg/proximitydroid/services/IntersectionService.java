@@ -13,6 +13,7 @@ import ca.uwinnipeg.proximitydroid.MathUtil;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
+ * A service that calculates the intersection.
  * @author Garrett Smith
  *
  */
@@ -28,20 +29,33 @@ public class IntersectionService extends EpsilonLinearService {
   
   public static final String DEGREE = "degree";
   
+  // the current degree of nearness, 1 is the maximum and means completely dissimilar
   protected float mDegree = 1;
   
   public IntersectionService() {
     super(CATEGORY, EPSILON_KEY);
   }
   
+  /**
+   * Returns the points of the pixels within the calculated intersection.
+   * @return
+   */
   public int[] getIntersection() {
     return indicesToPoints(getValue());
   }
   
+  /**
+   * Returns the degree of nearness of the current intersection.
+   * @return
+   */
   public float getDegree() {
     return mDegree;
   }
   
+  /**
+   * Updates and broadcasts the current degree of nearness.
+   * @param degree
+   */
   protected void setDegree(float degree) {
     mDegree = degree;
     

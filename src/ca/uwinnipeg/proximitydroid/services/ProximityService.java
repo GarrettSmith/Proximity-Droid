@@ -30,8 +30,7 @@ import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 import ca.uwinnipeg.proximitydroid.Util;
 
 /**
- * This service does the heavy lifting of generating neighbourhoods, intersections, maintaining the
- * perceptual system, etc.
+ * This service maintains a list of {@link PropertyService}s and the attached {@link Image}.
  * @author Garrett Smith
  *
  */
@@ -184,6 +183,10 @@ implements OnSharedPreferenceChangeListener {
     return mUri;
   }
 
+  /**
+   * Returns the filename of the bitmap currently being used.
+   * @return
+   */
   public String getFileName() {
     String path = mUri.getPath();
     int start = path.lastIndexOf('/');
@@ -196,6 +199,10 @@ implements OnSharedPreferenceChangeListener {
     return new ArrayList<Region>(mRegions);
   }
 
+  /**
+   * Adds a region to the system and all property services.
+   * @param region
+   */
   public void addRegion(Region region) { 
     mRegions.add(region);
     // tell services
@@ -208,6 +215,10 @@ implements OnSharedPreferenceChangeListener {
     mBroadcastManager.sendBroadcast(intent);
   }
   
+  /**
+   * Removes a region from the system and property services.
+   * @param region
+   */
   public void removeRegion(Region region) {
     mRegions.remove(region);
     // tell services
@@ -216,6 +227,9 @@ implements OnSharedPreferenceChangeListener {
     }
   }
   
+  /**
+   * clears all regions.
+   */
   public void clearRegions() {
     // clear all regions
     mRegions.clear();
@@ -228,14 +242,26 @@ implements OnSharedPreferenceChangeListener {
     mBroadcastManager.sendBroadcast(intent);
   }
   
+  /**
+   * Returns true if the bitmap has been set.
+   * @return
+   */
   public boolean hasBitmap() {
     return mHasBitmap;
   }
   
+  /**
+   * Returns the currently set bitmap.
+   * @return
+   */
   public RotatedBitmap getBitmap() {
     return mBitmap;
   }   
   
+  /**
+   * Sets the bitmap from the  given data Uri.
+   * @param data
+   */
   public void setBitmap(Uri data) {
     // record that we now have a bitmap
     mHasBitmap = true;
@@ -258,6 +284,10 @@ implements OnSharedPreferenceChangeListener {
     }.execute(mUri);
   }
   
+  /**
+   * Sets the bitmap from the given bitmap.
+   * @param bitmap
+   */
   public void setBitmap(RotatedBitmap bitmap) {
     mBitmap = bitmap;
     
@@ -286,6 +316,10 @@ implements OnSharedPreferenceChangeListener {
     }.execute(mBitmap);
   }
   
+  /**
+   * Returns a map of strings representing categories to lists of propbe functions.
+   * @return
+   */
   public Map<String, List<ProbeFunc<Integer>>> getProbeFuncs() {
     Map<String, List<ProbeFunc<Integer>>> features = new HashMap<String, List<ProbeFunc<Integer>>>();
     // load all the standard probe funcs

@@ -16,7 +16,7 @@ import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
- * A service that calculates a property of the image perceptual system.
+ * A service that calculates a property of {@link Region}s within the {@link Image}.
  * @author Garrett Smith
  *
  */
@@ -67,41 +67,78 @@ public abstract class PropertyService extends Service {
     mBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
   }
   
+  /**
+   * Sets the given image we are calculating within.
+   * @param image
+   */
   public void setup(Image image) {
     mImage = image;
   }
 
+  /**
+   * Adds a region to the service.
+   * @param region
+   */
   public void addRegion(Region region) {
     mRegions.add(region);
     onRegionAdded(region);
   }
   
+  /**
+   * Removes a region from the service.
+   * @param region
+   */
   public void removeRegion(Region region) {
     mRegions.remove(region);
     onRegionRemoved(region);
   }
   
+  /**
+   * Clears all the regions from the service.
+   */
   public void clearRegions() {
     mRegions.clear();
     onRegionsCleared();
   }
   
+  /**
+   * Causes the property to be recalculated.
+   */
   protected abstract void invalidate();
 
   // Callbacks
+  /**
+   * Called when a region is added.
+   * @param region
+   */
   protected void onRegionAdded(Region region) {}
 
+  /**
+   * Called when a region is removed.
+   * @param region
+   */
   protected void onRegionRemoved(Region region) {}
 
+  /**
+   * Called when the regions are cleared.
+   */
   protected void onRegionsCleared() { 
     invalidate(); 
   }
 
+  /**
+   * Called when the enabled probe functions are changed.
+   */
   protected void onProbeFuncsChanged() { 
     invalidate(); 
   }
 
   // broadcasting
+  /**
+   * Broadcasts the the value associated with the given region has been changed.
+   * @param indices
+   * @param region
+   */
   protected void broadcastValueChanged(List<Integer> indices, Region region) {
     Intent intent = new Intent(ACTION_VALUE_CHANGED);
     intent.addCategory(mCategory);
@@ -110,10 +147,19 @@ public abstract class PropertyService extends Service {
     mBroadcastManager.sendBroadcast(intent);
   }
   
+  /**
+   * Broadcasts that the general value has been changed.
+   * @param indices
+   */
   protected void broadcastValueChanged(List<Integer> indices) {
     broadcastValueChanged(indices, null);
   }
 
+  /**
+   * Converts the given list of indices into an array of points those indices are at.
+   * @param indices
+   * @return
+   */
   // TODO: get this off the ui thread and make it cancellable
   protected int[] indicesToPoints(List<Integer> indices) {
     // handle nulls
@@ -128,10 +174,18 @@ public abstract class PropertyService extends Service {
     return points;
   }
 
+  /**
+   * Returns the current progress of the calculation.
+   * @return
+   */
   public int getProgress() {
     return mProgress;
   }
   
+  /**
+   * Sets and broadcasts the progress of the calculation.
+   * @param value
+   */
   public void setProgress(int value) {
     // store progress
     mProgress = value;
@@ -143,6 +197,13 @@ public abstract class PropertyService extends Service {
     mBroadcastManager.sendBroadcast(intent);    
   }
   
+  /**
+   * A tasks that is used to calculate a property.
+   * <p>
+   * This handles general things like progress and keeping track of whether it is running.
+   * @author Garrett Smith
+   *
+   */
   public abstract class PropertyTask 
     extends AsyncTask<Region, Integer, List<Integer>>
     implements PerceptualSystemSubscriber {

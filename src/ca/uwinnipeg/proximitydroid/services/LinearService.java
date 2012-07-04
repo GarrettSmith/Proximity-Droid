@@ -10,16 +10,13 @@ import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
+ * A service that uses a linear list of tasks to calculate the property for each subsequent region.
  * @author Garrett Smith
  *
  */
 public abstract class LinearService extends PropertyService {
   
   public static final String TAG = "PropertyService";
-  
-  public LinearService(String category) {
-    super(category);
-  }
 
   // The indices of the pixels in the intersection
   protected List<Integer> mValue = new ArrayList<Integer>();
@@ -29,7 +26,14 @@ public abstract class LinearService extends PropertyService {
   
   // The list of regions to be used by intersect tasks
   protected List<Region> mQueue = new ArrayList<Region>(); 
-
+  
+  /**
+   * Creates a new service that broadcasts using the given category.
+   * @param category
+   */
+  public LinearService(String category) {
+    super(category);
+  }
   
   @Override
   protected void onRegionAdded(Region region) {
@@ -37,10 +41,18 @@ public abstract class LinearService extends PropertyService {
     addTask(region);
   }
   
+  /**
+   * Returns the current list of indices calculated to form the property.
+   * @return
+   */
   protected List<Integer> getValue() {
     return mValue;
   }
   
+  /**
+   * Sets and broadcasts the current general value calculated for the property.
+   * @param indices
+   */
   protected void setValue(List<Integer> indices) {
     // save the new intersection
     mValue.clear();
@@ -69,6 +81,9 @@ public abstract class LinearService extends PropertyService {
     }
   }
 
+  /**
+   * Recalculates the property starting from the first region added.
+   */
   protected void invalidate() {
     // stop all tasks
     // cancel running task
@@ -87,6 +102,10 @@ public abstract class LinearService extends PropertyService {
   }
   
 
+  /**
+   * Adds a task to the queue for the given region.
+   * @param region
+   */
   protected void addTask(Region region) {
     // add the region to the queue
     mQueue.add(region);
@@ -98,6 +117,9 @@ public abstract class LinearService extends PropertyService {
       
   }
 
+  /**
+   * Runs the next task in the queue if it is non empty.
+   */
   protected void runNextTask() {
     // only run if there are regions in the queue
     if (!mQueue.isEmpty()) {
@@ -111,6 +133,11 @@ public abstract class LinearService extends PropertyService {
     }
   }
   
+  /**
+   * A task that calculates a value and runs the next task in the queue.
+   * @author Garrett Smith
+   *
+   */
   protected class LinearTask extends PropertyTask {
     
     protected Region mRegion;
@@ -131,8 +158,19 @@ public abstract class LinearService extends PropertyService {
     
   }
   
+  /**
+   * This method should be overridden by subclasses to calculate their specific property.
+   * @param region
+   * @param sub
+   * @return
+   */
   protected abstract List<Integer> calculateProperty(Region region, PerceptualSystemSubscriber sub);
   
+  /**
+   * Sets the result of calculating using the given region to the given value.
+   * @param result
+   * @param region
+   */
   protected void setResult(List<Integer> result, Region region) {    
     // store result as the new value
     setValue(result);

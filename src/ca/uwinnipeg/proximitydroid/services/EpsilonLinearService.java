@@ -8,6 +8,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import ca.uwinnipeg.proximitydroid.Util;
 
 /**
+ * A property service that uses a linear list of tasks and an epsilon to calculate its property.
  * @author Garrett Smith
  *
  */
@@ -17,10 +18,17 @@ public abstract class EpsilonLinearService
   
   public static final String TAG = "EpsilonLinearService";
   
+  // the current epsilon value
   protected float mEpsilon;
   
+  // the shared preference key of the epsilon
   protected final String mEpsilonKey;
 
+  /**
+   * Creates a new service with the given category and shared preference key.
+   * @param category
+   * @param prefKey
+   */
   public EpsilonLinearService(String category, String prefKey) {
     super(category);
     mEpsilonKey = prefKey;
@@ -42,18 +50,12 @@ public abstract class EpsilonLinearService
       setEpsilon(prefs.getFloat(key, 0));
     }
   }
-  
-  /* (non-Javadoc)
-   * @see ca.uwinnipeg.proximitydroid.services.EpsilonProperty#getEpsilon()
-   */
+
   @Override
   public float getEpsilon() {
     return mEpsilon;
   }
   
-  /* (non-Javadoc)
-   * @see ca.uwinnipeg.proximitydroid.services.EpsilonProperty#setEpsilon(float)
-   */
   @Override
   public void setEpsilon(float epsilon) {
     mEpsilon = epsilon;

@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 
 /**
+ * A service that calculates the value of a service by using an epsilon.
  * @author Garrett Smith
  *
  */
@@ -18,10 +19,16 @@ public abstract class EpsilonPropertyService
   
   public static final String TAG = "EpsilonPropertyService";
   
+  // the current epsilon value
   protected float mEpsilon;
   
   protected final String mPreferencesKey;
 
+  /**
+   * Creates a new service with the given category and the shared preference key.
+   * @param category
+   * @param prefKey
+   */
   public EpsilonPropertyService(String category, String prefKey) {
     super(category);
     mPreferencesKey = prefKey;

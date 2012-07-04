@@ -11,6 +11,8 @@ import ca.uwinnipeg.proximity.PerceptualSystem.PerceptualSystemSubscriber;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
+ * A service that calculates the difference of each additional {@link Region} from the first added
+ * region.
  * @author Garrett Smith
  *
  */
@@ -26,6 +28,10 @@ public class DifferenceService extends EpsilonLinearService {
     super(CATEGORY, EPSILON_KEY);
   }
   
+  /**
+   * Returns the points of the pixels left after the difference operations.
+   * @return
+   */
   public int[] getDifference() {
     return indicesToPoints(getValue());
   }

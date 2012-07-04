@@ -12,6 +12,7 @@ import android.util.Log;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
+ * A service that calculates the neighbourhoods of all added regions.
  * @author Garrett Smith
  *
  */
@@ -21,7 +22,7 @@ public class NeighbourhoodService extends EpsilonPropertyService {
   
   public static final String CATEGORY = "Neighbourhood";
   
-  public static final String EPSILON_KEY = "Intersection epsilon";
+  public static final String EPSILON_KEY = "Neighbourhood epsilon";
 
   // The map of regions to the indices of the pixels in their neighbourhoods
   protected Map<Region, List<Integer>> mNeighbourhoods = new HashMap<Region, List<Integer>>();
@@ -45,6 +46,10 @@ public class NeighbourhoodService extends EpsilonPropertyService {
     setNeighbourhood(region, null);
   }
   
+  /**
+   * Returns a map of regions to the points within their neighbourhoods.
+   * @return
+   */
   public Map<Region, int[]> getNeighbourhoods() {
     Map<Region, int[]> nhs = new HashMap<Region, int[]>();
     for (Region reg : mNeighbourhoods.keySet()) {
@@ -54,6 +59,11 @@ public class NeighbourhoodService extends EpsilonPropertyService {
     return nhs;
   }
   
+  /**
+   * Sets the neighbourhood of the given region.
+   * @param region
+   * @param indices
+   */
   protected void setNeighbourhood(Region region, List<Integer> indices) {
     // save the change
     if (indices != null) {
@@ -98,6 +108,10 @@ public class NeighbourhoodService extends EpsilonPropertyService {
     } 
   }
   
+  /**
+   * Invalidates the given region, causing its neighbourhood to be recalculated.
+   * @param region
+   */
   protected void invalidate(Region region) {
     // clear old points
     mNeighbourhoods.put(region, new ArrayList<Integer>());
@@ -116,6 +130,12 @@ public class NeighbourhoodService extends EpsilonPropertyService {
 
   // Tasking 
   
+
+  /**
+   * A task used to calculate the neighbourhood of a region.
+   * @author Garrett Smith
+   *
+   */
   private class NeighbourhoodTask extends PropertyTask {
   
     @Override
