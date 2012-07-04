@@ -21,6 +21,7 @@ import ca.uwinnipeg.proximitydroid.R;
  *
  */
 // TODO: change padding to dip
+// TODO: pan view  when region is NEAR edge of screen
 public class SelectRegionView extends RegionView {  
   
   public static final String TAG = "SelectRegionView";
@@ -55,7 +56,10 @@ public class SelectRegionView extends RegionView {
 
   // The amount a touch can be off and still be considered touching an edge
   protected static final float TOUCH_PADDING = 0.05f;
-  protected static final float TOUCH_SHIFT = 0.025f;
+  protected static final float TOUCH_SHIFT = 0.025f;  
+  
+  // The minimum size of the region relative to screen size
+  protected static int MIN_SIZE;
 
   protected Action mAction = Action.NONE;
   protected Edge mSelectedEdge = Edge.NONE;
@@ -115,6 +119,9 @@ public class SelectRegionView extends RegionView {
       Matrix m = new Matrix();
       m.postRotate(45);
       HANDLE_PATH.transform(m);
+      
+      // minimum sizes
+      MIN_SIZE = (int) rs.getDimension(R.dimen.min_region);
     }    
     
     mSelectView = v;
@@ -195,20 +202,27 @@ public class SelectRegionView extends RegionView {
 
     float shift = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_SHIFT;
     float padding = Math.min(mView.getWidth(), mView.getHeight()) * TOUCH_PADDING;
+    
+    // the distance of the point from the edges
+    float dLeft, dRight, dTop, dBottom;    
+    dLeft =   Math.abs(x - left);
+    dRight =  Math.abs(x - right);
+    dTop =    Math.abs(y - top);
+    dBottom = Math.abs(y - bottom);
 
     // left and right
-    if (Math.abs(x - left  + shift) <= padding) {
+    if (dLeft < dRight && (dLeft + shift) <= padding) {
       mask = LEFT;
     }
-    else if (Math.abs(x - right - shift) <= padding) {
+    else if ((dRight - shift) <= padding) {
       mask = RIGHT;
     }
 
     // top and bottom
-    if (Math.abs(y - top + shift) <= padding) {
+    if (dTop < dBottom && (dTop + shift) <= padding) {
       mask += TOP;
     }
-    else if (Math.abs(y - bottom - shift) <= padding) {
+    else if ((dBottom - shift) <= padding) {
       mask += BOTTOM;
     }
     
@@ -318,6 +332,46 @@ public class SelectRegionView extends RegionView {
       // Reflect change on screen
       dirty.union(getPaddedScreenSpaceBounds());
       mView.invalidate(dirty);
+    }
+  }
+
+  @Override
+  protected void resize(int dx, int dy, Edge edg, Rect newBounds) {
+    switch (edg) {
+      case L: 
+        // constrain to image area
+        newBounds.left = Math.max(0, newBounds.left + dx); 
+        // prevent flipping and keep min size
+        newBounds.left = Math.min(newBounds.left, newBounds.right - MIN_SIZE); 
+        break;
+      case R: 
+        newBounds.right = Math.min(mImageBounds.right, newBounds.right + dx);
+        newBounds.right = Math.max(newBounds.right, newBounds.left + MIN_SIZE);
+        break;
+      case T: 
+        newBounds.top = Math.max(0, newBounds.top + dy);
+        newBounds.top = Math.min(newBounds.top, newBounds.bottom - MIN_SIZE);
+        break;
+      case B: 
+        newBounds.bottom = Math.min(mImageBounds.bottom, newBounds.bottom + dy);
+        newBounds.bottom = Math.max(newBounds.bottom, newBounds.top + MIN_SIZE);
+        break;
+      case TL:
+        resize(dx, dy, Edge.T, newBounds);
+        resize(dx, dy, Edge.L, newBounds);
+        break;
+      case TR:
+        resize(dx, dy, Edge.T, newBounds);
+        resize(dx, dy, Edge.R, newBounds);
+        break;
+      case BL:
+        resize(dx, dy, Edge.B, newBounds);
+        resize(dx, dy, Edge.L, newBounds);
+        break;
+      case BR:
+        resize(dx, dy, Edge.B, newBounds);
+        resize(dx, dy, Edge.R, newBounds);
+        break;
     }
   }
 

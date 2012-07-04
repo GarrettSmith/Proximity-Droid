@@ -23,23 +23,20 @@ public class RegionView extends Region {
 
   public static final String TAG = "RegionView";
 
-  // The default ratio of padding when resetting the neighbour hood size
-  public static final float PADDING_RATIO = 1/8f;  
-  
-  // The minimum size of the neighbourhood relative to screen size
-  protected static final float MIN_SIZE = 0.2f;
+  // The default ratio of padding when resetting the region size
+  public static final float PADDING_RATIO = 1/8f;
 
   // Flags if one time setup has been done
   private static boolean SETUP = false;
   
-  //Paint shared by all neighbourhoods
+  //Paint shared by all regions
   public static final Paint REGION_PAINT = new Paint();
   public static final Paint CENTER_BASE_PAINT = new Paint();
 
   // Path used to draw center point
   public static final Path CENTER_BASE_PATH = new Path();
 
-  // The view containing this neighbourhood.
+  // The view containing this regions.
   protected ProximityImageView mView;
 
   // The matrix used to move from image space to screen space
@@ -94,7 +91,7 @@ public class RegionView extends Region {
   }
 
   /**
-   * Sets bounds of neighbourhood and invalidates the containing view.
+   * Sets bounds of region and invalidates the containing view.
    * @param r
    */
   public void setBounds(Rect r) {
@@ -187,7 +184,7 @@ public class RegionView extends Region {
   }
 
   /**
-   * Moves the neighbourhood by the given delta.
+   * Moves the region by the given delta.
    * @param dx
    * @param dy
    */
@@ -216,27 +213,25 @@ public class RegionView extends Region {
    * @param dy
    * @param edg
    */
-  private void resize(int dx, int dy, Edge edg, Rect newBounds) {
-    int minSize = 
-        (int) (Math.min(mView.getWidth(), mView.getHeight()) * MIN_SIZE / mView.getScale());
+  protected void resize(int dx, int dy, Edge edg, Rect newBounds) {
     switch (edg) {
       case L: 
         // constrain to image area
         newBounds.left = Math.max(0, newBounds.left + dx); 
         // prevent flipping and keep min size
-        newBounds.left = Math.min(newBounds.left, newBounds.right - minSize); 
+        newBounds.left = Math.min(newBounds.left, newBounds.right); 
         break;
       case R: 
         newBounds.right = Math.min(mImageBounds.right, newBounds.right + dx);
-        newBounds.right = Math.max(newBounds.right, newBounds.left + minSize);
+        newBounds.right = Math.max(newBounds.right, newBounds.left);
         break;
       case T: 
         newBounds.top = Math.max(0, newBounds.top + dy);
-        newBounds.top = Math.min(newBounds.top, newBounds.bottom - minSize);
+        newBounds.top = Math.min(newBounds.top, newBounds.bottom);
         break;
       case B: 
         newBounds.bottom = Math.min(mImageBounds.bottom, newBounds.bottom + dy);
-        newBounds.bottom = Math.max(newBounds.bottom, newBounds.top + minSize);
+        newBounds.bottom = Math.max(newBounds.bottom, newBounds.top);
         break;
       case TL:
         resize(dx, dy, Edge.T, newBounds);
@@ -293,7 +288,7 @@ public class RegionView extends Region {
   }
   
   /**
-   *  Maps the neighbourhood bounds from image space to screen space.
+   *  Maps the region bounds from image space to screen space.
    * @return
    */
   public Rect getScreenSpaceBoundsRect() {
@@ -301,7 +296,7 @@ public class RegionView extends Region {
   }
 
   /**
-   *  Maps the neighbourhood bounds from image space to screen space.
+   *  Maps the region bounds from image space to screen space.
    * @return
    */
   public RectF getScreenSpaceBounds() {

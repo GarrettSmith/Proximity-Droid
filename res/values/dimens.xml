@@ -2,4 +2,5 @@
 <resources>
     <dimen name="epsilon_margin">8dp</dimen>
     <dimen name="region_center_radius">8dip</dimen>
+    <dimen name="min_region">12dp</dimen>
 </resources>
