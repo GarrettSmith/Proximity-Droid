@@ -18,14 +18,17 @@ import android.widget.SpinnerAdapter;
 import ca.uwinnipeg.proximitydroid.fragments.AboutDialogFragment;
 import ca.uwinnipeg.proximitydroid.fragments.ComplimentFragment;
 import ca.uwinnipeg.proximitydroid.fragments.DifferenceFragment;
+import ca.uwinnipeg.proximitydroid.fragments.FeatureFragment;
 import ca.uwinnipeg.proximitydroid.fragments.ImageFragment;
 import ca.uwinnipeg.proximitydroid.fragments.IntersectionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
+import ca.uwinnipeg.proximitydroid.fragments.PropertyFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionFragment.OnAddRegionSelectedListener;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
 import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnClosedListener;
+import ca.uwinnipeg.proximitydroid.services.ProximityService;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
@@ -36,6 +39,11 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
 
 /**
+ * The main activity and entry point of the app. Starts the {@link ProximityService} and requests 
+ * image to provide the service. The activity then provides various {@link PropertyFragment}s to
+ * view the results of calculations.
+ * <p>
+ * This activity should primarily handle the ui of the app and leave the logic to the services.
  * @author Garrett Smith
  *
  */
@@ -67,6 +75,9 @@ public class ProximityDroidActivity
   public static final String DIFFERENCE_TAG = "difference";
   public static final String SELECT_TAG = "select";
   
+  /**
+   * The fragment classes used to populate the activity.
+   */
   @SuppressWarnings("unchecked")
   public static final Class<ImageFragment<?>>[] FRAGMENT_CLASSES = 
     (Class<ImageFragment<?>>[]) new Class<?>[] {
@@ -77,6 +88,9 @@ public class ProximityDroidActivity
       DifferenceFragment.class
     };
   
+  /**
+   * The tags used for each fragment.
+   */
   public static final String[] FRAGMENT_TAGS = new String[] {
     REGION_TAG,
     NEIGHBOURHOOD_TAG,
@@ -85,6 +99,9 @@ public class ProximityDroidActivity
     DIFFERENCE_TAG
   };
   
+  /**
+   * The labels used for the tab of each fragment.
+   */
   public static final int[] FRAGMENT_TEXT = new int[] {
     R.string.regions,
     R.string.neighbourhoods,
@@ -95,10 +112,10 @@ public class ProximityDroidActivity
   
   // bundle keys
   protected static final String BUNDLE_SELECTED_TAB = "Selected Tab";
-
   
   // Service connection
   
+  @Override
   protected void onProximityServiceConnected() {
     super.onProximityServiceConnected();
     // request an image if the service does not already have one
@@ -126,6 +143,7 @@ public class ProximityDroidActivity
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     switch(requestCode) {
+      // check if the result is the image we requested and send it to the service if it is
       case REQUEST_CODE_SELECT_IMAGE:
         if (resultCode == Activity.RESULT_OK) {
           getService().setBitmap(data.getData());
@@ -153,6 +171,7 @@ public class ProximityDroidActivity
     // setup tabs
     mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
     
+    // for each class of fragment add a new tab to the navigation
     for (int i = 0; i < FRAGMENT_CLASSES.length; i++) {
       Class<ImageFragment<?>> clazz = FRAGMENT_CLASSES[i];
       String tag = FRAGMENT_TAGS[i];
@@ -165,7 +184,7 @@ public class ProximityDroidActivity
       mActionBar.addTab(tab);
     }
     
-    // restore the selected tab
+    // restore the selected tab or set it to the first one if this is our first run
     int selected = 0;
     if (state != null) {
       selected = state.getInt(BUNDLE_SELECTED_TAB);
@@ -206,6 +225,12 @@ public class ProximityDroidActivity
     }
   }
   
+  /**
+   * Toggles displaying the {@link FeatureFragment}.
+   * <p>
+   * If we are on a small screen this starts a new {@link FeatureActivity}.
+   * @param item
+   */
   private void toggleFeatures(MenuItem item) {
 
     if (mSmallScreen) {
@@ -238,6 +263,11 @@ public class ProximityDroidActivity
 
   }
 
+  /**
+   * Updates the text of the toggle features button to make sense.
+   * @param item
+   * @param shown
+   */
   private void updateToggleText(MenuItem item, Boolean shown) {
     int text = shown ? R.string.menu_hide_features : R.string.menu_show_features;
     item.setTitle(text);    
@@ -259,7 +289,7 @@ public class ProximityDroidActivity
   }
 
   /**
-   * Change to the select region fragment
+   * Change to the {@link RegionSelectFragment}.
    */
   public void onAddRegionSelected() {
 
@@ -296,6 +326,7 @@ public class ProximityDroidActivity
   }
   
   /**
+   * A tab listener listens for when its tab is pressed and switches to the associated activity.
    * @author Garrett Smith
    *
    * @param <T>
@@ -316,8 +347,6 @@ public class ProximityDroidActivity
         mTag = tag;
         mClass = clz;
     }
-
-    /* The following are each of the ActionBar.TabListener callbacks */
 
     @Override
     public void onTabSelected(Tab tab, FragmentTransaction ft) {
@@ -354,7 +383,7 @@ public class ProximityDroidActivity
 
     @Override
     public void onTabReselected(Tab tab, FragmentTransaction ft) {
-      // User selected the already selected tab. Usually do nothing.
+      // Do nothing.
     }
   }
 

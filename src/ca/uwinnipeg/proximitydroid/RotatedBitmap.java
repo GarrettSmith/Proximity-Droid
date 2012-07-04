@@ -5,11 +5,20 @@ import android.graphics.Matrix;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * A wrapper of bitmap that also contains rotation information and creates transformation matrices 
+ * to display the bitmap as intended.
+ * @author Garrett Smith
+ *
+ */
 public class RotatedBitmap implements Parcelable {
 
   public static final String TAG = "RotatedBitmap";
 
+  // the wrapped bitmap
   private Bitmap mBitmap;
+  
+  // the rotation of the bitmap
   private int mOrientation;
 
   public static final int NORMAL = 0;
@@ -17,33 +26,59 @@ public class RotatedBitmap implements Parcelable {
   public static final int UPSIDEDOWN = 2;
   public static final int CCW = 3;
 
+  /**
+   * Creates an unrotated rotated bitmap from the given bitmap.
+   * @param bm
+   */
   public RotatedBitmap(Bitmap bm) {
     this(bm, NORMAL);
   }
 
+  /**
+   * Creates a rotated bitmap from the given bitmap with the given orienation.
+   * @param bm
+   * @param or the orientation of the bitmap
+   */
   public RotatedBitmap(Bitmap bm, int or) {
     mBitmap = bm;
     mOrientation = or;
   }
 
+  /**
+   * Sets the orientation of the bitmap.
+   * @param or
+   */
   public void setOrientation(int or) {
     mOrientation = or;
   }
 
+  /**
+   * Gets an int representing the orientation of the bitmap.
+   * @return
+   */
   public int getOrientation() {
     return mOrientation;
   }
 
+  /**
+   * Sets the bitmap to wrap.
+   * @param bm
+   */
   public void setBitmap(Bitmap bm) {
     mBitmap = bm;
   }
 
+  /**
+   * Returns the wrapped bitmap.
+   * @return
+   */
   public Bitmap getBitmap() {
     return mBitmap;
   }
 
   /**
-   * @return the degrees the bitmap is rotated
+   * Returns the degrees the bitmap is rotated.
+   * @return
    */
   public int getRotation() {
     return mOrientation * 90;
@@ -51,23 +86,37 @@ public class RotatedBitmap implements Parcelable {
 
   /**
    * 
-   * @return true if the bitmap has changed int (is rotated CW or CCW)
+   * @return true if the bitmap has changed orientation for the original bitmap 
+   * (is rotated CW or CCW)
    */
   public boolean isOrientationChanged() {
     return (mOrientation % 2 != 0);
   }
 
+  /**
+   * Return the width of the bitmap after it has been rotated.
+   * @return
+   */
   public int getWidth() {
     if (isOrientationChanged()) return mBitmap.getHeight();
     else return mBitmap.getWidth();
   }
 
-
+  /**
+   * Returns the height of the bitmap after it has been rotated.
+   * @return
+   */
   public int getHeight() {
     if (isOrientationChanged()) return mBitmap.getWidth();
     else return mBitmap.getHeight();
   }
   
+  /**
+   * Returns the integer representation of the pixel at the given coordinated of the image. 
+   * @param x
+   * @param y
+   * @return
+   */
   public int getPixel(int x, int y) {
     int width = mBitmap.getWidth();
     int height = mBitmap.getHeight();
@@ -89,6 +138,10 @@ public class RotatedBitmap implements Parcelable {
     return mBitmap.getPixel(x, y);
   }
 
+  /**
+   * Returns the transformation used to display this bitmap as intended.
+   * @return
+   */
   public Matrix getMatrix() {
     Matrix m = new Matrix(); // Identity
 
@@ -103,6 +156,8 @@ public class RotatedBitmap implements Parcelable {
 
     return m;
   }
+  
+  // Parcelable
 
   @Override
   public int describeContents() {
@@ -120,6 +175,9 @@ public class RotatedBitmap implements Parcelable {
     mOrientation = in.readInt();
   }
 
+  /**
+   * The rotated bitmap parcelable creator.
+   */
   public static final Parcelable.Creator<RotatedBitmap> CREATOR =
       new Parcelable.Creator<RotatedBitmap>() {
 

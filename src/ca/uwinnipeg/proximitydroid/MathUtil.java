@@ -12,10 +12,11 @@ import android.graphics.Point;
 import android.util.FloatMath;
 
 /**
+ * A class providing various math functions used by the system.
  * @author Garrett Smith
  *
  */
-public class MathUtil {
+public final class MathUtil {
 
   /**
    * Finds the distance between two points.

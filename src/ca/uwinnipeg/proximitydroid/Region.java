@@ -10,6 +10,9 @@ import android.os.Parcelable;
 import ca.uwinnipeg.proximity.image.Image;
 
 /**
+ * A region of interest in the {@link Image}.
+ * <p>
+ * A region has a shape, rectangle, oval, or polygon, and a bounds.
  * @author Garrett Smith
  *
  */
@@ -20,11 +23,21 @@ public class Region implements Parcelable {
   // The bounds of the neighbourhood IN IMAGE SPACE
   protected Rect mBounds = new Rect();
 
+  /**
+   * The possible region shapes.
+   * @author Garrett Smith
+   *
+   */
   public enum Shape { RECTANGLE, OVAL, POLYGON }
 
-  // The edge or pair of edges that are currently selected
+  /**
+   * Represents the edges of a region being selected.
+   * @author Garrett Smith
+   *
+   */
   public enum Edge { NONE, TL, T, TR, R, BR, B, BL, L }
 
+  // current shape of the region
   protected Shape mShape = Shape.RECTANGLE;
 
   // The list of points that make up the polygon
@@ -33,14 +46,18 @@ public class Region implements Parcelable {
   // The image this region belongs to
   protected Image mImage;
   
-  public void setImage(Image image) {
-    mImage = image;
-  }
-  
+  /**
+   * Creates a new region within the given image.
+   * @param image
+   */
   public Region(Image image) {
     mImage = image;
   }
   
+  /**
+   * Creates a new region that is a copy of the given region.
+   * @param source
+   */
   public Region(Region source) {
     if (source != null) {
       mShape = source.mShape;
@@ -49,7 +66,19 @@ public class Region implements Parcelable {
       mImage = source.mImage;
     }
   }
+  
+  /**
+   * Sets the {@link Image} this region is a part of.
+   * @param image
+   */
+  public void setImage(Image image) {
+    mImage = image;
+  }
 
+  /**
+   * Returns the bounds of the region.
+   * @return
+   */
   public Rect getBounds() {
     Rect bounds;
     // Calculate the bounds of the polygon
@@ -63,7 +92,7 @@ public class Region implements Parcelable {
   }
 
   /**
-   * Sets bounds of neighbourhood and invalidates the containing view.
+   * Sets bounds of region.
    * @param r
    */
   public void setBounds(Rect r) {
@@ -71,24 +100,40 @@ public class Region implements Parcelable {
     mBounds.set(r);
   }
 
+  /**
+   * Sets the shape of the region.
+   * @param s
+   */
   public void setShape(Shape s) {
     mShape = s;
   }
 
+  /**
+   * Returns the shape of the region.
+   * @return
+   */
   public Shape getShape() {
     return mShape;
   }
   
+  /**
+   * Sets the polygon of this region to be a copy of the given polygon.
+   * @param poly
+   */
   public void setPolygon(Polygon poly) {
     mPoly.set(poly);
   }
   
+  /**
+   * Returns the region's polygon.
+   * @return
+   */
   public Polygon getPolygon() {
     return mPoly;
   }
   
   /**
-   * Gets all the indices contained by this region.
+   * Gets all the indices of pixels within the {@link Image} contained by this region.
    * @param img
    * @return
    */  
@@ -152,6 +197,10 @@ public class Region implements Parcelable {
     return indices;
   }
   
+  /**
+   * Gets the indices of all pixels within this region in list form.
+   * @return
+   */
   public List<Integer> getIndicesList() {
     int[] indices = getIndices();
     List<Integer> list = new ArrayList<Integer>();
@@ -169,6 +218,8 @@ public class Region implements Parcelable {
   public int getCenterIndex() {
     return mImage.getIndex(mBounds.centerX(), mBounds.centerY());
   }
+  
+  // Parcelable
 
   @Override
   public int describeContents() {
@@ -190,6 +241,9 @@ public class Region implements Parcelable {
     mShape = Shape.valueOf(name);
   }
   
+  /**
+   * The region parcelable creator.
+   */
   public static final Parcelable.Creator<Region> CREATOR =
       new Parcelable.Creator<Region>() {
 

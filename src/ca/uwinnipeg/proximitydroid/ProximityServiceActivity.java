@@ -17,7 +17,7 @@ import ca.uwinnipeg.proximitydroid.services.ProximityService;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 /**
- * An activity that starts and binds to the proximity service.
+ * An activity that starts and binds to the {@link ProximityService}.
  * @author Garrett Smith
  *
  */
@@ -27,21 +27,27 @@ public abstract class ProximityServiceActivity extends SherlockFragmentActivity 
   
   // The service we are bound to
   private ProximityService mService;
-  
-  public ProximityService getService() {
-    return mService;
-  }
 
   // Whether we are currently bound
   private boolean mBound = false;
   
+  /**
+   * Returns the {@link ProximityService} we are connected to or null
+   * @return
+   */
+  public ProximityService getService() {
+    return mService;
+  }
+  
+  /**
+   * Returns true if we are bound to the service and false otherwise.
+   * @return
+   */
   public boolean isBound() {
     return mBound;
   }
   
-  /**
-   * Callbacks for binding the service.
-   */
+  // the connection to the service
   private ServiceConnection mConnection = new ProximityServiceConnection();
   
   protected class ProximityServiceConnection implements ServiceConnection {
@@ -68,7 +74,15 @@ public abstract class ProximityServiceActivity extends SherlockFragmentActivity 
   
   // service callbacks
   
+  /**
+   * This method is called when the {@link ProximityService} is connected and available to the 
+   * activity through getService();
+   */
   protected void onProximityServiceConnected() {};
+  
+  /**
+   * This method is called when the {@link ProximityService} is no longer available to the activity.
+   */
   protected void onProximityServiceDisconnected() {};
   
   // lifecycle
@@ -78,7 +92,7 @@ public abstract class ProximityServiceActivity extends SherlockFragmentActivity 
     Intent intent = new Intent(this, ProximityService.class);
     // start the service
     startService(intent);
-    // bind to service
+    // bind to the service
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
   }
 

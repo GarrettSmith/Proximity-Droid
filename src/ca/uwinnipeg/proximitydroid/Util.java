@@ -22,10 +22,11 @@ import android.view.WindowManager;
 import ca.uwinnipeg.proximity.image.Image;
 
 /**
+ * A collection of helper methods used by the system.
  * @author Garrett Smith
  *
  */
-public class Util {
+public final class Util {
 
   public static final String TAG = "Util";
 
@@ -166,6 +167,11 @@ public class Util {
     return p;
   }
   
+  /**
+   * Sets the pixels of the given image from the given bitmap.
+   * @param img
+   * @param bm
+   */
   public static void setImage(Image img, Bitmap bm) {
     int width = bm.getWidth();
     int height = bm.getHeight();
@@ -175,6 +181,13 @@ public class Util {
     img.set(pixels, width, height);
   }  
   
+  /**
+   * Support method to get the default preferences.
+   * <p>
+   * This is needed because for whatever silly reason it wasn't defined in the support library.
+   * @param context
+   * @return
+   */
   public static SharedPreferences getSupportDefaultSharedPrefences(Context context) {
     return context.getSharedPreferences(context.getPackageName() + "_preferences", 0);
   }

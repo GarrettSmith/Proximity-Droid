@@ -9,7 +9,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * A polygon used by neighbourhoods.
+ * A polygon class used by neighbourhoods.
+ * <p>
+ * A polygon is a list of points with some helper methods.
  * @author garrett
  *
  */
@@ -103,6 +105,11 @@ public class Polygon implements Parcelable {
     return fs;
   }
   
+  /**
+   * Returns the index within the points list of the given point.
+   * @param p
+   * @return
+   */
   public int indexOf(Point p) {
     return mPoints.indexOf(p);
   }
@@ -130,7 +137,7 @@ public class Polygon implements Parcelable {
   }
   
   /**
-   * Empties all points from the polygon.
+   * Clears all points from the polygon.
    */
   public void reset() {
     mPoints.clear();
@@ -220,7 +227,7 @@ public class Polygon implements Parcelable {
   }
   
   /**
-   * 
+   * Sets the bounds of the polygon and stretches the current points to match the new bounds.
    * @param bounds
    */
   public void setBounds(Rect newBounds) {
@@ -260,6 +267,11 @@ public class Polygon implements Parcelable {
     }
   }
   
+  /**
+   * Moves the polygon so that the top left corner is located at the given point.
+   * @param x
+   * @param y
+   */
   public void offsetTo(int x, int y) {
     Rect bounds = getBounds();    
     int dx = x - bounds.left;
@@ -314,6 +326,8 @@ public class Polygon implements Parcelable {
 
     return path;
   }
+  
+  // Parcelable
 
   @Override
   public int describeContents() {
@@ -335,6 +349,9 @@ public class Polygon implements Parcelable {
     }
   }
   
+  /**
+   * The parcelable creator for the polygon class.
+   */
   public static final Parcelable.Creator<Polygon> CREATOR =
       new Parcelable.Creator<Polygon>() {
 

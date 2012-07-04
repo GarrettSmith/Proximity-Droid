@@ -16,7 +16,8 @@ import ca.uwinnipeg.proximity.ProbeFunc;
 import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreferenceAttachedListener;
 
 /**
- * An activity that populates the items in the attached preferences from the Proximity Service.
+ * An activity that populates the items in the attached preferences from a connected Proximity 
+ * Service.
  * @author Garrett Smith
  *
  */
@@ -24,6 +25,7 @@ public abstract class FeaturePopulatingFragment
   extends ProximityServiceActivity
   implements OnPreferenceAttachedListener {
 
+  // attached preference screen to be populated
   protected PreferenceScreen mPreferenceScreen;
   
   @Override
@@ -42,6 +44,14 @@ public abstract class FeaturePopulatingFragment
     mPreferenceScreen = root;
   }
   
+  /**
+   * Populates the feature preferences from a map of Strings, representing categories, to lists of
+   * probe functions. The toString method of the probe function is used to name the corresponding
+   * preference.
+   * <p>
+   * This method is called when the Proximity Service is connected to this activity.
+   * @param features
+   */
   @TargetApi(14)
   public void populatePreferences(Map<String, List<ProbeFunc<Integer>>> features) {
 

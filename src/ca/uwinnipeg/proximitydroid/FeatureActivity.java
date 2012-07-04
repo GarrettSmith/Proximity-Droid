@@ -12,6 +12,10 @@ import ca.uwinnipeg.proximitydroid.fragments.PreferenceListFragment.OnPreference
 import com.actionbarsherlock.view.MenuItem;
 
 /**
+ * A simple activity that displays the feature preference screen.
+ * <p>
+ * This activity is used on phones and other small screen devices on which a sliding drawer wouldn't 
+ * work.
  * @author Garrett Smith
  *
  */
@@ -29,6 +33,7 @@ public class FeatureActivity
     
     mFragmentManager = getSupportFragmentManager();
     
+    // add the fragment to the activity
     mFragmentManager.beginTransaction()
       .add(android.R.id.content, new FeatureFragment())
       .commit();
