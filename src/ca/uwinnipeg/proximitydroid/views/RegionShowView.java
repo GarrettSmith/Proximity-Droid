@@ -240,21 +240,21 @@ public class RegionShowView extends ProximityImageView {
     @Override
     public boolean onDoubleTap(MotionEvent e) {
       
-      if (Math.abs(getScale() - MAX_SCALE) <= (MAX_SCALE / 2)) {        
+      if (Math.abs(getScale() - MAX_SCALE) <= (MAX_SCALE / 2)) {
+        zoomTo(MIN_SCALE, 200);
+      }
+      else {        
         float[] p = convertToImageSpace(e.getX(), e.getY());
         float x = p[0];
         float y = p[1];
-        zoomTo(MIN_SCALE, x, y, 200);
-      }
-      else {
-        zoomTo(MAX_SCALE/2, 200);
+        zoomTo(MAX_SCALE/2, e.getX(), e.getY(), 200);
       }
       return true;
     }
     
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float dx, float dy) {
-      panBy(dx, dy);
+      panBy(-dx, -dy);
       return true;
     }
   }
