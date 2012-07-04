@@ -272,20 +272,6 @@ public class RegionView extends Region {
     resize(-dx, -dy, Edge.TL);
     resize(dx, dy, Edge.BR);
   }
-
-  /**
-   * 
-   * converts the given points to image space
-   * @param x
-   * @param y
-   */
-  protected float[] convertToImageSpace(float x, float y) {
-    float[] point = new float[]{x, y};
-    Matrix inverse = new Matrix();
-    mScreenMatrix.invert(inverse);
-    inverse.mapPoints(point);
-    return point;
-  }
   
   /**
    *  Maps the region bounds from image space to screen space.

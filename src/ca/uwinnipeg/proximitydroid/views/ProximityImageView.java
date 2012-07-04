@@ -11,7 +11,7 @@ import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 
 /**
  * 
- * The view which the image and currently selected neighbourhood is drawn.
+ * A view that displays a {@link RotatedBitmap}.
  *
  */
 public class ProximityImageView extends ImageView {  
@@ -179,6 +179,19 @@ public class ProximityImageView extends ImageView {
   public void setUserMatrix(float[] values) {
     mUserMatrix.setValues(values);
     invalidate();
+  }  
+
+  /** 
+   * converts the given point to image space
+   * @param x
+   * @param y
+   */
+  protected float[] convertToImageSpace(float x, float y) {
+    float[] point = new float[]{x, y};
+    Matrix inverse = new Matrix();
+    mFinalMatrix.invert(inverse);
+    inverse.mapPoints(point);
+    return point;
   }
 
   // User matrix operations

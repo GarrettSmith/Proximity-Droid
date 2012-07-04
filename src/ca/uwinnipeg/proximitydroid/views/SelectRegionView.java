@@ -20,7 +20,6 @@ import ca.uwinnipeg.proximitydroid.R;
  * @author Garrett Smith
  *
  */
-// TODO: change padding to dip
 // TODO: pan view  when region is NEAR edge of screen
 public class SelectRegionView extends RegionView {  
   
@@ -151,7 +150,7 @@ public class SelectRegionView extends RegionView {
    * Handles a down event.
    */
   public void handleDown(MotionEvent event) {
-    float[] p = convertToImageSpace(event.getX(), event.getY());
+    float[] p = mView.convertToImageSpace(event.getX(), event.getY());
     float x = p[0];
     float y = p[1];
 
@@ -301,7 +300,7 @@ public class SelectRegionView extends RegionView {
     // Check if any action is being performed
     if (mAction != Action.NONE) {
 
-      float[] p = convertToImageSpace(event.getX(), event.getY());
+      float[] p = mView.convertToImageSpace(event.getX(), event.getY());
       float x = p[0];
       float y = p[1];
 

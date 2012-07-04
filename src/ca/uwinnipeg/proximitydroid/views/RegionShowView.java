@@ -15,16 +15,23 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.view.View;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 
 /**
+ * A view that shows a list of {@link RegionView} over a bitmap. It can also show a highlight to
+ * represent the results of calculations.
  * @author Garrett Smith
  *
  */
 public class RegionShowView extends ProximityImageView {
   
-  public static final String TAG = "RegionShowView";
+  public static final String TAG = "RegionView";
   
   // Paint to dim unselected area
   private static boolean SETUP = false;
@@ -42,6 +49,12 @@ public class RegionShowView extends ProximityImageView {
   
   // if we should dim the areas that are outside of the regions
   protected boolean mDim = true;
+  
+  private GestureDetector mSimpleDetector = 
+      new GestureDetector(getContext(), new CustomSimpleOnGestureListener());;
+      
+  private ScaleGestureDetector mScaleDetector = 
+      new ScaleGestureDetector(getContext(), new CustomScaleListener());
 
   public RegionShowView(Context context) {
     super(context);
@@ -53,7 +66,8 @@ public class RegionShowView extends ProximityImageView {
     init();
   }
   
-  private void init() {
+  private void init() {    
+    // one time static setup
     if (!SETUP) {
       SETUP = true;
       UNSELECTED_PAINT.setStyle(Paint.Style.FILL);
@@ -81,16 +95,27 @@ public class RegionShowView extends ProximityImageView {
     mHighlight = new int[bm.getWidth() * bm.getHeight()];
   }
   
+  /**
+   * Adds a region to the view.
+   * @param reg
+   */
   public void add(Region reg) {
     mRegions.put(reg, new RegionView(this, reg));
     invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
   }
   
+  /**
+   * Removes a region from the view.
+   * @param reg
+   */
   public void remove(Region reg) {
     mRegions.remove(reg);
     invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
   }
   
+  /**
+   * Clears all regions from the view.
+   */
   public void clear() {
     mRegions.clear();
     invalidate();
@@ -104,17 +129,28 @@ public class RegionShowView extends ProximityImageView {
     }
   }
   
+  /**
+   * Clears the highlighted pixels of this view.
+   */
   public void clearHighlight() {
     // fill the highlight with transparent pixels
     Arrays.fill(mHighlight, 0x00000000);
     invalidate();
   }
 
+  /**
+   * Sets the highlighted pixels to the given array of points.
+   * @param points
+   */
   public void setHighlight(int[] points) {
     clearHighlight();
     addHighlight(points);
   }
   
+  /**
+   * Adds points to the highlight.
+   * @param points
+   */
   public void addHighlight(int[] points) {
     int width = mBitmap.getWidth();
     for (int i = 0; i < points.length; i += 2) {
@@ -125,6 +161,10 @@ public class RegionShowView extends ProximityImageView {
     invalidate();
   }
   
+  /**
+   * Sets whether the center of regions should be drawn.
+   * @param drawCenter
+   */
   public void setDrawCenterPoint(boolean drawCenter) {
     boolean changed = mDrawCenter != drawCenter;
     mDrawCenter = true;
@@ -133,6 +173,10 @@ public class RegionShowView extends ProximityImageView {
     }
   }
   
+  /**
+   * Sets whether areas outside of regions should be dimmed.
+   * @param dim
+   */
   public void setDim(boolean dim) {
     boolean changed = mDim != dim;
     mDim = true;
@@ -175,6 +219,47 @@ public class RegionShowView extends ProximityImageView {
         reg.draw(canvas);
       }
     }   
+  }
+  
+  // input  
+  
+  @Override
+  public boolean onTouchEvent(MotionEvent event) {
+    mSimpleDetector.onTouchEvent(event);
+    mScaleDetector.onTouchEvent(event);
+    return true;
+  }
+  
+  protected class CustomSimpleOnGestureListener extends SimpleOnGestureListener {
+    
+    @Override
+    public boolean onDown(MotionEvent e) {
+      return true;
+    }
+    
+    @Override
+    public boolean onDoubleTap(MotionEvent e) {
+      
+      float[] p = convertToImageSpace(e.getX(), e.getY());
+      float x = p[0];
+      float y = p[1];
+      
+      if (Math.abs(getScale() - MAX_SCALE) <= (MAX_SCALE / 2)) {
+        zoomTo(MIN_SCALE, 200);
+      }
+      else {
+        zoomTo(MAX_SCALE/2, 200);
+      }
+      return true;
+    }
+  }
+  
+  protected class CustomScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+    @Override
+    public boolean onScale(ScaleGestureDetector detector) {
+      zoomBy(detector.getScaleFactor());
+      return true;
+    }
   }
 
 }
