@@ -241,12 +241,10 @@ public class RegionShowView extends ProximityImageView {
     public boolean onDoubleTap(MotionEvent e) {
       
       if (Math.abs(getScale() - MAX_SCALE) <= (MAX_SCALE / 2)) {
+        center();
         zoomTo(MIN_SCALE, 200);
       }
-      else {        
-        float[] p = convertToImageSpace(e.getX(), e.getY());
-        float x = p[0];
-        float y = p[1];
+      else {     
         zoomTo(MAX_SCALE/2, e.getX(), e.getY(), 200);
       }
       return true;
