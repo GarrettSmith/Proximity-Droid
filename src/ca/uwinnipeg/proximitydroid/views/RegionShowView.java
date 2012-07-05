@@ -3,9 +3,9 @@
  */
 package ca.uwinnipeg.proximitydroid.views;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -19,7 +19,6 @@ import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.View;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 
@@ -39,7 +38,7 @@ public class RegionShowView extends ProximityImageView {
   protected final static Paint POINT_PAINT = new Paint();
   
   // The regions of interest in this image
-  protected Map<Region, RegionView> mRegions = new HashMap<Region, RegionView>();
+  protected List<Region> mRegions = new ArrayList<Region>();
   
   // The highlight to draw over the image, this shows the neighbourhoods and intersetion
   protected int[] mHighlight = new int[0];
@@ -100,8 +99,8 @@ public class RegionShowView extends ProximityImageView {
    * @param reg
    */
   public void add(Region reg) {
-    mRegions.put(reg, new RegionView(this, reg));
-    invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
+    mRegions.add(reg);
+    // TODO: invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
   }
   
   /**
@@ -110,7 +109,7 @@ public class RegionShowView extends ProximityImageView {
    */
   public void remove(Region reg) {
     mRegions.remove(reg);
-    invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
+    // TODO: invalidate(mRegions.get(reg).getPaddedScreenSpaceBounds());
   }
   
   /**
@@ -119,14 +118,6 @@ public class RegionShowView extends ProximityImageView {
   public void clear() {
     mRegions.clear();
     invalidate();
-  }
-  
-  @Override
-  protected void updateFinalMatrix() {
-    super.updateFinalMatrix();
-    for (RegionView reg : mRegions.values()) {
-      reg.setScreenMatrix(getFinalMatrix());
-    }
   }
   
   /**
@@ -188,10 +179,12 @@ public class RegionShowView extends ProximityImageView {
   @Override
   public void draw(Canvas canvas) {
     super.draw(canvas);
+    canvas.save();
+    canvas.concat(mFinalMatrix);
     // dim the unselected area
     if (mDim) {
       Path unselected = new Path();
-      for (RegionView reg : mRegions.values()) {
+      for (Region reg : mRegions) {
         unselected.addPath(reg.getShapePath());
       }
       canvas.save();
@@ -202,23 +195,23 @@ public class RegionShowView extends ProximityImageView {
     
     // draw the highlight    
     if (mBitmap != null && mHighlight.length > 0) {
-      canvas.save();
-      canvas.concat(mFinalMatrix);
       int width = mBitmap.getWidth();
       int height = mBitmap.getHeight();
       canvas.drawBitmap(mHighlight, 0, width, 0, 0, width, height, true, POINT_PAINT);
-      canvas.restore();
     }
     
     // draw all the regions
-    for (RegionView reg : mRegions.values()) {
+    Path regionPath;
+    for (Region reg : mRegions) {
       if (mDrawCenter) {
-        reg.drawWithCenter(canvas);
+        regionPath = reg.getPath();
       }
       else {
-        reg.draw(canvas);
+        regionPath = reg.getShapePath();
       }
-    }   
+    }
+    // TODO: canvas.drawPath(regionPath, paint)
+    canvas.restore();
   }
   
   // input  

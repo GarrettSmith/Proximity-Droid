@@ -191,5 +191,21 @@ public final class Util {
   public static SharedPreferences getSupportDefaultSharedPrefences(Context context) {
     return context.getSharedPreferences(context.getPackageName() + "_preferences", 0);
   }
+  
+  /**
+   * Makes a copy of the original array taking the first given number of elements from it.
+   * <p>
+   * This is just an implementation of Arrays.copyOf() because it wasn't introduced in our min api.
+   * @param orig
+   * @param newLength
+   * @return
+   */
+  public static int[] copyOf(int[] orig, int newLength) {
+    int[] newArray = new int[newLength];
+    for (int i = 0; i < newArray.length; i++) {
+      newArray[i] = orig[i];
+    }
+    return newArray;
+  }
 
 }

@@ -25,9 +25,9 @@ import ca.uwinnipeg.proximitydroid.fragments.NeighbourhoodFragment;
 import ca.uwinnipeg.proximitydroid.fragments.PropertyFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionFragment;
 import ca.uwinnipeg.proximitydroid.fragments.RegionFragment.OnAddRegionSelectedListener;
-import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment;
-import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.ListNavigationProvider;
-import ca.uwinnipeg.proximitydroid.fragments.RegionSelectFragment.OnClosedListener;
+import ca.uwinnipeg.proximitydroid.fragments.AddRegionFragment;
+import ca.uwinnipeg.proximitydroid.fragments.AddRegionFragment.ListNavigationProvider;
+import ca.uwinnipeg.proximitydroid.fragments.AddRegionFragment.OnClosedListener;
 import ca.uwinnipeg.proximitydroid.services.ProximityService;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -289,7 +289,7 @@ public class ProximityDroidActivity
   }
 
   /**
-   * Change to the {@link RegionSelectFragment}.
+   * Change to the {@link AddRegionFragment}.
    */
   public void onAddRegionSelected() {
 
@@ -297,7 +297,7 @@ public class ProximityDroidActivity
     invalidateOptionsMenu(); 
     
     // create the fragment
-    RegionSelectFragment frag = new RegionSelectFragment();
+    AddRegionFragment frag = new AddRegionFragment();
     frag.bindService(getService());
 
     // swap the select fragment in

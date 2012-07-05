@@ -1,7 +1,6 @@
 package ca.uwinnipeg.proximitydroid.fragments;
 
 import android.app.Activity;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,8 +12,8 @@ import ca.uwinnipeg.proximity.image.Image;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.Region.Shape;
-import ca.uwinnipeg.proximitydroid.views.RegionSelectView;
-import ca.uwinnipeg.proximitydroid.views.RegionView;
+import ca.uwinnipeg.proximitydroid.services.ProximityService;
+import ca.uwinnipeg.proximitydroid.views.AddRegionView;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
@@ -27,8 +26,8 @@ import com.actionbarsherlock.view.MenuItem;
  * @author Garrett Smith
  *
  */
-public class RegionSelectFragment 
-  extends ImageFragment<RegionSelectView>
+public class AddRegionFragment 
+  extends ImageFragment<AddRegionView>
   implements ActionBar.OnNavigationListener {
 
   public static final String TAG = "RegionSelectFragment";
@@ -41,7 +40,9 @@ public class RegionSelectFragment
   public static final int BUTTON_OVAL_INDEX = 1;
   public static final int BUTTON_POLYGON_INDEX = 2;
 
-  private RegionView mRegionView;
+  
+  // the region being added
+  private Region mRegion;
 
   // UI
   private SpinnerAdapter mSpinnerAdapter;
@@ -71,6 +72,13 @@ public class RegionSelectFragment
     // retain state even if activity is destroyed
     setRetainInstance(true);
   }
+  
+  @Override
+  protected void onServiceAttached(ProximityService service) {
+    super.onServiceAttached(service);
+    mRegion = new Region(service.getImage());
+    mRegion.resetBounds();
+  }
 
   @Override
   public View onCreateView(
@@ -78,24 +86,9 @@ public class RegionSelectFragment
       ViewGroup container,
       Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-    mView = (RegionSelectView) inflater.inflate(R.layout.region_select, container, false);    
+    mView = (AddRegionView) inflater.inflate(R.layout.add_region, container, false); 
+    mView.setRegion(mRegion);
     return mView;
-  }
-  
-  @Override
-  protected void draw() {
-    super.draw();
-
-    mView.setImage(getService().getImage());
-    mRegionView = mView.getRegion();
-
-    int width = mBitmap.getWidth();
-    int height = mBitmap.getHeight();
-
-    Rect imageRect = new Rect(0, 0, width, height);    
-    mRegionView.setImageRect(imageRect);
-
-    mRegionView.resetBounds();
   }
 
   @Override
@@ -138,13 +131,13 @@ public class RegionSelectFragment
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case R.id.menu_reset:
-        mRegionView.reset();
+        // TODO: mRegion.reset();
         return true;
 
       case R.id.menu_accept:
         // check for trying to save a polygon with less than 3 points
-        if (!(mRegionView.getShape() == Shape.POLYGON && mRegionView.getPolygon().size() < 3)) {
-          getService().addRegion(mRegionView);
+        if (!(mRegion.getShape() == Shape.POLYGON && mRegion.getPolygon().size() < 3)) {
+          getService().addRegion(mRegion);
           mListener.onClosed();
         }
         else {
@@ -164,16 +157,18 @@ public class RegionSelectFragment
 
   @Override
   public boolean onNavigationItemSelected(int position, long itemId) {
-    switch(position) {
-      case BUTTON_RECTANGLE_INDEX:
-        mRegionView.setShape(RegionView.Shape.RECTANGLE);
-        break;
-      case BUTTON_OVAL_INDEX:
-        mRegionView.setShape(RegionView.Shape.OVAL);
-        break;
-      case BUTTON_POLYGON_INDEX:
-        mRegionView.setShape(RegionView.Shape.POLYGON);
-        break;     
+    if (mRegion != null) {
+      switch(position) {
+        case BUTTON_RECTANGLE_INDEX:
+          mRegion.setShape(Region.Shape.RECTANGLE);
+          break;
+        case BUTTON_OVAL_INDEX:
+          mRegion.setShape(Region.Shape.OVAL);
+          break;
+        case BUTTON_POLYGON_INDEX:
+          mRegion.setShape(Region.Shape.POLYGON);
+          break;     
+      }
     }
     return true;
   }

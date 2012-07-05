@@ -30,7 +30,6 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 // TODO: Add selecting regions
-// TODO: Add pan and zooming
 public class RegionFragment extends ImageFragment<RegionShowView> {
 
   public static final String TAG = "RegionFragment";
