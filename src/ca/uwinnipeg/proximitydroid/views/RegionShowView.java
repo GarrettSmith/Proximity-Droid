@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
@@ -34,6 +35,8 @@ public class RegionShowView extends ProximityImageView {
   
   // Paint to dim unselected area
   private static boolean SETUP = false;
+
+  private static final Paint FOCUSED_PAINT = new Paint();
   protected final static Paint UNSELECTED_PAINT = new Paint();
   protected final static Paint POINT_PAINT = new Paint();
   
@@ -69,9 +72,17 @@ public class RegionShowView extends ProximityImageView {
     // one time static setup
     if (!SETUP) {
       SETUP = true;
+      
+      Resources rs = getResources();
+
+      FOCUSED_PAINT.setStyle(Paint.Style.STROKE);
+      FOCUSED_PAINT.setStrokeWidth(rs.getDimension(R.dimen.region_focused_stroke));
+      FOCUSED_PAINT.setColor(rs.getColor(R.color.region_focused_color));
+      FOCUSED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
+      
       UNSELECTED_PAINT.setStyle(Paint.Style.FILL);
       UNSELECTED_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
-      UNSELECTED_PAINT.setColor(getResources().getColor(R.color.region_unselected_color));
+      UNSELECTED_PAINT.setColor(rs.getColor(R.color.region_unselected_color));
       
       float invert[] =
         {
@@ -201,16 +212,12 @@ public class RegionShowView extends ProximityImageView {
     }
     
     // draw all the regions
-    Path regionPath;
     for (Region reg : mRegions) {
       if (mDrawCenter) {
-        regionPath = reg.getPath();
+        canvas.drawPath(reg.getCenterPath(), reg.getCenterPaint());
       }
-      else {
-        regionPath = reg.getShapePath();
-      }
+      canvas.drawPath(reg.getPath(), FOCUSED_PAINT);
     }
-    // TODO: canvas.drawPath(regionPath, paint)
     canvas.restore();
   }
   
