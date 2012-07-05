@@ -139,7 +139,7 @@ implements OnSharedPreferenceChangeListener {
       PropertyServiceConnection con = new PropertyServiceConnection();
       mConnections.add(con);
       // start and bind service
-      startService(intent);
+      //startService(intent);
       bindService(intent, con, BIND_AUTO_CREATE);
     }
     
@@ -168,6 +168,21 @@ implements OnSharedPreferenceChangeListener {
     settings.registerOnSharedPreferenceChangeListener(this);
   }
   
+  @Override
+  public void onDestroy() {
+    // unbind from all the services
+    for (PropertyServiceConnection con : mConnections) {
+      unbindService(con);
+    }
+    super.onDestroy();
+  }
+  
+  /**
+   * Returns the attached {@link PropertyService} of the given class, or null if no matching service
+   * was found.
+   * @param clazz
+   * @return
+   */
   public PropertyService getPropertyService(Class<? extends PropertyService> clazz) {
     ComponentName key = new ComponentName(this, clazz);
     return mServices.get(key);
