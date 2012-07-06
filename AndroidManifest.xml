@@ -27,6 +27,7 @@
         <service android:name=".services.IntersectionService"></service>
         <service android:name=".services.ComplimentService"></service>
         <service android:name=".services.DifferenceService"></service>
+        <service android:name=".services.NeighbourhoodIntersectionService"></service>
     </application>
 
 </manifest>

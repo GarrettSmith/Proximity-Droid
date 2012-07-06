@@ -46,7 +46,7 @@ implements OnSharedPreferenceChangeListener {
   public static final Class<PropertyService>[] SERVICE_CLASSES = 
     (Class<PropertyService>[]) new Class<?>[] { 
       NeighbourhoodService.class, 
-      IntersectionService.class, 
+      NeighbourhoodIntersectionService.class, 
       DifferenceService.class,
       ComplimentService.class
     };

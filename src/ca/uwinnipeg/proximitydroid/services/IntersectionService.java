@@ -76,14 +76,14 @@ public class IntersectionService extends EpsilonLinearService {
 
     // check if this is the only region
     if (mValue.isEmpty()) {
-      indices = region.getIndicesList();
+      indices = getIndices(region);
     }
     // else take the intersection of the region and the current intersection
     else {
       long startTime = System.currentTimeMillis();
       indices = mImage.hybridIntersection(
           mValue, 
-          region.getIndicesList(),
+          getIndices(region),
           getEpsilon(), 
           sub);
       Log.i(TAG, "Intersection took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
@@ -92,15 +92,36 @@ public class IntersectionService extends EpsilonLinearService {
     return indices;
   }
   
+  /**
+   * Returns the indices associated with the given region.
+   * <p>
+   * We use this so we can override it for the other intersection services.
+   * @param region
+   * @return
+   */
+  protected List<Integer> getIndices(Region region) {
+    return region.getIndicesList();
+  }
+  
   @Override
-  protected void setResult(List<Integer> indices, Region region) {
-    // store the new degree 
-    float intSize = indices.size();
-    float unionSize = MathUtil.union(mValue, region.getIndicesList()).size();
+  protected void setResult(List<Integer> intersection, Region region) {    
+    setDegree(calculateDegree(intersection, getIndices(region)));    
+    super.setValue(intersection);
+  }
+  
+  /**
+   * Calculates the degree of nearness.
+   * @param intersection
+   * @param regionIndices
+   * @return
+   */
+  protected float calculateDegree(List<Integer> intersection, List<Integer> regionIndices) {
+    // size of the intersection
+    float intSize = intersection.size();    
+    // union of indices in the current intersection and in the added region
+    float unionSize = MathUtil.union(mValue, regionIndices).size();
     float degree = 1 - (intSize / unionSize);
-    setDegree(degree);
-    
-    super.setValue(indices);
+    return degree;
   }
 
 }

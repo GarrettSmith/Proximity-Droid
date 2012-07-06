@@ -29,6 +29,7 @@ public abstract class PropertyService extends Service {
 
   public static final String PROGRESS = "Progress";
   public static final String POINTS = "points";
+  public static final String INDICES = "indices";
   public static final String REGION = "Region";
 
   // the maximum progress value
@@ -143,6 +144,7 @@ public abstract class PropertyService extends Service {
     Intent intent = new Intent(ACTION_VALUE_CHANGED);
     intent.addCategory(mCategory);
     intent.putExtra(POINTS, indicesToPoints(indices));
+    intent.putIntegerArrayListExtra(INDICES, new ArrayList<Integer>(indices));
     if (region != null) intent.putExtra(REGION, region);
     mBroadcastManager.sendBroadcast(intent);
   }
