@@ -36,6 +36,10 @@ public class IntersectionService extends EpsilonLinearService {
     super(CATEGORY, EPSILON_KEY);
   }
   
+  protected IntersectionService(String category) {
+    super(category, EPSILON_KEY);
+  }
+  
   /**
    * Returns the points of the pixels within the calculated intersection.
    * @return

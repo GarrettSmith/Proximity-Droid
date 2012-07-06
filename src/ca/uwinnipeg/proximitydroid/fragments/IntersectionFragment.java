@@ -13,7 +13,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.services.IntersectionService;
-import ca.uwinnipeg.proximitydroid.services.NeighbourhoodIntersectionService;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -24,7 +23,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @author Garrett Smith
  *
  */
-public class IntersectionFragment extends EpsilonPropertyFragment<NeighbourhoodIntersectionService> {
+public class IntersectionFragment extends EpsilonPropertyFragment<IntersectionService> {
 
   // The text view used to display the degree of nearness
   protected TextView mDegreeText;
@@ -45,14 +44,14 @@ public class IntersectionFragment extends EpsilonPropertyFragment<NeighbourhoodI
   
   public IntersectionFragment() {
     super(
-        NeighbourhoodIntersectionService.class, 
-        NeighbourhoodIntersectionService.CATEGORY,
+        IntersectionService.class, 
+        IntersectionService.CATEGORY,
         new IntentFilter(IntersectionService.ACTION_DEGREE_CHANGED),
         IntersectionService.EPSILON_KEY);
   }
   
   @Override
-  protected void onPropertyServiceAvailable(NeighbourhoodIntersectionService service) {
+  protected void onPropertyServiceAvailable(IntersectionService service) {
     super.onPropertyServiceAvailable(service);
     mPoints = service.getIntersection();
     mDegree = service.getDegree();

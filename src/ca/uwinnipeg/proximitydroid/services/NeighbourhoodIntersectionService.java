@@ -29,6 +29,10 @@ public class NeighbourhoodIntersectionService extends IntersectionService {
   
   // receives when neighbourhoods have been calculated
   protected BroadcastReceiver mNeighbourhoodReceiver = new mNeighbourhoodReceiver();
+  
+  public NeighbourhoodIntersectionService() {
+    super(CATEGORY);
+  }
 
   @Override
   public void onCreate() {
