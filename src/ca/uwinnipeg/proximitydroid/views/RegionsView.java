@@ -29,7 +29,7 @@ import ca.uwinnipeg.proximitydroid.Region;
  * @author Garrett Smith
  *
  */
-public class RegionShowView extends ProximityImageView {
+public class RegionsView extends ProximityImageView {
   
   public static final String TAG = "RegionView";
   
@@ -58,12 +58,12 @@ public class RegionShowView extends ProximityImageView {
   private ScaleGestureDetector mScaleDetector = 
       new ScaleGestureDetector(getContext(), new CustomScaleListener());
 
-  public RegionShowView(Context context) {
+  public RegionsView(Context context) {
     super(context);
     init();
   }
 
-  public RegionShowView(Context context, AttributeSet attr) {
+  public RegionsView(Context context, AttributeSet attr) {
     super(context, attr);
     init();
   }

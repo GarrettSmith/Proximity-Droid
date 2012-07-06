@@ -18,7 +18,7 @@ import android.view.ViewGroup;
 import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.services.ProximityService;
-import ca.uwinnipeg.proximitydroid.views.RegionShowView;
+import ca.uwinnipeg.proximitydroid.views.RegionsView;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -30,7 +30,7 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 // TODO: Add selecting regions
-public class RegionFragment extends ImageFragment<RegionShowView> {
+public class RegionFragment extends ImageFragment<RegionsView> {
 
   public static final String TAG = "RegionFragment";
     
@@ -53,7 +53,7 @@ public class RegionFragment extends ImageFragment<RegionShowView> {
       ViewGroup container,
       Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-    mView = (RegionShowView) inflater.inflate(R.layout.region_show, container, false);
+    mView = (RegionsView) inflater.inflate(R.layout.region_show, container, false);
     return mView;
   }
   

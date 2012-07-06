@@ -56,19 +56,7 @@
 //    mSelectView.followResize(this);
 //  }
 //
-//  @Override
-//  public Rect getPaddedScreenSpaceBounds() {
-//    int padding = (int) HANDLE_SIZE;
-//    padding += 1;
-//    RectF r = new RectF(mBounds.left, mBounds.top, mBounds.right, mBounds.bottom);
-//    mScreenMatrix.mapRect(r);
-//    r.inset(-padding, -padding);
-//    return new Rect(
-//        Math.round(r.left), 
-//        Math.round(r.top), 
-//        Math.round(r.right), 
-//        Math.round(r.bottom));
-//  }
+
 
   
 

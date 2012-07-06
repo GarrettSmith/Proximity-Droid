@@ -18,6 +18,7 @@ import ca.uwinnipeg.proximitydroid.R;
 import ca.uwinnipeg.proximitydroid.Region;
 import ca.uwinnipeg.proximitydroid.Region.Edge;
 import ca.uwinnipeg.proximitydroid.Region.Shape;
+import ca.uwinnipeg.proximitydroid.RotatedBitmap;
 
 /**
  * 
@@ -56,6 +57,11 @@ public class AddRegionView extends ProximityImageView {
   // The amount a touch can be off and still be considered touching an edge
   protected static final float TOUCH_PADDING = 0.05f;
   protected static final float TOUCH_SHIFT = 0.025f;  
+  
+  // pointer debugging
+  private static final boolean DEBUG_POINTER = true;
+  private float debugX;
+  private float debugY;
   
   // Bitmask for checking the touched edge of the region
   public static final byte LEFT =   8; // 0b1000
@@ -132,13 +138,39 @@ public class AddRegionView extends ProximityImageView {
     }
   }
 
+  /**
+   * Sets the region to display.
+   * @param reg
+   */
   public void setRegion(Region reg) {
     mRegion = reg;
     invalidate();
   }
 
+  /**
+   * Returns the region added to the view.
+   * @return
+   */
   public Region getRegion() {
     return mRegion;
+  }
+  
+  /**
+   * Returns the bounds of the region in screen space with an additional padding to cover the 
+   * handles being drawn.
+   * @return
+   */
+  public Rect getPaddedScreenSpaceBounds() {
+    int padding = (int) HANDLE_SIZE;
+    padding += 1;
+    RectF r = mRegion.getBoundsF();
+    mFinalMatrix.mapRect(r);
+    r.inset(-padding, -padding);
+    return new Rect(
+        Math.round(r.left), 
+        Math.round(r.top), 
+        Math.round(r.right), 
+        Math.round(r.bottom));
   }
 
   @Override
@@ -176,11 +208,17 @@ public class AddRegionView extends ProximityImageView {
       if (mRegion.getShape() != Shape.RECTANGLE) {
         canvas.drawRect(mRegion.getBounds(), GUIDE_PAINT);
       }
+      
+      // draw debug points
+      if (DEBUG_POINTER) {
+        canvas.drawCircle(debugX, debugY, 80, FOCUSED_PAINT);
+      }
+      
       canvas.restore();
     }
   }
 
-  public Path getShapePath() {
+  private Path getShapePath() {
     // remove the selected point from the drawn poly if it was moved outside of the image bounds
     if (mRegion.getShape() == Shape.POLYGON && 
         mAction == Action.MOVE_POINT && 
@@ -448,6 +486,7 @@ public class AddRegionView extends ProximityImageView {
   
   /**
    * Handles an up event.
+   * @param event
    */
   public void onUp(MotionEvent event) {
     // Move view to follow neighbourhood
@@ -471,7 +510,7 @@ public class AddRegionView extends ProximityImageView {
 
     // Reset current action
     mAction = Action.NONE;
-    //invalidate(getPaddedScreenSpaceBounds());
+    invalidate(getPaddedScreenSpaceBounds());
   }
 
   protected class CustomSimpleOnGestureListener extends SimpleOnGestureListener {
@@ -480,7 +519,14 @@ public class AddRegionView extends ProximityImageView {
     public boolean onDown(MotionEvent e) {
       float[] p = convertToImageSpace(e.getX(), e.getY());
       float x = p[0];
-      float y = p[1];
+      float y = p[1];      
+
+      // display debug pointer
+      if (DEBUG_POINTER) {
+        debugX = x;
+        debugY = y;
+        invalidate();
+      }
 
       // Polygons
       if (mRegion.getShape() == Shape.POLYGON) {      
@@ -592,9 +638,36 @@ public class AddRegionView extends ProximityImageView {
     
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float dx, float dy) {
+      // handle orientation change
+      // TODO: These need to be tested
+      switch (mBitmap.getOrientation()) {
+        case RotatedBitmap.CW:
+          float tmp = dx;
+          dx = dy;
+          dy = -tmp;
+          break;
+        case RotatedBitmap.UPSIDEDOWN:
+          dy = -dy;
+          dx = -dx;
+          break;
+        case RotatedBitmap.CCW:
+          float tmp2 = dx;
+          dx = -dy;
+          dy = tmp2;
+          break;           
+      }
       // scale delta
       dx /= getScale();
       dy /= getScale();
+      // display debug pointer
+      if (DEBUG_POINTER) {
+        float[] p = convertToImageSpace(e2.getX(), e2.getY());
+        float x = p[0];
+        float y = p[1];   
+        debugX = x;
+        debugY = y;
+        invalidate();
+      }
       // Determine which action to take
       switch (mAction) {
         case MOVE:
