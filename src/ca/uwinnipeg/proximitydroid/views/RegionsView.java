@@ -213,12 +213,16 @@ public class RegionsView extends ProximityImageView {
     
     // draw all the regions
     for (Region reg : mRegions) {
-      if (mDrawCenter) {
-        canvas.drawPath(reg.getCenterPath(), reg.getCenterPaint());
-      }
-      canvas.drawPath(reg.getPath(), FOCUSED_PAINT);
+      canvas.drawPath(reg.getShapePath(), FOCUSED_PAINT);
     }
     canvas.restore();
+    
+    // draw centers
+    if (mDrawCenter) {
+      for (Region reg : mRegions) {
+        canvas.drawPath(reg.getCenterPath(mFinalMatrix), reg.getCenterPaint());
+      }
+    }
   }
   
   // input  
