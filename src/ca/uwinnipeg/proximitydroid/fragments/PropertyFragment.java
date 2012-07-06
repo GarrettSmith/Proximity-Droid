@@ -35,6 +35,9 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   // the current progress of the service's calculation
   protected int mProgress;
   
+  // the attached propertyService
+  protected S mPropertyService;
+  
   /**
    * Creates a new property fragment.
    * @param clazz the class of {@link PropertyService} we are interested in
@@ -79,6 +82,7 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   @Override
   public void onDestroy() {
     mBroadcastManager.unregisterReceiver(mPropertyReciever);
+    mPropertyService = null;
     super.onDestroy();
   }
   
@@ -86,7 +90,8 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   @Override
   protected void onServiceAttached(ProximityService service) {
     super.onServiceAttached(service);
-    onPropertyServiceAvailable((S) service.getPropertyService(mServiceClass));
+    mPropertyService = (S) service.getPropertyService(mServiceClass);
+    onPropertyServiceAvailable(mPropertyService);
   }
   
   /**
@@ -96,6 +101,14 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   protected void onPropertyServiceAvailable(S service) {
     // get the current progress
     setProgress(service.getProgress());
+  }
+  
+  /**
+   * Returns the attached {@link PropertyService}.
+   * @return
+   */
+  public S getPropertyService() {
+    return mPropertyService;
   }
   
   /**

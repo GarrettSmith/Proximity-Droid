@@ -29,7 +29,6 @@ import ca.uwinnipeg.proximitydroid.Util;
  * @author Garrett Smith
  *
  */
-// TODO: make the maximum value the norm
 public class EpsilonDialogFragment 
   extends DialogFragment 
   implements OnSeekBarChangeListener {
@@ -42,6 +41,9 @@ public class EpsilonDialogFragment
   // the key of the preference to save to
   protected String mPrefKey;
   
+  // the maximum value we can set, the norm
+  protected float mNorm;
+  
   protected SharedPreferences mPreferencs;
   
   // the number of steps you can adjust by
@@ -52,6 +54,7 @@ public class EpsilonDialogFragment
   
   // Argument keys
   protected static final String PREF_KEY = "pref key";
+  protected static final String NORM_KEY = "norm key";
   
   protected TextView mValueText;
   
@@ -65,10 +68,11 @@ public class EpsilonDialogFragment
    * @param prefKey
    * @return
    */
-  public static EpsilonDialogFragment newInstance(String prefKey) {
+  public static EpsilonDialogFragment newInstance(String prefKey, float maxValue) {
     EpsilonDialogFragment frag = new EpsilonDialogFragment();
     Bundle args = new Bundle();
     args.putString(PREF_KEY, prefKey);
+    args.putFloat(NORM_KEY, maxValue);
     frag.setArguments(args);
     return frag;
   }
@@ -77,8 +81,10 @@ public class EpsilonDialogFragment
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     
-    // get the preference key
-    mPrefKey = getArguments().getString(PREF_KEY);
+    // passed arguments
+    Bundle args = getArguments();
+    mPrefKey = args.getString(PREF_KEY);    
+    mNorm = args.getFloat(NORM_KEY);
     
     // get the preferences
     mPreferencs = Util.getSupportDefaultSharedPrefences(getActivity());
@@ -143,7 +149,7 @@ public class EpsilonDialogFragment
 
   @Override
   public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-    mCurrentValue = progress / (float)STEPS;
+    mCurrentValue = progress / (float)STEPS * mNorm;
     // set the text to show the current epsilon
     updateValueText();
   }

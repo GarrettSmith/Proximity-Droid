@@ -348,6 +348,14 @@ implements OnSharedPreferenceChangeListener {
     // TODO: load probe funcs from external storage
     return features;
   }
+  
+  /**
+   * Returns the norm of the {@link Image}.
+   * @return
+   */
+  public float getNorm() {
+    return (float)mImage.getNorm();
+  }
 
   // Preferences
 

@@ -63,7 +63,7 @@ public abstract class EpsilonPropertyFragment<S extends PropertyService>
       transaction.addToBackStack(null);
       
       DialogFragment newFragment = 
-          EpsilonDialogFragment.newInstance(mEpsilonKey);
+          EpsilonDialogFragment.newInstance(mEpsilonKey, getService().getNorm());
       newFragment.show(transaction, "dialog");
       return true;
     }
