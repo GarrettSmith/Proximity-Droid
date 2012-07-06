@@ -263,7 +263,7 @@ public class AddRegionView extends ProximityImageView {
   }
   
   private void drawCenter(Canvas canvas) {
-    canvas.drawPath(mRegion.getCenterPath(), mRegion.getCenterPaint());
+    canvas.drawPath(mRegion.getCenterPath(mFinalMatrix), mRegion.getCenterPaint());
   }
 
   /**

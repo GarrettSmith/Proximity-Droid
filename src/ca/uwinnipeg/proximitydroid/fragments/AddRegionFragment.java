@@ -131,7 +131,15 @@ public class AddRegionFragment
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case R.id.menu_reset:
-        // TODO: mRegion.reset();
+        // reset the region
+        if (mRegion.getShape() == Shape.POLYGON) {
+          mRegion.resetPolygon();
+        }
+        else {
+          mRegion.resetBounds();
+        }
+        mView.invalidate();
+        mView.followResize(mRegion);
         return true;
 
       case R.id.menu_accept:
@@ -158,6 +166,7 @@ public class AddRegionFragment
   @Override
   public boolean onNavigationItemSelected(int position, long itemId) {
     if (mRegion != null) {
+      Region.Shape oldShape = mRegion.getShape();
       switch(position) {
         case BUTTON_RECTANGLE_INDEX:
           mRegion.setShape(Region.Shape.RECTANGLE);
@@ -167,7 +176,13 @@ public class AddRegionFragment
           break;
         case BUTTON_POLYGON_INDEX:
           mRegion.setShape(Region.Shape.POLYGON);
+          // reset view
+          mView.followResize(mRegion);
           break;     
+      }
+      // reset bounds if we are coming from a polygon with 1 or less points
+      if (oldShape == Shape.POLYGON && mRegion.getPolygon().size() <= 1) {
+        mRegion.resetBounds();
       }
       mView.invalidate();
     }

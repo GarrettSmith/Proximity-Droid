@@ -3,6 +3,7 @@ package ca.uwinnipeg.proximitydroid;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
@@ -92,8 +93,8 @@ public class Region implements Parcelable {
       CENTER_BASE_PAINT.setStyle(Paint.Style.FILL);
       CENTER_BASE_PAINT.setFlags(Paint.ANTI_ALIAS_FLAG);
 
-      // TODO: float size = rs.getDimension(R.dimen.region_center_radius);
-      //CENTER_BASE_PATH.addRect(-size, -size, size, size, Path.Direction.CW);
+      float size = 10;//rs.getDimension(R.dimen.region_center_radius);
+      CENTER_BASE_PATH.addRect(-size, -size, size, size, Path.Direction.CW);
     }
   }
   
@@ -137,17 +138,6 @@ public class Region implements Parcelable {
     dirty.union(getBounds());
     return dirty;
   }
-  
-//TODO:  public void reset() {
-//    if (mShape == Shape.POLYGON) {
-//      mPoly.reset();
-//      updateBounds();
-//    }
-//    else {
-//      resetBounds();
-//    }
-//    mView.invalidate();
-//  }
 
   /**
    * Sets the bounds to a default value.
@@ -208,6 +198,17 @@ public class Region implements Parcelable {
     mPoly.set(poly);
     updateBounds();
     dirty.union(getBounds());
+    return dirty;
+  }
+  
+  /**
+   * Reset the polygon's points.
+   * @return
+   */
+  public Rect resetPolygon() {
+    Rect dirty = new Rect(getBounds());
+    mPoly.reset();
+    updateBounds();
     return dirty;
   }
   
@@ -443,10 +444,22 @@ public class Region implements Parcelable {
    * @return
    */
   public Path getCenterPath() {
+    return getCenterPath(new Matrix());
+  }
+
+  /**
+   * Returns the path representing the center pixel of this region in image space.
+   * @param matrix
+   * @return
+   */
+  public Path getCenterPath(Matrix matrix) {
     Path centerPath = new Path();
-    Rect bounds = getBounds();
     
-    centerPath.addPath(CENTER_BASE_PATH, bounds.centerX(), bounds.centerY());
+    Rect bounds = getBounds();
+    float[] p = new float[]{ bounds.centerX(), bounds.centerY() };
+    matrix.mapPoints(p);
+    
+    centerPath.addPath(CENTER_BASE_PATH, p[0], p[1]);
     
     return centerPath;
   }
