@@ -181,7 +181,7 @@ public class RegionsView extends ProximityImageView {
    */
   public void setDim(boolean dim) {
     boolean changed = mDim != dim;
-    mDim = true;
+    mDim = dim;
     if (changed) {
       invalidate();
     }

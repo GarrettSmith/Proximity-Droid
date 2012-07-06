@@ -73,6 +73,13 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   }
   
   @Override
+  protected void draw() {
+    // don't fade unselected areas
+    mView.setDim(false);
+    super.draw();
+  }
+  
+  @Override
   public void onStart() {
     super.onStart();
     // write the current progress
