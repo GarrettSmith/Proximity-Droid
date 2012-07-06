@@ -59,7 +59,7 @@ public class AddRegionView extends ProximityImageView {
   protected static final float TOUCH_SHIFT = 0.025f;  
   
   // pointer debugging
-  private static final boolean DEBUG_POINTER = true;
+  private static final boolean DEBUG_POINTER = false;
   private float debugX;
   private float debugY;
   
@@ -156,15 +156,36 @@ public class AddRegionView extends ProximityImageView {
   }
   
   /**
+   * Returns the bounds of the region in screen space.
+   * @return
+   */
+  public RectF getScreenSpaceBoundsF() {
+    RectF r = mRegion.getBoundsF();
+    mFinalMatrix.mapRect(r);
+    return r;
+  }
+  
+  /**
+   * Returns the bounds of the region in screen space.
+   * @return
+   */
+  public Rect getScreenSpaceBounds() {
+    RectF r = getScreenSpaceBoundsF();
+    return new Rect(
+        Math.round(r.left), 
+        Math.round(r.top), 
+        Math.round(r.right), 
+        Math.round(r.bottom));
+  }
+  
+  /**
    * Returns the bounds of the region in screen space with an additional padding to cover the 
    * handles being drawn.
    * @return
    */
   public Rect getPaddedScreenSpaceBounds() {
-    int padding = (int) HANDLE_SIZE;
-    padding += 1;
-    RectF r = mRegion.getBoundsF();
-    mFinalMatrix.mapRect(r);
+    int padding = (int) HANDLE_SIZE + 1;
+    Rect r = getScreenSpaceBounds();
     r.inset(-padding, -padding);
     return new Rect(
         Math.round(r.left), 
@@ -178,12 +199,9 @@ public class AddRegionView extends ProximityImageView {
     super.onDraw(canvas);
     // only draw if we have a region to draw
     if (mRegion != null) {
-      canvas.save();
-      
-      // transform to screen space
-      canvas.concat(mFinalMatrix);
       
       Path shapePath = getShapePath();
+      shapePath.transform(mFinalMatrix);
 
       // dim outside
       drawUnselected(canvas, shapePath);
@@ -206,15 +224,17 @@ public class AddRegionView extends ProximityImageView {
 
       // Draw bounds guide for non rectangles
       if (mRegion.getShape() != Shape.RECTANGLE) {
-        canvas.drawRect(mRegion.getBounds(), GUIDE_PAINT);
+        canvas.drawRect(getScreenSpaceBounds(), GUIDE_PAINT);
       }
       
       // draw debug points
       if (DEBUG_POINTER) {
+        canvas.save();
+        canvas.concat(mFinalMatrix);
         canvas.drawCircle(debugX, debugY, 80, FOCUSED_PAINT);
+        canvas.restore();
       }
       
-      canvas.restore();
     }
   }
 
@@ -259,14 +279,14 @@ public class AddRegionView extends ProximityImageView {
         // don't draw handles when resizing polygons
         if (mAction != Action.RESIZE) {
           float[] ps = mRegion.getPolygon().toFloatArray();
-          //mScreenMatrix.mapPoints(ps);
+          mFinalMatrix.mapPoints(ps);
           for (int i = 0; i < ps.length; i += 2) {
             handlePath.addPath(HANDLE_PATH, ps[i], ps[i+1]);
           }      
         }
       }
       else {
-        RectF screenBounds = mRegion.getBoundsF();
+        RectF screenBounds = getScreenSpaceBoundsF();
         if (mAction == Action.RESIZE) {
           // Draw only the resized handle
           handlePath.addPath(getHandlePath(mSelectedEdge, screenBounds));
@@ -363,7 +383,7 @@ public class AddRegionView extends ProximityImageView {
       selectedPath.lineTo(p3.x, p3.y);
 
       // transform by the screen
-      //selectedPath.transform(mFinalMatrix);
+      selectedPath.transform(mFinalMatrix);
       // draw handles
       canvas.drawPath(selectedPath, REMOVE_POINT_PAINT);
 
@@ -375,7 +395,7 @@ public class AddRegionView extends ProximityImageView {
 
     // Find the dimension
     float[] p = {x, y};
-    //mScreenMatrix.mapPoints(p);
+    mFinalMatrix.mapPoints(p);
 
     // add the handle
     selectedPath.addPath(HANDLE_PATH, p[0], p[1]);
@@ -639,7 +659,6 @@ public class AddRegionView extends ProximityImageView {
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float dx, float dy) {
       // handle orientation change
-      // TODO: These need to be tested
       switch (mBitmap.getOrientation()) {
         case RotatedBitmap.CW:
           float tmp = dx;

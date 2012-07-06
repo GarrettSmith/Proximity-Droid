@@ -169,6 +169,7 @@ public class AddRegionFragment
           mRegion.setShape(Region.Shape.POLYGON);
           break;     
       }
+      mView.invalidate();
     }
     return true;
   }
