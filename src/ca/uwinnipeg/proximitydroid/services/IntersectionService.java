@@ -66,6 +66,7 @@ public class IntersectionService extends EpsilonLinearService {
     // broadcast the change if we are finished calculating
     if (mQueue.isEmpty()) {
       Intent intent = new Intent(ACTION_DEGREE_CHANGED);
+      intent.addCategory(CATEGORY);
       intent.putExtra(DEGREE, degree);
       mBroadcastManager.sendBroadcast(intent);
     }

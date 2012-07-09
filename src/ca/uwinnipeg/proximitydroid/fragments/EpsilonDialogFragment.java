@@ -47,7 +47,7 @@ public class EpsilonDialogFragment
   protected SharedPreferences mPreferencs;
   
   // the number of steps you can adjust by
-  protected final int STEPS = 20;
+  protected final int STEPS = 30;
   
   // the number formatter
   protected static final String FORMAT = "%1.2f";

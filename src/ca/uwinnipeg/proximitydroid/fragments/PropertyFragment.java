@@ -20,7 +20,7 @@ import ca.uwinnipeg.proximitydroid.services.ProximityService;
 public abstract class PropertyFragment<S extends PropertyService> extends RegionFragment {
   
   // the class of the property service
-  protected Class<S> mServiceClass;
+  protected Class<? extends S> mServiceClass;
   
   // the category of broadcasts we are interested in
   protected String mCategory;
@@ -30,7 +30,7 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   protected BroadcastReceiver mPropertyReciever = new PropertyFragmentReceiver();
   
   // the intent filter used to filter broadcasts we are interseted in
-  protected IntentFilter mFilter;
+  protected IntentFilter mBaseFilter;
   
   // the current progress of the service's calculation
   protected int mProgress;
@@ -46,7 +46,7 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   public PropertyFragment(Class<S> clazz, String category) {
     mServiceClass = clazz;
     mCategory = category;
-    mFilter = new IntentFilter();
+    mBaseFilter = new IntentFilter();
   }
   
   /**
@@ -58,13 +58,13 @@ public abstract class PropertyFragment<S extends PropertyService> extends Region
   public PropertyFragment(Class<S> clazz, String category, IntentFilter filter) {
     mServiceClass = clazz;
     mCategory = category;
-    mFilter = filter;
+    mBaseFilter = filter;
   }
   
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
-    IntentFilter filter = new IntentFilter(mFilter);
+    IntentFilter filter = new IntentFilter(mBaseFilter);
     filter.addAction(PropertyService.ACTION_PROGRESS_CHANGED);
     filter.addAction(PropertyService.ACTION_VALUE_CHANGED);    
     filter.addAction(ProximityService.ACTION_REGIONS_CLEARED);    
