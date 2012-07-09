@@ -28,6 +28,10 @@ public class ComplimentService extends EpsilonLinearService {
     super(CATEGORY, EPSILON_KEY);
   }
   
+  protected ComplimentService(String category) {
+    super(category, EPSILON_KEY);
+  }
+  
   /**
    * Returns the points within the most recently calculated compliment.
    * @return
@@ -48,16 +52,27 @@ public class ComplimentService extends EpsilonLinearService {
       // take the initial compliment
       long startTime = System.currentTimeMillis();
       if (mValue.isEmpty()) {
-        indices = mImage.hybridCompliment(region.getIndicesList(), getEpsilon(), sub);
+        indices = mImage.hybridCompliment(getIndices(region), getEpsilon(), sub);
       }
       // take the difference of with the next object
       else {  
-        indices = mImage.hybridDifference(mValue, region.getIndicesList(), getEpsilon(), sub);
+        indices = mImage.hybridDifference(mValue, getIndices(region), getEpsilon(), sub);
       }
       Log.i(TAG, "Compliment took " + (System.currentTimeMillis() - startTime)/1000f + " seconds");
     }
 
     return indices;
+  }
+  
+  /**
+   * Returns the indices associated with the given region.
+   * <p>
+   * We use this so we can override it for the other intersection services.
+   * @param region
+   * @return
+   */
+  protected List<Integer> getIndices(Region region) {
+    return region.getIndicesList();
   }
 
 }

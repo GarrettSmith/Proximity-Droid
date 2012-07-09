@@ -4,18 +4,25 @@
 package ca.uwinnipeg.proximitydroid.fragments;
 
 import ca.uwinnipeg.proximitydroid.services.ComplimentService;
+import ca.uwinnipeg.proximitydroid.services.NeighbourhoodComplimentService;
 
 /**
  * Displays the results of the {@link ComplimentService}.
  * @author Garrett Smith
  *
  */
-public class ComplimentFragment extends EpsilonPropertyFragment<ComplimentService> {
+public class ComplimentFragment 
+  extends UseNeighbourhoodPropertyFragment<ComplimentService, NeighbourhoodComplimentService> {
   
   protected int[] mPoints;
   
   public ComplimentFragment() {
-    super(ComplimentService.class, ComplimentService.CATEGORY, ComplimentService.EPSILON_KEY);
+    super(
+        ComplimentService.class, 
+        ComplimentService.CATEGORY, 
+        NeighbourhoodComplimentService.class, 
+        NeighbourhoodComplimentService.CATEGORY, 
+        ComplimentService.EPSILON_KEY);
   }
   
   @Override

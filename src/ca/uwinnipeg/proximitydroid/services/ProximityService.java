@@ -49,7 +49,8 @@ implements OnSharedPreferenceChangeListener {
       IntersectionService.class, 
       NeighbourhoodIntersectionService.class,
       DifferenceService.class,
-      //ComplimentService.class
+      ComplimentService.class,
+      NeighbourhoodComplimentService.class
     };
 
   // The perceptual system
