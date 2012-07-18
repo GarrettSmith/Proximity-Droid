@@ -239,7 +239,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     
     // append number
     for (int i = 0; true; i++) {
-      if (!new File(path, str.toString() + i + ".jpg").exists()) {
+      if (!new File(path, str.toString() + i + ".png").exists()) {
         str.append(i);
         break;
       }
