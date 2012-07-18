@@ -8,27 +8,42 @@
         android:minSdkVersion="8"
         android:targetSdkVersion="15" />
 
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:hardwareAccelerated="false"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name" android:largeHeap="true">
-        <activity android:name="ProximityDroidActivity" android:uiOptions="splitActionBarWhenNarrow" android:theme="@style/base">
+        android:label="@string/app_name"
+        android:largeHeap="true" >
+        <activity
+            android:name="ProximityDroidActivity"
+            android:theme="@style/base"
+            android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:label="@string/app_features" android:name="FeatureActivity"></activity><service android:name=".services.ProximityService"></service>
-        
-        <service android:name=".services.NeighbourhoodService"></service>
-        <service android:name=".services.IntersectionService"></service>
-        <service android:name=".services.ComplimentService"></service>
-        <service android:name=".services.DifferenceService"></service>
-        <service android:name=".services.NeighbourhoodIntersectionService"></service>
-        <service android:name=".services.NeighbourhoodComplimentService"></service>
+        <activity
+            android:name="FeatureActivity"
+            android:label="@string/app_features" >
+        </activity>
+
+        <service android:name=".services.ProximityService" >
+        </service>
+        <service android:name=".services.NeighbourhoodService" >
+        </service>
+        <service android:name=".services.IntersectionService" >
+        </service>
+        <service android:name=".services.ComplimentService" >
+        </service>
+        <service android:name=".services.DifferenceService" >
+        </service>
+        <service android:name=".services.NeighbourhoodIntersectionService" >
+        </service>
+        <service android:name=".services.NeighbourhoodComplimentService" >
+        </service>
     </application>
 
 </manifest>
