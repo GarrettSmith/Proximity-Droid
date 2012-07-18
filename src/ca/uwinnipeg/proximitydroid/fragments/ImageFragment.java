@@ -118,7 +118,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     boolean rtn = false;
     try {
       output = new FileOutputStream(file);
-      rtn = saveImage(CompressFormat.JPEG, 95, output);
+      rtn = saveImage(CompressFormat.PNG, 0, output);
       output.close();
       return rtn;
     } 
