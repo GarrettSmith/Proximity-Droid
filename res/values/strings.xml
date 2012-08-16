@@ -27,5 +27,7 @@
     <string name="difference">Difference</string>
     <string name="invalid_polygon">Polygons need at least three points.</string>
     <string name="menu_use_neighbourhood">Use Neighbourhoods</string>
+    <string name="intersection_union">Union: </string>
+    <string name="intersection_size">Intersection: </string>
 
 </resources>

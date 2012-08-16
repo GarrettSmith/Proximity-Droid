@@ -10,6 +10,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
@@ -210,8 +211,13 @@ public class AddRegionView extends ProximityImageView {
       canvas.drawPath(shapePath, FOCUSED_PAINT);
 
       // draw the center pixel
-      if (!(mRegion.getShape() == Shape.POLYGON && mRegion.getPolygon().size() < 3)) {
-        drawCenter(canvas);
+      try {
+        if (!(mRegion.getShape() == Shape.POLYGON && mRegion.getPolygon().size() < 3)) {
+          drawCenter(canvas);
+        }
+      }
+      catch(NullPointerException ex) {
+        Log.e(TAG, "Pixel wasn't loaded yet to be used for center");
       }
 
       // draw shape

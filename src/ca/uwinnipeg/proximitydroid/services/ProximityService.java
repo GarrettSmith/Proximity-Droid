@@ -45,12 +45,12 @@ implements OnSharedPreferenceChangeListener {
   @SuppressWarnings("unchecked")
   public static final Class<PropertyService>[] SERVICE_CLASSES = 
     (Class<PropertyService>[]) new Class<?>[] { 
+      ComplimentService.class,
+      NeighbourhoodComplimentService.class,
       NeighbourhoodService.class, 
       IntersectionService.class, 
       NeighbourhoodIntersectionService.class,
-      DifferenceService.class,
-      ComplimentService.class,
-      NeighbourhoodComplimentService.class
+      DifferenceService.class
     };
 
   // The perceptual system

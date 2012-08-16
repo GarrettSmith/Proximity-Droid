@@ -28,9 +28,17 @@ public class IntersectionService extends EpsilonLinearService {
   public static final String ACTION_DEGREE_CHANGED = "action.DEGREE_SET";
   
   public static final String DEGREE = "degree";
+  public static final String INTERSECTION_SIZE = "intersection size";
+  public static final String UNION_SIZE = "union size";
   
   // the current degree of nearness, 1 is the maximum and means completely dissimilar
   protected float mDegree = 1;
+  
+  // the number of pixels in the union
+  protected int mUnionSize = 0;
+  
+  // the number of pixels in the intersections
+  protected int mIntersectionSize = 0;
   
   public IntersectionService() {
     super(CATEGORY, EPSILON_KEY);
@@ -60,14 +68,18 @@ public class IntersectionService extends EpsilonLinearService {
    * Updates and broadcasts the current degree of nearness.
    * @param degree
    */
-  protected void setDegree(float degree) {
+  protected void setDegree(float degree, int unionSize, int intSize) {
     mDegree = degree;
+    mUnionSize = unionSize;
+    mIntersectionSize = intSize;
     
     // broadcast the change if we are finished calculating
     if (mQueue.isEmpty()) {
       Intent intent = new Intent(ACTION_DEGREE_CHANGED);
       intent.addCategory(CATEGORY);
       intent.putExtra(DEGREE, degree);
+      intent.putExtra(UNION_SIZE, mUnionSize);
+      intent.putExtra(INTERSECTION_SIZE, mIntersectionSize);
       mBroadcastManager.sendBroadcast(intent);
     }
   }
@@ -109,24 +121,15 @@ public class IntersectionService extends EpsilonLinearService {
   }
   
   @Override
-  protected void setResult(List<Integer> intersection, Region region) {    
-    setDegree(calculateDegree(intersection, getIndices(region)));    
-    super.setValue(intersection);
-  }
-  
-  /**
-   * Calculates the degree of nearness.
-   * @param intersection
-   * @param regionIndices
-   * @return
-   */
-  protected float calculateDegree(List<Integer> intersection, List<Integer> regionIndices) {
+  protected void setResult(List<Integer> intersection, Region region) {  
     // size of the intersection
-    float intSize = intersection.size();    
+    int intSize = intersection.size();    
     // union of indices in the current intersection and in the added region
-    float unionSize = MathUtil.union(mValue, regionIndices).size();
-    float degree = 1 - (intSize / unionSize);
-    return degree;
+    int unionSize = MathUtil.union(mValue, getIndices(region)).size();
+    float degree = 1 - ((float) intSize / unionSize);
+    
+    setDegree(degree, unionSize, intSize);    
+    super.setValue(intersection);
   }
 
 }

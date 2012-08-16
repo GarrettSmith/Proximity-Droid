@@ -36,13 +36,29 @@ public class IntersectionFragment
   // The bar used to display a visual of the degree of nearness
   protected ProgressBar mDegreeBar;
   
+  // the text view used to display the size of the union
+  protected TextView mUnionText;
+  
+  // the text view used to display the size of the intersection
+  protected TextView mIntersectionSizeText;
+  
   // the number of steps in the degree bar
   protected final static int DEGREE_STEPS = 100;
   
   public int[] mPoints;
   
   // the current degree
-  public float mDegree = 1;
+  protected float mDegree = 1;
+  
+  // the current union size
+  protected int mUnionSize = 0;
+  
+  protected MenuItem mUnionSizeItem;
+  
+  // the current instersection size
+  protected int mIntersectionSize = 0;
+  
+  protected MenuItem mIntersectionsizeItem;
   
   public IntersectionFragment() {
     super(
@@ -84,8 +100,18 @@ public class IntersectionFragment
     mDegreeText = (TextView) view.findViewById(R.id.degree_value);
     mDegreeBar = (ProgressBar) view.findViewById(R.id.degree_bar);
     
-    // set the current degree
+    mUnionSizeItem = menu.findItem(R.id.menu_union);
+    view = mUnionSizeItem.getActionView();
+    mUnionText = (TextView) view.findViewById(R.id.union_value);
+
+    mIntersectionsizeItem = menu.findItem(R.id.menu_size);
+    view = mIntersectionsizeItem.getActionView();
+    mIntersectionSizeText = (TextView) view.findViewById(R.id.intersection_size_value);
+    
+    // set the values degree
     setDegree(mDegree);
+    setUnion(mUnionSize);
+    setIntersectionSize(mIntersectionSize);
   }
   
   @Override
@@ -93,6 +119,8 @@ public class IntersectionFragment
     String action = intent.getAction();
     if (action.equals(IntersectionService.ACTION_DEGREE_CHANGED)) {
       onDegreeChanged(intent.getFloatExtra(IntersectionService.DEGREE, 1));
+      onUnionChanged(intent.getIntExtra(IntersectionService.UNION_SIZE, 0));
+      onIntersectionSizeChanged(intent.getIntExtra(IntersectionService.INTERSECTION_SIZE, 0));
     }
     else {
       super.onRecieve(context, intent);
@@ -107,6 +135,9 @@ public class IntersectionFragment
   @Override
   protected void onRegionsCleared() {
     mPoints = null;
+    onDegreeChanged(1);
+    onUnionChanged(0);
+    onIntersectionSizeChanged(0);
   }
   
   /**
@@ -116,6 +147,16 @@ public class IntersectionFragment
   protected void onDegreeChanged(float degree) {
     mDegree = degree;
     setDegree(mDegree);
+  }
+  
+  protected void onUnionChanged(int union) {
+    mUnionSize = union;
+    setUnion(mUnionSize);
+  }
+  
+  protected void onIntersectionSizeChanged(int intersectionSize) {
+    mIntersectionSize = intersectionSize;
+    setIntersectionSize(mIntersectionSize);
   }
   
   @Override
@@ -132,5 +173,18 @@ public class IntersectionFragment
   protected void setDegree(float degree) {
     mDegreeBar.setProgress((int) (DEGREE_STEPS - (degree * DEGREE_STEPS)));
     mDegreeText.setText(new Formatter().format(DEGREE_FORMAT, degree).toString());
+  }
+  
+  protected void setUnion(int union) {
+    String unionStr = Integer.toString(union);
+    mUnionText.setText(unionStr);
+    mUnionSizeItem.setTitle(getResources().getString(R.string.intersection_union) + ' ' + unionStr);
+    
+  }
+  
+  protected void setIntersectionSize(int intersectionSize) {
+    String str = Integer.toString(intersectionSize);
+    mIntersectionSizeText.setText(str);
+    mIntersectionsizeItem.setTitle(getResources().getString(R.string.intersection_size) + ' ' + str);
   }
 }
