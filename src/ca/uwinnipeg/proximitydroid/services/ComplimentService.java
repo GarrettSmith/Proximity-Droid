@@ -51,7 +51,7 @@ public class ComplimentService extends EpsilonLinearService {
     else {
       // take the initial compliment
       long startTime = System.currentTimeMillis();
-      if (mValue.isEmpty()) {
+      if (mRegions.get(0) == region) {
         indices = mImage.hybridCompliment(getIndices(region), getEpsilon(), sub);
       }
       // take the difference of with the next object

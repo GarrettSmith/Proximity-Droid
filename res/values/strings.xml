@@ -13,7 +13,7 @@
     <string name="menu_show_features">Show Features</string>
     <string name="menu_hide_features">Hide Features</string>
     <string name="menu_clear">Clear Regions</string>
-    <string name="menu_save_image">Save Image</string>
+    <string name="menu_save_image">Snapshot</string>
     <string name="menu_epsilon">Set Epsilon</string>
     <string name="app_epsilon">Set Epsilon</string>
     <string name="save_success">The image has been saved.</string>

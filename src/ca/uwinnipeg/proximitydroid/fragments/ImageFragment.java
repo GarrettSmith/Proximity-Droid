@@ -59,7 +59,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
   protected BitmapChangedReceiver mBitmapchangedReceiver = new BitmapChangedReceiver();
   
   // the subdirectory in the pictures directory used to save screen shots
-  public static final String PICTURES_DIRECTORY_NAME = "ProximityDroid";  
+  public static final String PICTURES_DIRECTORY_NAME = "Proximity-System";  
   
   // Service
   
@@ -246,7 +246,7 @@ public class ImageFragment<V extends ProximityImageView> extends SherlockFragmen
     }
     
     // append file type
-    str.append(".jpg");
+    str.append(".png");
     return str.toString();
   }
   

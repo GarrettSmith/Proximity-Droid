@@ -65,17 +65,19 @@ public final class Util {
    * @param filePath
    * @return
    */
+  //TODO: get rotated bitmaps handeled properly
   public static int readOrientation(String filePath) {
-    ExifInterface exif;
-    int orientation = ExifInterface.ORIENTATION_NORMAL;
-    try {
-      exif = new ExifInterface(filePath);
-      orientation = 
-          exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-    } catch (IOException e) {
-      Log.e(TAG, "Failed to load file for exif data. " + filePath);
-    }    
-    return mapEXIF(orientation);
+//    ExifInterface exif;
+//    int orientation = ExifInterface.ORIENTATION_NORMAL;
+//    try {
+//      exif = new ExifInterface(filePath);
+//      orientation = 
+//          exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+//    } catch (IOException e) {
+//      Log.e(TAG, "Failed to load file for exif data. " + filePath);
+//    }    
+//    return mapEXIF(orientation);
+    return RotatedBitmap.NORMAL;
   }
 
   /**

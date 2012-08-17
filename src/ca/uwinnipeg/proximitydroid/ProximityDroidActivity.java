@@ -49,6 +49,7 @@ import com.actionbarsherlock.view.Window;
  */
 //TODO: Add editing created regions
 //TODO: Show an image loading view
+//TODO: get rotated images working correctly
 public class ProximityDroidActivity 
   extends FeaturePopulatingFragment 
   implements OnAddRegionSelectedListener,
@@ -148,6 +149,10 @@ public class ProximityDroidActivity
         if (resultCode == Activity.RESULT_OK) {
           getService().setBitmap(data.getData());
         }
+        else {
+          finish();
+        }
+        break;
     }
   }
   

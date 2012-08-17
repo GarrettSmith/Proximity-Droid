@@ -92,7 +92,7 @@ public class IntersectionService extends EpsilonLinearService {
     List<Integer> indices = new ArrayList<Integer>();
 
     // check if this is the only region
-    if (mValue.isEmpty()) {
+    if (mRegions.get(0) == region) {
       indices = getIndices(region);
     }
     // else take the intersection of the region and the current intersection
