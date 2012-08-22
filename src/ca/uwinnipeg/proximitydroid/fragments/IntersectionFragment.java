@@ -101,11 +101,15 @@ public class IntersectionFragment
     mDegreeBar = (ProgressBar) view.findViewById(R.id.degree_bar);
     
     mUnionSizeItem = menu.findItem(R.id.menu_union);
-    view = mUnionSizeItem.getActionView();
+    if (mUnionSizeItem != null) {
+      view = mUnionSizeItem.getActionView();
+    }
     mUnionText = (TextView) view.findViewById(R.id.union_value);
 
     mIntersectionsizeItem = menu.findItem(R.id.menu_size);
-    view = mIntersectionsizeItem.getActionView();
+    if (mIntersectionsizeItem != null) {
+      view = mIntersectionsizeItem.getActionView();
+    }
     mIntersectionSizeText = (TextView) view.findViewById(R.id.intersection_size_value);
     
     // set the values degree

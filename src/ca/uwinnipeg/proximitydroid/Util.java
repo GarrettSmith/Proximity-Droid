@@ -3,8 +3,6 @@
  */
 package ca.uwinnipeg.proximitydroid;
 
-import java.io.IOException;
-
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -16,7 +14,6 @@ import android.graphics.Point;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import ca.uwinnipeg.proximity.image.Image;
@@ -43,8 +40,8 @@ public final class Util {
     // Load the orientation
     int orientation = Util.readOrientation(path);
     
-    int width = 500;
-    int height = 500;
+    int width = 400;
+    int height = 400;
 
     // Read the bitmap's size
     BitmapFactory.Options options = new BitmapFactory.Options();
