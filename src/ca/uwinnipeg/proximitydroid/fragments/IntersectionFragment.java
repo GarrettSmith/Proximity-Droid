@@ -176,19 +176,24 @@ public class IntersectionFragment
    */
   protected void setDegree(float degree) {
     mDegreeBar.setProgress((int) (DEGREE_STEPS - (degree * DEGREE_STEPS)));
-    mDegreeText.setText(new Formatter().format(DEGREE_FORMAT, degree).toString());
+    Formatter formatter = new Formatter();
+    mDegreeText.setText(formatter.format(DEGREE_FORMAT, degree).toString());
+    formatter.close();
   }
   
   protected void setUnion(int union) {
-    String unionStr = Integer.toString(union);
-    mUnionText.setText(unionStr);
-    mUnionSizeItem.setTitle(getResources().getString(R.string.intersection_union) + ' ' + unionStr);
-    
+    if (mUnionText != null) {
+      String unionStr = Integer.toString(union);
+      mUnionText.setText(unionStr);
+      mUnionSizeItem.setTitle(getResources().getString(R.string.intersection_union) + ' ' + unionStr);
+    }    
   }
-  
+
   protected void setIntersectionSize(int intersectionSize) {
-    String str = Integer.toString(intersectionSize);
-    mIntersectionSizeText.setText(str);
-    mIntersectionsizeItem.setTitle(getResources().getString(R.string.intersection_size) + ' ' + str);
+    if (mIntersectionSizeText != null) {
+      String str = Integer.toString(intersectionSize);
+      mIntersectionSizeText.setText(str);
+      mIntersectionsizeItem.setTitle(getResources().getString(R.string.intersection_size) + ' ' + str);
+    }
   }
 }
