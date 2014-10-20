@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="ca.uwinnipeg.proximitydroid"
-    android:versionCode="1"
+    package="ca.uwinnipeg.proximitydroid.v2"
+    android:versionCode="2"
     android:versionName="@string/app_versionName" >
 
     <uses-sdk
@@ -18,7 +18,7 @@
         <activity
             android:name="ProximityDroidActivity"
             android:theme="@style/base"
-            android:uiOptions="splitActionBarWhenNarrow" >
+            android:uiOptions="splitActionBarWhenNarrow" android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,7 +27,12 @@
         </activity>
         <activity
             android:name="FeatureActivity"
-            android:label="@string/app_features" >
+            android:label="@string/app_features"  
+            android:parentActivityName="ca.uwinnipeg.proximitydroid.v2.ProximityDroidActivity">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+		        <meta-data
+		            android:name="android.support.PARENT_ACTIVITY"
+		            android:value="ca.uwinnipeg.proximitydroid.ProximityDroidActivity" />
         </activity>
 
         <service android:name=".services.ProximityService" >
@@ -44,6 +49,7 @@
         </service>
         <service android:name=".services.NeighbourhoodComplimentService" >
         </service>
+        <service android:name=".services.UpperApproxService"></service>
     </application>
 
 </manifest>

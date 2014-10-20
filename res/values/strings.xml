@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Proximity System</string>
-    <string name="app_versionName">1.0</string>
+    <string name="app_versionName">2.0 - 01/17/2014</string>
     <string name="app_about">About</string>
     <string name="menu_about">About</string>
     <string name="about_developers_title">Developed by</string>
@@ -29,5 +29,6 @@
     <string name="menu_use_neighbourhood">Use Neighbourhoods</string>
     <string name="intersection_union">Union: </string>
     <string name="intersection_size">Intersection: </string>
+    <string name="upperapprox">Upper Approximation</string>
 
 </resources>
